@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: clonereport
+    runtime: node
+    plan: starter
+    buildCommand: "true"
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22.13.0"
+      - key: DB_PATH
+        value: /var/data/clonereport.db
+      - key: TRUST_PROXY
+        value: "1"
+      - key: PUBLIC_URL
+        value: https://clonereport.com
+      - key: SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
