@@ -10,7 +10,9 @@ async function save(value) {
   if (!/^https?:$/.test(url.protocol)) { msg.textContent = 'Use an http or https address.'; return; }
   const origin = `${url.protocol}//${url.hostname}/*`;
   if (url.hostname !== 'clonereport.com') {
-    const granted = await chrome.permissions.request({ origins: [origin] });
+    let granted = false;
+    try { granted = await chrome.permissions.request({ origins: [origin] }); }
+    catch { msg.textContent = 'Only clonereport.com or a local server (localhost) can be used.'; return; }
     if (!granted) { msg.textContent = 'Permission denied for that site.'; return; }
   }
   const apiBase = url.href.replace(/\/+$/, '');
