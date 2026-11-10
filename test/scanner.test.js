@@ -31,8 +31,9 @@ test('scan adds good games, skips the rest, and never re-adds removed ones', asy
     4: game(4, 'Disliked Game', 3000, 3000),
     5: game(5, 'Copycat', 9000, 100),
     6: game(6, 'Second Original', 8000, 400),
+    7: game(7, 'Smaller Original', 450, 50, '50,000 .. 100,000'),
   }, {}];
-  const details = { 1: { genre: 'Action' }, 2: { genre: 'Utilities' }, 5: { genre: 'Casual' }, 6: { genre: 'Indie, RPG' } };
+  const details = { 1: { genre: 'Action' }, 2: { genre: 'Utilities' }, 5: { genre: 'Casual' }, 6: { genre: 'Indie, RPG' }, 7: { genre: 'Adventure' } };
   const calls = [];
   const fetch = async (url) => {
     calls.push(url);
@@ -40,7 +41,7 @@ test('scan adds good games, skips the rest, and never re-adds removed ones', asy
     const body = u.searchParams.get('request') === 'all' ? pages[Number(u.searchParams.get('page'))] : details[u.searchParams.get('appid')];
     return { ok: true, json: async () => body };
   };
-  const opts = { fetch, sleep: async () => {}, log: () => {}, target: 100, minReviews: 1000, minPositive: 80 };
+  const opts = { fetch, sleep: async () => {}, log: () => {}, target: 100, stages: [{ minReviews: 1000, minPositive: 80 }] };
 
   let r = await scanSteam(opts);
   assert.equal(r.added, 2);
@@ -63,7 +64,49 @@ test('scan adds good games, skips the rest, and never re-adds removed ones', asy
   store.seedOriginals([{ name: 'Big Original', steam_appid: 1 }]);
   assert.equal(store.findOriginal(1, ''), null);
 
+  // A looser second stage picks up the smaller game the first stage passed over.
+  assert.equal(store.findOriginal(7, ''), null);
+  r = await scanSteam({ ...opts, stages: [{ minReviews: 1000, minPositive: 80 }, { minReviews: 300, minPositive: 80 }] });
+  assert.equal(r.added, 1);
+  assert.equal(store.findOriginal(7, '').name, 'Smaller Original');
+
   // Stops at the target.
   r = await scanSteam({ ...opts, target: store.countOriginals() });
   assert.equal(r.added, 0);
+});
+
+test('classic console scan: adds famous games, merges consoles, respects exclusions', async () => {
+  const { scanClassic, CONSOLES, toGame } = require('../classic');
+  const row = (q, name, langs, extra = {}) => ({
+    game: { value: 'http://www.wikidata.org/entity/' + q }, gameLabel: { value: name }, langs: { value: String(langs) },
+    article: { value: 'https://en.wikipedia.org/wiki/' + name.replace(/ /g, '_') }, developers: { value: 'Dev' }, publishers: { value: 'Pub' },
+    year: { value: '1991' }, ...extra,
+  });
+  const byConsole = {
+    Sega_Genesis: [row('Q901', 'Sonic Test', 60), row('Q903', 'Q903', 30)],
+    Master_System: [row('Q901', 'Sonic Test', 60), row('Q902', 'Lesser Known', 6)],
+  };
+  const fetch = async (url) => {
+    const q = decodeURIComponent(new URL(url).searchParams.get('query'));
+    const article = q.match(/en\.wikipedia\.org\/wiki\/([^>]+)>/)[1];
+    return { ok: true, json: async () => ({ results: { bindings: byConsole[article] || [] } }) };
+  };
+  const opts = { fetch, sleep: async () => {}, log: () => {}, target: 1000, stages: [20, 5] };
+  assert.equal(CONSOLES.length, 24);
+  assert.equal(toGame(row('Q1', 'A', 9), 'SNES').wiki_url, 'https://en.wikipedia.org/wiki/A');
+
+  let r = await scanClassic(opts);
+  assert.equal(r.added, 2);
+  const sonic = store.findOriginal(null, 'Sonic Test');
+  assert.equal(sonic.source, 'classic-scan');
+  assert.equal(sonic.platforms, 'Master System, Sega Genesis');
+  assert.equal(sonic.year, 1991);
+  assert.equal(sonic.wiki_langs, 60);
+  assert.equal(store.findOriginal(null, 'Q903'), null, 'games without an English name are skipped');
+  assert.ok(store.pageOriginals('classic', 50, 0).total >= 2);
+
+  store.excludeOriginal(store.findOriginal(null, 'Lesser Known').id, 'test');
+  r = await scanClassic(opts);
+  assert.equal(r.added, 0);
+  assert.equal(store.findOriginal(null, 'Lesser Known'), null);
 });
