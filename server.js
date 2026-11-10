@@ -8,7 +8,7 @@ const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
 const steam = require('./steam');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, developerPage, developersPage, treePage, notFound, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, developerPage, developersPage, treePage, notFound, esc } = require('./views');
 const { familyTree } = require('./tree');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -94,6 +94,13 @@ function cleanDate(v) {
 // Shared mechanics: comma or line separated, stored one per line.
 const cleanMechanics = (v) => [...new Set(String(v || '').split(/[,\n]/).map((x) => x.replace(/\s+/g, ' ').trim().slice(0, 40)).filter(Boolean))]
   .slice(0, 12).join('\n');
+// Evidence links: one per line, http(s) only, at most 8. Returns null if any line is not a link.
+function cleanLinks(v, max = 8) {
+  const lines = String(v || '').split(/\s*\n\s*/).map((x) => x.trim()).filter(Boolean);
+  const out = [];
+  for (const l of lines) { const u = cleanUrl(l); if (!u) return null; if (!out.includes(u)) out.push(u); }
+  return out.length > max ? null : out.join('\n');
+}
 const httpsOnly = (u) => (u && !u.startsWith('https://') ? null : u);
 const clean = (v, max) => String(v || '').replace(/\s+/g, (m) => (m.includes('\n') ? '\n' : ' ')).trim().slice(0, max);
 
@@ -113,6 +120,7 @@ function validate(f) {
     clone_image: httpsOnly(cleanUrl(f.get('clone_image'))),
     original_image: httpsOnly(cleanUrl(f.get('original_image'))),
     mechanics: cleanMechanics(f.get('mechanics')),
+    evidence: cleanLinks(f.get('evidence')),
   };
   const errors = [];
   if (!r.clone_name) errors.push('Please enter the name of the clone.');
@@ -124,6 +132,7 @@ function validate(f) {
   if (!r.original_url && !r.clone_url) errors.push('Please add at least one link (to the original game or the clone) so reviewers can verify the report.');
   if (r.clone_released === null || r.original_released === null) errors.push('Release dates must look like 2017, 2017-02 or 2017-02-21.');
   if (r.clone_image === null || r.original_image === null) errors.push('Screenshot links must be full web addresses starting with https://.');
+  if (r.evidence === null) errors.push('Evidence must be up to 8 web addresses, one per line, each starting with http:// or https://.');
   const linkCount = (r.notes.match(/https?:\/\//g) || []).length;
   if (linkCount > 5) errors.push('Notes can contain at most 5 links.');
   return { r, errors };
@@ -217,11 +226,53 @@ async function handle(req, res) {
     if (!r || (r.status !== 'approved' && !isAdmin(req))) return send(res, 404, notFound());
     const voted = url.searchParams.get('voted');
     return send(res, 200, reportPage(r, {
+      responses: store.disputesFor(r.id, 'published'),
       myVote: store.myVote(r.id, voterId(req)), voteToken: makeFormToken('vote:' + r.id),
       voteMsg: voted === 'ok' ? 'Thanks, your vote counts.' : voted === 'limit' ? 'You have voted a lot in the last hour. Please try again later.'
         : voted === 'expired' ? 'The page was open too long. Please vote again.' : '',
     }), { 'Cache-Control': 'no-store' });
   }
+
+  if (req.method === 'GET' && (m = p.match(/^\/report\/(\d+)\/history$/))) {
+    const r = store.get(Number(m[1]));
+    if (!r || (r.status !== 'approved' && !isAdmin(req))) return send(res, 404, notFound());
+    return send(res, 200, historyPage(r, store.history(r.id)));
+  }
+
+  if ((m = p.match(/^\/report\/(\d+)\/dispute$/))) {
+    const r = store.get(Number(m[1]));
+    if (!r || r.status !== 'approved') return send(res, 404, notFound());
+    if (req.method === 'GET') return send(res, 200, disputePage(r, { token: makeFormToken('dispute'), values: {} }));
+    if (req.method === 'POST') {
+      let f;
+      try { f = await readBody(req); } catch { return send(res, 413, layout('Too large', '<p>That message is too large.</p>')); }
+      if (f.get('website')) return redirect(res, `/report/${r.id}/dispute/thanks`);
+      const values = Object.fromEntries(f);
+      const again = (status, errors) => send(res, status, disputePage(r, { token: makeFormToken('dispute'), values, errors }));
+      const tokErr = checkFormToken(f.get('token'), 'dispute');
+      if (tokErr) return again(400, [tokErr === 'too-fast' ? 'That was very quick! Please check your message and send it again.' : 'The form expired. Please send it again.']);
+      const ipHash = hmac('ip:' + clientIp(req));
+      if (store.rateCheck(ipHash, 3600 * 1000) >= MAX_PER_HOUR) return again(429, ['You have sent several messages recently. Please try again in an hour.']);
+      const d = {
+        name: clean(f.get('name'), 120),
+        role: ['clone-developer', 'original-developer', 'other'].includes(f.get('role')) ? f.get('role') : '',
+        contact: clean(f.get('contact'), 200),
+        message: String(f.get('message') || '').trim().slice(0, 4000),
+        links: cleanLinks(f.get('links'), 5),
+      };
+      const errors = [];
+      if (!d.name) errors.push('Please enter your name or studio.');
+      if (!d.role) errors.push('Please say how you are connected to this report.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contact)) errors.push('Please enter an email address so a moderator can reply.');
+      if (d.message.length < 20) errors.push('Please explain why the report is wrong (at least 20 characters).');
+      if (d.links === null) errors.push('Links must be up to 5 web addresses, one per line.');
+      if (errors.length) return again(400, errors);
+      store.logSubmission(ipHash);
+      store.createDispute(r.id, d, ipHash);
+      return redirect(res, `/report/${r.id}/dispute/thanks`);
+    }
+  }
+  if (req.method === 'GET' && (m = p.match(/^\/report\/(\d+)\/dispute\/thanks$/))) return send(res, 200, disputeThanksPage(Number(m[1])));
 
   if (req.method === 'POST' && (m = p.match(/^\/report\/(\d+)\/vote$/))) {
     const r = store.get(Number(m[1]));
@@ -296,12 +347,21 @@ async function handle(req, res) {
       return send(res, 401, layout('Admin', '<p>Sign in required.</p>'), { 'WWW-Authenticate': 'Basic realm="clonereport admin", charset="UTF-8"' });
     if (req.method === 'GET' && p === '/admin') {
       const status = ['pending', 'approved', 'rejected'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'pending';
-      return send(res, 200, adminPage(status, store.byStatus(status), store.counts()), { 'Cache-Control': 'no-store' });
+      return send(res, 200, adminPage(status, store.byStatus(status), store.counts(), store.disputeCounts().open), { 'Cache-Control': 'no-store' });
     }
     if (req.method === 'GET' && p === '/admin/originals') {
       const q = clean(url.searchParams.get('q'), 120);
       const rows = q ? store.searchOriginals(q) : store.pageOriginals('', 50, 0).rows;
       return send(res, 200, adminOriginalsPage(q, rows, store.countOriginals(), scanner.state), { 'Cache-Control': 'no-store' });
+    }
+    if (req.method === 'GET' && p === '/admin/disputes') {
+      const status = ['open', 'published', 'dismissed'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'open';
+      return send(res, 200, adminDisputesPage(status, store.disputesByStatus(status), store.disputeCounts()), { 'Cache-Control': 'no-store' });
+    }
+    if (req.method === 'POST' && (m = p.match(/^\/admin\/disputes\/(\d+)\/(publish|dismiss|reopen)$/))) {
+      if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+      store.setDisputeStatus(Number(m[1]), { publish: 'published', dismiss: 'dismissed', reopen: 'open' }[m[2]]);
+      return redirect(res, '/admin/disputes?status=' + encodeURIComponent(url.searchParams.get('back') || 'open'));
     }
     if (req.method === 'POST' && (m = p.match(/^\/admin\/originals\/(\d+)\/remove$/))) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));

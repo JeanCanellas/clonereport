@@ -157,6 +157,14 @@ function voteBox(r, { myVote, voteToken, voteMsg }) {
 </section>`;
 }
 
+const ROLES = { 'clone-developer': 'Developer of the game reported as a clone', 'original-developer': 'Developer of the original game', other: 'Other' };
+function evidenceList(text, title = 'Evidence') {
+  const links = String(text || '').split('\n').filter(Boolean);
+  if (!links.length) return '';
+  const host = (u) => { try { return new URL(u).host.replace(/^www\./, ''); } catch { return u; } };
+  return `<section><h2>${esc(title)}</h2><ul class="evidence">${links.map((u) => `<li>${link(u, host(u))} <small class="muted">${esc(u.length > 80 ? u.slice(0, 77) + '…' : u)}</small></li>`).join('')}</ul></section>`;
+}
+
 function reportPage(r, opts = {}) {
   const mech = String(r.mechanics || '').split('\n').filter(Boolean);
   const row = (label, o, c) => (o || c ? `<div class="crow"><div class="clabel">${label}</div><div>${o || '<span class="muted">Unknown</span>'}</div><div>${c || '<span class="muted">Unknown</span>'}</div></div>` : '');
@@ -180,8 +188,12 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
     <a class="btn ghost" href="${treeUrl(r.original_name)}">Family tree of ${esc(r.original_name)}</a></p>
   ${mech.length ? `<section><h2>What they share</h2><ul class="chips">${mech.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
   ${r.notes ? `<section><h2>Details from the reporter</h2><p class="notes">${esc(r.notes)}</p></section>` : ''}
+  ${evidenceList(r.evidence)}
+  ${(opts.responses || []).map((d) => `<section class="box response"><h2>Response from ${esc(d.name)}</h2>
+    <p class="muted">${esc(ROLES[d.role] || 'Response')} · ${date(d.created_at)}</p><p class="notes">${esc(d.message)}</p>${evidenceList(d.links, 'Their links')}</section>`).join('')}
   ${r.status === 'approved' ? voteBox(r, opts) : ''}
-  <p class="muted">Reported ${date(r.created_at)}. This is a community claim reviewed by a moderator, not a legal finding.</p>
+  <p class="muted">Reported ${date(r.created_at)}. This is a community claim reviewed by a moderator, not a legal finding.
+    <a href="/report/${r.id}/history">Edit history</a>${r.status === 'approved' ? ` · <a href="/report/${r.id}/dispute">Are you the developer? Dispute this report</a>` : ''}</p>
 </article>`);
 }
 
@@ -293,6 +305,11 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
     <span>What was copied?</span>
     <textarea name="notes" rows="5" maxlength="2000" placeholder="Gameplay, art, name, code, level design… Links to comparisons or screenshots help.">${esc(v.notes)}</textarea>
   </label>
+  <label class="field">
+    <span>Evidence links</span>
+    <textarea name="evidence" rows="3" maxlength="4000" placeholder="https://youtube.com/… comparison video&#10;https://… article">${esc(v.evidence)}</textarea>
+    <small>Up to 8 links, one per line: comparison videos, articles, screenshots.</small>
+  </label>
   ${field('contact', 'Your email (optional, private)', v, { type: 'email', hint: 'Only moderators see this, in case we have questions.', max: 200 })}
   <button class="btn">Submit report</button>
 </form>`);
@@ -303,7 +320,7 @@ const thanksPage = () => layout('Thanks', `
 <p>A moderator will review it soon. Once approved, it will show up in search.</p>
 <p><a class="btn" href="/">Back to search</a></p>`);
 
-function adminPage(status, rows, counts) {
+function adminPage(status, rows, counts, openDisputes = 0) {
   const tabs = ['pending', 'approved', 'rejected'].map((s) =>
     `<a class="tab${s === status ? ' on' : ''}" href="/admin?status=${s}">${s} (${counts[s] || 0})</a>`).join('');
   const action = (r, act, label, cls = '') =>
@@ -322,7 +339,7 @@ function adminPage(status, rows, counts) {
     ${action(r, 'delete', 'Delete', 'danger')}
   </div>
 </li>`;
-  return layout('Admin', `<h1>Moderation</h1><nav class="tabs">${tabs}<a class="tab" href="/admin/originals">Original games</a></nav>
+  return layout('Admin', `<h1>Moderation</h1><nav class="tabs">${tabs}<a class="tab" href="/admin/disputes">Disputes (${openDisputes} open)</a><a class="tab" href="/admin/originals">Original games</a></nav>
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p class="muted">Nothing here.</p>`}`);
 }
 
@@ -353,8 +370,81 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
   <label class="field"><span>Shared mechanics (one per line or comma separated)</span>
     <textarea name="mechanics" rows="4" maxlength="600">${esc(v.mechanics)}</textarea></label>
   <label class="field"><span>Details</span><textarea name="notes" rows="6" maxlength="2000">${esc(v.notes)}</textarea></label>
+  <label class="field"><span>Evidence links (one per line, up to 8)</span><textarea name="evidence" rows="4" maxlength="4000">${esc(v.evidence)}</textarea></label>
   <button class="btn">Save changes</button>
 </form>`);
+}
+
+// ---------- disputes and history ----------
+function disputePage(r, { token, values = {}, errors = [] }) {
+  const v = values;
+  const opt = (k, label) => `<label class="radio"><input type="radio" name="role" value="${k}" ${v.role === k ? 'checked' : ''} required> ${esc(label)}</label>`;
+  return layout(`Dispute: ${r.clone_name}`, `
+<h1>Dispute this report</h1>
+<p>Report: <a href="/report/${r.id}"><strong>${esc(r.clone_name)}</strong> reported as a clone of <strong>${esc(r.original_name)}</strong></a>.</p>
+<p class="muted">If you made one of these games and think the report is wrong or unfair, tell us why. A moderator reads every message and may update or remove the report, or publish your response next to it. Your email stays private.</p>
+${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+<form class="report-form" method="post" action="/report/${r.id}/dispute">
+  <input type="hidden" name="token" value="${esc(token)}">
+  <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off"></label></div>
+  <fieldset><legend>Who are you?</legend>
+    ${opt('clone-developer', `I made ${r.clone_name} (the game reported as a clone)`)}
+    ${opt('original-developer', `I made ${r.original_name} (the original)`)}
+    ${opt('other', 'Something else')}
+    ${field('name', 'Your name or studio', v, { required: true })}
+    ${field('contact', 'Email (private)', v, { type: 'email', required: true, max: 200, hint: 'Only moderators see this.' })}
+  </fieldset>
+  <label class="field"><span>Why is the report wrong? <em>*</em></span>
+    <textarea name="message" rows="7" maxlength="4000" required>${esc(v.message)}</textarea>
+    <small>If we publish a response, this is the text people will see.</small></label>
+  <label class="field"><span>Supporting links (optional, one per line)</span>
+    <textarea name="links" rows="3" maxlength="2000" placeholder="e.g. design documents, earlier release dates, licenses">${esc(v.links)}</textarea></label>
+  <button class="btn">Send dispute</button>
+</form>`);
+}
+
+const disputeThanksPage = (id) => layout('Dispute received', `
+<h1>Thanks, we got your message</h1>
+<p>A moderator will review it and may contact you by email.</p>
+<p><a class="btn" href="/report/${id}">Back to the report</a></p>`);
+
+const FIELD_LABELS = { clone_name: 'Clone name', clone_url: 'Clone link', clone_developer: 'Clone developer', original_name: 'Original name',
+  original_url: 'Original link', original_developer: 'Original developer', platform: 'Platform', notes: 'Details', clone_released: 'Clone release date',
+  original_released: 'Original release date', clone_image: 'Clone image', original_image: 'Original image', mechanics: 'Shared mechanics',
+  evidence: 'Evidence', status: 'Status' };
+const ACTORS = { reporter: 'Reporter', admin: 'Moderator', steam: 'Steam', developer: 'Developer' };
+function historyPage(r, rows) {
+  const val = (x) => (x == null || x === '' ? '<span class="muted">empty</span>' : `<span class="notes">${esc(x)}</span>`);
+  return layout(`Edit history: ${r.clone_name}`, `
+<h1>Edit history</h1>
+<p><a href="/report/${r.id}"><strong>${esc(r.clone_name)}</strong> reported as a clone of <strong>${esc(r.original_name)}</strong></a></p>
+<ol class="history">${rows.map((h) => `<li><div><strong>${esc(h.action[0].toUpperCase() + h.action.slice(1))}</strong>
+  <span class="muted">by ${esc(ACTORS[h.actor] || h.actor)} · ${esc(String(h.created_at).slice(0, 16))} UTC</span></div>
+  ${h.changes ? `<dl>${Object.entries(h.changes).map(([k, [a, b]]) => `<dt>${esc(FIELD_LABELS[k] || k)}</dt><dd>${val(a)} → ${val(b)}</dd>`).join('')}</dl>` : ''}</li>`).join('')}</ol>
+<p class="muted">Changes made before edit history was added are not listed.</p>`);
+}
+
+function adminDisputesPage(status, rows, counts) {
+  const tabs = ['open', 'published', 'dismissed'].map((s) => `<a class="tab${s === status ? ' on' : ''}" href="/admin/disputes?status=${s}">${s} (${counts[s] || 0})</a>`).join('');
+  const action = (d, act, label, cls = '') => `<form method="post" action="/admin/disputes/${d.id}/${act}?back=${status}"><button class="btn small ${cls}">${label}</button></form>`;
+  const row = (d) => `<li class="admin-row">
+  <div>
+    <a href="/report/${d.report_id}"><strong>${esc(d.clone_name || 'deleted report')}</strong> → ${esc(d.original_name || '')}</a>
+    <div class="muted">#${d.id} · ${date(d.created_at)} · ${esc(d.name)} · ${esc(ROLES[d.role] || d.role)} · ${esc(d.contact)}</div>
+    <p class="notes">${esc(d.message)}</p>
+    ${d.links ? `<div class="muted">${d.links.split('\n').map((u) => link(u, u)).join('<br>')}</div>` : ''}
+  </div>
+  <div class="actions">
+    ${status !== 'published' ? action(d, 'publish', 'Publish response') : ''}
+    ${status !== 'dismissed' ? action(d, 'dismiss', 'Dismiss', 'ghost') : ''}
+    ${status !== 'open' ? action(d, 'reopen', 'Reopen', 'ghost') : ''}
+    <a class="btn small ghost" href="/admin/${d.report_id}/edit">Edit report</a>
+  </div>
+</li>`;
+  return layout('Admin: disputes', `<h1>Disputes</h1>
+<nav class="tabs"><a class="tab" href="/admin">Reports</a>${tabs}<a class="tab" href="/admin/originals">Original games</a></nav>
+<p class="muted">Publishing shows the developer's message on the report page as their response. To remove a report, reject it from Reports.</p>
+${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p class="muted">Nothing here.</p>'}`);
 }
 
 // ---------- developer pages ----------
@@ -410,4 +500,4 @@ ${q ? `<p>No approved reports mention “${esc(q)}”. <a href="/search?q=${enco
 
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, developerPage, developersPage, treePage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, developerPage, developersPage, treePage, notFound };

@@ -121,3 +121,13 @@ legend { font-weight: 700; padding: 0 6px; }
 .tree .tree { padding-left: 18px; border-left: 2px solid var(--line); margin-left: 6px; }
 .tree li { margin: 6px 0; }
 .small-link { font-size: .8rem; margin-left: 6px; }
+
+/* Moderation */
+.evidence { padding-left: 1.2em; display: grid; gap: 4px; }
+.evidence small { display: block; overflow-wrap: anywhere; }
+.response { margin: 18px 0; border-left: 4px solid var(--focus); }
+.radio { display: flex; gap: 8px; align-items: center; }
+.radio input { width: auto; }
+.history { list-style: none; padding: 0; display: grid; gap: 10px; }
+.history li { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; }
+.history dl { margin: 8px 0 0; }

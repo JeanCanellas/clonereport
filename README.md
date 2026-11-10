@@ -52,6 +52,12 @@ Each report page (`/report/:id`) is a side-by-side comparison of the original an
 
 Visitors vote on each approved report: **Clone**, **Inspired by** or **Original**. Each visitor (by salted IP hash) has one vote per report and can change it. The **clone score** is the share of votes saying "clone", with "inspired by" counting half. After 3 votes the report shows a verdict: *Likely a clone* (67% or more), *Inspired by* (34–66%) or *Likely original* (33% or less). The verdict shows on the report page and on report cards in search and on the home page.
 
+## Moderation tools
+
+- **Evidence links.** Reporters can add up to 8 links (comparison videos, articles, screenshots), one per line. They show under "Evidence" on the report page, and admins can change them at `/admin/:id/edit`.
+- **Disputes.** Every approved report has a "Dispute this report" link (`/report/:id/dispute`) for the developers involved. They give their name, role, a private email, an explanation and optional links. Disputes land in `/admin/disputes`, where a moderator can **publish** the developer's message as a response next to the report, **dismiss** it, or reopen it. To take a report down, reject it from the Reports tab. Disputes use the same spam protection as the submit form.
+- **Edit history.** `/report/:id/history` lists every change to a report: submitted, approved or rejected, edited by a moderator (field by field, old and new values), filled in from Steam, disputes received and responses published. It never shows contact emails or IP hashes. Changes made before this feature was added are not listed.
+
 ## Developer pages and family trees
 
 `/dev/:key` gathers every approved report about one studio: games it was reported to have cloned, its games that others cloned, and its original games. Developer names are matched loosely ("Copycat Studios, Inc." and "copycat studios inc" are the same page). A studio with 3 or more games reported as clones gets a "repeat reports" note. `/developers` ranks studios by reports.
@@ -60,7 +66,7 @@ Visitors vote on each approved report: **Clone**, **Inspired by** or **Original*
 
 ## Pages
 
-- `/` search + recently added, `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
+- `/` search + recently added, `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/report/:id/history`, `/report/:id/dispute`, `/admin/disputes`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` JSON lookup (used by the browser extension). Steam app ids are taken automatically from `store.steampowered.com/app/<id>` links in reports.
 
 ## Deploy
