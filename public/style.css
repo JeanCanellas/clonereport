@@ -113,3 +113,11 @@ legend { font-weight: 700; padding: 0 6px; }
 .vote-btn.v-original.on { border-color: var(--orig); }
 .vbar { display: block; width: 100%; height: 8px; border-radius: 99px; overflow: hidden; background: var(--line); margin-bottom: 12px; }
 .vbar .v-clone { fill: var(--clone); } .vbar .v-inspired { fill: var(--focus); } .vbar .v-original { fill: var(--orig); }
+
+/* Developers and family trees */
+.rank { padding-left: 1.4em; display: grid; gap: 6px; }
+.rank .muted { display: block; }
+.tree { list-style: none; padding-left: 0; margin: 6px 0; }
+.tree .tree { padding-left: 18px; border-left: 2px solid var(--line); margin-left: 6px; }
+.tree li { margin: 6px 0; }
+.small-link { font-size: .8rem; margin-left: 6px; }

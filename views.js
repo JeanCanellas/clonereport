@@ -1,8 +1,11 @@
 'use strict';
 // HTML templates. Every user-supplied value goes through esc().
 
+const { devKey } = require('./keys');
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const link = (url, text) => (url ? `<a href="${esc(url)}" rel="nofollow ugc noopener" target="_blank">${esc(text)}</a>` : esc(text));
+const devLink = (name) => (name && devKey(name) ? `<a href="/dev/${devKey(name)}">${esc(name)}</a>` : esc(name));
+const treeUrl = (name) => `/tree?game=${encodeURIComponent(name)}`;
 const date = (s) => (s ? esc(String(s).slice(0, 10)) : '');
 
 function layout(title, body, { q = '' } = {}) {
@@ -29,6 +32,7 @@ function layout(title, body, { q = '' } = {}) {
 ${body}
 </main>
 <footer class="wrap site-foot">
+  <nav class="foot-nav"><a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/submit">Report a clone</a></nav>
   <p>Reports are submitted by the community and reviewed before they appear. They are claims, not legal findings.</p>
 </footer>
 </body>
@@ -166,13 +170,14 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
     <div class="crow chead"><div class="clabel"></div><div><span class="tag orig">Original</span></div><div><span class="tag clone">Clone</span></div></div>
     ${r.original_image || r.clone_image ? `<div class="crow"><div class="clabel"></div><div>${shot(r.original_image, r.original_name)}</div><div>${shot(r.clone_image, r.clone_name)}</div></div>` : ''}
     ${row('Game', `<strong>${link(r.original_url, r.original_name)}</strong>`, `<strong>${link(r.clone_url, r.clone_name)}</strong>`)}
-    ${row('Developer', esc(r.original_developer), esc(r.clone_developer))}
+    ${row('Developer', devLink(r.original_developer), devLink(r.clone_developer))}
     ${row('Released', date(r.original_released), date(r.clone_released))}
     ${row('Platform', r.platform ? '<span class="muted">Not listed</span>' : '', esc(r.platform))}
     ${row('Steam', r.original_steam_appid ? link(steamUrl(r.original_steam_appid), 'Store page') : '', r.clone_steam_appid ? link(steamUrl(r.clone_steam_appid), 'Store page') : '')}
   </section>
   ${releaseNote(r)}
-  ${r.original_url ? `<p><a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">Go to the original</a></p>` : ''}
+  <p class="links">${r.original_url ? `<a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">Go to the original</a>` : ''}
+    <a class="btn ghost" href="${treeUrl(r.original_name)}">Family tree of ${esc(r.original_name)}</a></p>
   ${mech.length ? `<section><h2>What they share</h2><ul class="chips">${mech.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
   ${r.notes ? `<section><h2>Details from the reporter</h2><p class="notes">${esc(r.notes)}</p></section>` : ''}
   ${r.status === 'approved' ? voteBox(r, opts) : ''}
@@ -193,7 +198,7 @@ function gamePage(g, { clones, asClone }) {
   <section class="box">
     <dl>
       <dt>Game</dt><dd>${esc(g.name)}</dd>
-      ${g.developer ? `<dt>Developer</dt><dd>${esc(g.developer)}</dd>` : ''}
+      ${g.developer ? `<dt>Developer</dt><dd>${devLink(g.developer)}</dd>` : ''}
       ${g.publisher ? `<dt>Publisher</dt><dd>${esc(g.publisher)}</dd>` : ''}
       <dt>Available on</dt><dd>${esc(stores(g))}</dd>
     </dl>
@@ -204,7 +209,8 @@ function gamePage(g, { clones, asClone }) {
   </section>
   <h2>Clones of ${esc(g.name)}</h2>
   ${clones.length ? `<ul class="cards">${clones.map(card).join('')}</ul>` : `<p class="muted">No clones of this game have been reported yet.</p>`}
-  <p><a href="/submit?original_name=${encodeURIComponent(g.name)}">Report a clone of ${esc(g.name)}</a></p>
+  <p class="links"><a href="/submit?original_name=${encodeURIComponent(g.name)}">Report a clone of ${esc(g.name)}</a>
+    ${clones.length || asClone.length ? `· <a href="${treeUrl(g.name)}">See the family tree</a>` : ''}</p>
 </article>`);
 }
 
@@ -351,6 +357,57 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
 </form>`);
 }
 
+// ---------- developer pages ----------
+function developerPage(key, name, { cloned, wasCloned, originals }) {
+  const repeat = cloned.length >= 3;
+  return layout(`${name}: games and clone reports`, `
+<article class="report">
+  <h1>${esc(name)}</h1>
+  <p class="lead">${[
+    cloned.length ? `<strong>${cloned.length}</strong> game${cloned.length === 1 ? '' : 's'} reported as clones` : '',
+    wasCloned.length ? `<strong>${wasCloned.length}</strong> report${wasCloned.length === 1 ? '' : 's'} of others cloning their games` : '',
+    originals.length ? `<strong>${originals.length}</strong> original game${originals.length === 1 ? '' : 's'} listed` : '',
+  ].filter(Boolean).join(' · ') || 'No approved reports yet.'}</p>
+  ${repeat ? `<p class="notice">Repeat reports: the community has reported ${cloned.length} games from this developer as clones.</p>` : ''}
+  ${cloned.length ? `<h2>Reported as clones</h2><ul class="cards">${cloned.map(card).join('')}</ul>` : ''}
+  ${wasCloned.length ? `<h2>Their games that others cloned</h2><ul class="cards">${wasCloned.map(card).join('')}</ul>` : ''}
+  ${originals.length ? `<h2>Original games</h2><ul class="cards">${originals.map(originalCard).join('')}</ul>` : ''}
+  <p class="muted">Reports are matched by the developer name given in each report. <a href="/developers">All developers</a></p>
+</article>`);
+}
+
+function developersPage({ cloners, cloned }) {
+  const list = (rows, one, many) => (rows.length ? `<ol class="rank">${rows.map((d) => `<li><a href="/dev/${esc(d.dev_key)}">${esc(d.name)}</a>
+    <span class="muted">${d.n} ${d.n === 1 ? one : many}</span></li>`).join('')}</ol>` : '<p class="muted">No reports yet.</p>');
+  return layout('Developers', `
+<h1>Developers</h1>
+<p>Studios ranked by approved community reports. Open one to see every report about it.</p>
+<div class="grid2">
+  <section><h2>Most reported for cloning</h2>${list(cloners, 'game reported as a clone', 'games reported as clones')}</section>
+  <section><h2>Most cloned</h2>${list(cloned, 'clone report', 'clone reports')}</section>
+</div>`);
+}
+
+// ---------- family trees ----------
+function treeList(nodes, label) {
+  if (!nodes.length) return '';
+  return `<ul class="tree">${nodes.map((n) => `<li><a href="${treeUrl(n.name)}">${esc(n.name)}</a>
+    <a class="muted small-link" href="/report/${n.report}">${label}</a>${treeList(n.children, label)}</li>`).join('')}</ul>`;
+}
+function treePage(q, t) {
+  if (!t) return layout('Family tree', `<h1>Family tree</h1>
+<form class="big-search" action="/tree" method="get"><input name="game" value="${esc(q)}" placeholder="Game name" aria-label="Game name" required><button class="btn">Show tree</button></form>
+${q ? `<p>No approved reports mention “${esc(q)}”. <a href="/search?q=${encodeURIComponent(q)}">Search instead</a>.</p>` : '<p>Type a game to see what it copied and what copied it.</p>'}`, { q });
+  return layout(`${t.name}: family tree`, `
+<h1>Family tree of ${esc(t.name)}</h1>
+<p class="muted">Built from approved community reports. Click a game to center the tree on it.</p>
+<div class="grid2">
+  <section class="box"><h2>${esc(t.name)} copies</h2>${t.ancestors.length ? treeList(t.ancestors, 'report') : '<p class="muted">Nothing reported. As far as Clone Report knows, it is an original.</p>'}</section>
+  <section class="box"><h2>Copied by</h2>${t.descendants.length ? treeList(t.descendants, 'report') : '<p class="muted">No clones reported yet.</p>'}</section>
+</div>
+<p><a href="/search?q=${encodeURIComponent(t.name)}">Search reports for ${esc(t.name)}</a></p>`, { q });
+}
+
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, developerPage, developersPage, treePage, notFound };

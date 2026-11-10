@@ -132,3 +132,40 @@ test('steam details fill empty comparison fields', async () => {
   assert.equal(r.clone_developer, 'Dev 11');
   assert.equal(r.original_image, null);
 });
+
+test('developer pages group reports by studio', async () => {
+  const a = approved({ clone_name: 'Copy One', clone_developer: 'Copycat Studios, Inc.', original_name: 'Hit One', original_developer: 'Real Devs' });
+  approved({ clone_name: 'Copy Two', clone_developer: 'copycat studios inc', original_name: 'Hit Two', original_developer: 'Real Devs' });
+  approved({ clone_name: 'Copy Three', clone_developer: 'Copycat  Studios Inc', original_name: 'Hit Three' });
+  const r = await fetch(`${base}/report/${a}`);
+  assert.match(await r.text(), /href="\/dev\/copycat-studios-inc"/);
+  const page = await (await fetch(`${base}/dev/copycat-studios-inc`)).text();
+  assert.match(page, /<strong>3<\/strong> games reported as clones/);
+  assert.match(page, /Repeat reports/);
+  assert.match(page, /Copy Two/);
+  const real = await (await fetch(`${base}/dev/real-devs`)).text();
+  assert.match(real, /Their games that others cloned/);
+  assert.equal((await fetch(`${base}/dev/nobody-here`)).status, 404);
+  const list = await (await fetch(`${base}/developers`)).text();
+  assert.match(list, /<a href="\/dev\/copycat-studios-inc">[^<]+<\/a>\s*<span class="muted">3 games reported as clones/);
+
+  // Editing a report's developer moves it to the new studio page.
+  store.updateReport(a, { ...store.get(a), clone_developer: 'Someone Else' });
+  assert.match(await (await fetch(`${base}/dev/copycat-studios-inc`)).text(), /<strong>2<\/strong> games/);
+});
+
+test('family trees follow reports both ways', async () => {
+  approved({ clone_name: 'Tree B', original_name: 'Tree A' });
+  approved({ clone_name: 'Tree C', original_name: 'Tree B' });
+  approved({ clone_name: 'Tree D', original_name: 'Tree A' });
+  const pending = store.createReport({ clone_name: 'Tree Hidden', original_name: 'Tree A', original_url: 'https://e.com' }, 'x');
+  const page = await (await fetch(`${base}/tree?game=tree%20b`)).text();
+  assert.match(page, /Family tree of Tree B/);
+  assert.match(page, /Tree B copies<\/h2><ul class="tree"><li><a href="\/tree\?game=Tree%20A">Tree A<\/a>/);
+  assert.match(page, /Copied by<\/h2><ul class="tree"><li><a href="\/tree\?game=Tree%20C">/);
+  const a = await (await fetch(`${base}/tree?game=Tree%20A`)).text();
+  assert.match(a, /Tree C/, 'grandchildren are shown');
+  assert.ok(!a.includes('Tree Hidden'), 'pending reports are left out');
+  assert.match(await (await fetch(`${base}/tree?game=nope`)).text(), /No approved reports mention/);
+  assert.ok(pending);
+});

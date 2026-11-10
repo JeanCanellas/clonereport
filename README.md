@@ -52,9 +52,15 @@ Each report page (`/report/:id`) is a side-by-side comparison of the original an
 
 Visitors vote on each approved report: **Clone**, **Inspired by** or **Original**. Each visitor (by salted IP hash) has one vote per report and can change it. The **clone score** is the share of votes saying "clone", with "inspired by" counting half. After 3 votes the report shows a verdict: *Likely a clone* (67% or more), *Inspired by* (34–66%) or *Likely original* (33% or less). The verdict shows on the report page and on report cards in search and on the home page.
 
+## Developer pages and family trees
+
+`/dev/:key` gathers every approved report about one studio: games it was reported to have cloned, its games that others cloned, and its original games. Developer names are matched loosely ("Copycat Studios, Inc." and "copycat studios inc" are the same page). A studio with 3 or more games reported as clones gets a "repeat reports" note. `/developers` ranks studios by reports.
+
+`/tree?game=<name>` shows a game's family tree: what it copies (and what that copied, up the chain) and what copied it (and their clones), built from approved reports. Games are matched by Steam app id when known, otherwise by name.
+
 ## Pages
 
-- `/` search + recently added, `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
+- `/` search + recently added, `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` JSON lookup (used by the browser extension). Steam app ids are taken automatically from `store.steampowered.com/app/<id>` links in reports.
 
 ## Deploy

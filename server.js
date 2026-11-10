@@ -8,7 +8,8 @@ const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
 const steam = require('./steam');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, notFound, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, developerPage, developersPage, treePage, notFound, esc } = require('./views');
+const { familyTree } = require('./tree');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -236,6 +237,19 @@ async function handle(req, res) {
     if (store.votesByVoter(voter, 3600 * 1000) >= MAX_VOTES_PER_HOUR) return back('limit');
     store.vote(r.id, voter, choice);
     return back('ok');
+  }
+
+  if (req.method === 'GET' && (m = p.match(/^\/dev\/([a-z0-9-]{1,80})$/))) {
+    const d = store.developer(m[1]);
+    const any = d.cloned[0] || d.wasCloned[0];
+    const name = d.cloned[0]?.clone_developer || d.wasCloned[0]?.original_developer || d.originals[0]?.developer;
+    if (!any && !d.originals.length) return send(res, 404, notFound());
+    return send(res, 200, developerPage(m[1], name, d));
+  }
+  if (req.method === 'GET' && p === '/developers') return send(res, 200, developersPage(store.topDevelopers(50)));
+  if (req.method === 'GET' && p === '/tree') {
+    const q = clean(url.searchParams.get('game'), 120);
+    return send(res, 200, treePage(q, q ? familyTree(store.approvedEdges(), q) : null));
   }
 
   if (req.method === 'GET' && (m = p.match(/^\/game\/(\d+)$/))) {
