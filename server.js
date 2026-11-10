@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
+const stores = require('./stores');
 const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound, esc } = require('./views');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -92,6 +93,8 @@ function validate(f) {
     notes: String(f.get('notes') || '').trim().slice(0, 2000),
     contact: clean(f.get('contact'), 200),
   };
+  // Fill in the platform from the clone's store link when the reporter left it empty.
+  if (!r.platform && r.clone_url) r.platform = stores.storeName(stores.parseStoreUrl(r.clone_url)?.store) || '';
   const errors = [];
   if (!r.clone_name) errors.push('Please enter the name of the clone.');
   if (!r.original_name) errors.push('Please enter the name of the original game.');
@@ -120,12 +123,22 @@ const sameOrigin = (req) => {
 };
 
 // ---------- JSON API (used by the browser extension) ----------
+// Query: ?appid=<steam app id> (Steam), or ?store=<key>&id=<store id> for any
+// store in stores.js (playstation, xbox, nintendo, appstore, googleplay, itch),
+// plus an optional &name= fallback.
 function apiLookup(req, res, url) {
   const appidRaw = url.searchParams.get('appid');
-  const appid = /^\d{1,10}$/.test(appidRaw || '') ? Number(appidRaw) : null;
+  let appid = /^\d{1,10}$/.test(appidRaw || '') ? Number(appidRaw) : null;
+  let key = appid ? { store: 'steam', id: String(appid) } : null;
+  const storeParam = url.searchParams.get('store');
+  if (!key && stores.isStore(storeParam)) {
+    const id = stores.normalizeId(storeParam, url.searchParams.get('id'));
+    if (id) key = { store: storeParam, id };
+    if (key?.store === 'steam') appid = Number(id);
+  }
   const name = clean(url.searchParams.get('name'), 120);
   const base = PUBLIC_URL || `${TRUST_PROXY && req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'}://${req.headers.host}`;
-  const { asClone, asOriginal } = (appid || name) ? store.lookup(appid, name) : { asClone: [], asOriginal: [] };
+  const { asClone, asOriginal } = (key || name) ? store.lookup(key, name) : { asClone: [], asOriginal: [] };
   const steamUrl = (id) => (id ? `https://store.steampowered.com/app/${id}` : null);
   const summary = (r) => (r.notes ? (r.notes.length > 160 ? r.notes.slice(0, 157).trimEnd() + '…' : r.notes) : null);
   const entry = (r, side) => ({
@@ -133,17 +146,23 @@ function apiLookup(req, res, url) {
     appid: r[side + '_steam_appid'] ?? null,
     steamUrl: steamUrl(r[side + '_steam_appid']),
     url: r[side + '_url'] || null,
+    store: r[side + '_store'] || null,
+    storeName: stores.storeName(r[side + '_store']),
+    storeId: r[side + '_store_id'] || null,
     developer: r[side + '_developer'] || null,
     reportUrl: `${base}/report/${r.id}`,
     summary: summary(r),
   });
   const cloneOf = asClone.map((r) => entry(r, 'original'));
   const clonedBy = asOriginal.map((r) => entry(r, 'clone'));
-  const hit = asClone[0] ? { name: asClone[0].clone_name, appid: asClone[0].clone_steam_appid ?? appid }
-    : asOriginal[0] ? { name: asOriginal[0].original_name, appid: asOriginal[0].original_steam_appid ?? appid } : null;
+  const hitOf = (r, side) => ({
+    name: r[side + '_name'], appid: r[side + '_steam_appid'] ?? appid,
+    store: r[side + '_store'] || key?.store || null, storeId: r[side + '_store_id'] || key?.id || null,
+  });
+  const hit = asClone[0] ? hitOf(asClone[0], 'clone') : asOriginal[0] ? hitOf(asOriginal[0], 'original') : null;
   const body = hit ? { found: true, game: hit, cloneOf, clonedBy } : { found: false, cloneOf: [], clonedBy: [] };
   // Extra field: the game is on the site's list of verified originals (not clones).
-  const orig = (appid || name) ? store.findOriginal(appid, name) : null;
+  const orig = (key || name) ? store.findOriginal(appid, name) : null;
   body.verifiedOriginal = orig ? {
     name: orig.name, developer: orig.developer || null, appid: orig.steam_appid ?? null,
     steamUrl: steamUrl(orig.steam_appid), eshopUrl: orig.eshop_url || null, pageUrl: `${base}/game/${orig.id}`,
@@ -181,6 +200,12 @@ async function handle(req, res) {
   }
 
   if (req.method === 'GET' && p === '/search') {
+    // A pasted store link (Steam, PlayStation, Xbox, eShop, App Store, Google Play, itch.io) finds reports about that page.
+    const link = stores.parseStoreUrl(url.searchParams.get('q'));
+    if (link) {
+      const q = clean(url.searchParams.get('q'), 500);
+      return send(res, 200, searchPage(q, store.byStoreId(link.store, link.id), [], { storeName: stores.storeName(link.store) }));
+    }
     const q = clean(url.searchParams.get('q'), 120);
     return send(res, 200, searchPage(q, q ? store.search(q) : [], q ? store.searchOriginals(q) : []));
   }

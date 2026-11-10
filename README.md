@@ -47,7 +47,21 @@ Each game gets a page at `/game/:id` marked "Not a clone", shows up in search, a
 ## Pages
 
 - `/` search + recently added, `/search?q=`, `/report/:id`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
-- `GET /api/lookup?appid=<steam app id>&name=<game name>` JSON lookup (used by the browser extension). Steam app ids are taken automatically from `store.steampowered.com/app/<id>` links in reports.
+- `GET /api/lookup?appid=<steam app id>&name=<game name>` or `GET /api/lookup?store=<store>&id=<store id>&name=<game name>` JSON lookup (used by the browser extension).
+
+## Supported stores
+
+`stores.js` recognises store page links for **Steam, PlayStation Store, Xbox / Microsoft Store, Nintendo eShop, App Store, Google Play and itch.io**. When a report links to one of them, the store and the game's id there are saved with the report, so:
+
+- `/api/lookup?store=xbox&id=9PP5G1F153J1` (or `playstation` + `concept/10000176`, `appstore` + `642848232`, `googleplay` + `com.example.game`, `itch` + `user/game`, `nintendo` + `hollow-knight-switch`) matches it exactly. Entries in the answer carry `store`, `storeName` and `storeId`.
+- Pasting a store link into search lists the reports about that page.
+- The report page names the store, and the platform is filled in from the clone's link when the reporter leaves it empty.
+
+Reports saved before this change get their store ids filled in from their links on the next start.
+
+## Chrome extension
+
+`chrome-extension/` is the Clone Report browser extension. It shows a banner on game pages of every store above. Its `stores.js` must stay identical to the site's (a test checks this). See `chrome-extension/README.md`.
 
 ## Deploy
 

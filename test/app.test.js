@@ -152,3 +152,45 @@ test('admin can remove an original for good; approving a clone report removes it
   const list = await (await fetch(base + '/originals?page=2')).text();
   assert.match(list, /Page 2 of \d+/);
 });
+
+test('reports work for PlayStation, Xbox, mobile and itch.io store pages', async () => {
+  const store = require('../db');
+  const id = store.createReport({ clone_name: 'Pocket Knight', clone_url: 'https://play.google.com/store/apps/details?id=com.cheap.pocketknight',
+    original_name: 'Shovel Hero', original_url: 'https://www.xbox.com/en-US/games/store/shovel-hero/9ABCDEFGHJKL', notes: 'same levels' }, 'x');
+  store.setStatus(id, 'approved');
+  const id2 = store.createReport({ clone_name: 'Shovel Hero Pocket', clone_url: 'https://cheapdev.itch.io/shovel-hero-pocket',
+    original_name: 'Shovel Hero', original_url: 'https://store.playstation.com/en-us/concept/10001234' }, 'x');
+  store.setStatus(id2, 'approved');
+
+  let j = await (await fetch(base + '/api/lookup?store=googleplay&id=com.cheap.pocketknight')).json();
+  assert.equal(j.found, true);
+  assert.equal(j.game.store, 'googleplay');
+  assert.equal(j.cloneOf[0].name, 'Shovel Hero');
+  assert.equal(j.cloneOf[0].store, 'xbox');
+  assert.equal(j.cloneOf[0].storeName, 'Xbox / Microsoft Store');
+  assert.equal(j.cloneOf[0].storeId, '9ABCDEFGHJKL');
+
+  // Xbox ids are matched case-insensitively; the original's page lists its clones.
+  j = await (await fetch(base + '/api/lookup?store=xbox&id=9abcdefghjkl')).json();
+  assert.deepEqual(j.clonedBy.map((e) => e.name), ['Pocket Knight']);
+  j = await (await fetch(base + '/api/lookup?store=playstation&id=concept/10001234')).json();
+  assert.deepEqual(j.clonedBy.map((e) => e.name), ['Shovel Hero Pocket']);
+  j = await (await fetch(base + '/api/lookup?store=itch&id=CheapDev/shovel-hero-pocket')).json();
+  assert.equal(j.cloneOf[0].store, 'playstation');
+  // An unknown store or a bad id falls back to the name.
+  j = await (await fetch(base + '/api/lookup?store=nope&id=1&name=pocket%20knight')).json();
+  assert.equal(j.cloneOf[0].name, 'Shovel Hero');
+  j = await (await fetch(base + '/api/lookup?store=xbox&id=bad')).json();
+  assert.equal(j.found, false);
+
+  // Pasting a store link into search finds the reports about that page.
+  let s = await (await fetch(base + '/search?q=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.cheap.pocketknight&hl=en'))).text();
+  assert.match(s, /Reports about this Google Play page/);
+  assert.match(s, /Pocket Knight/);
+  s = await (await fetch(base + '/search?q=' + encodeURIComponent('https://apps.apple.com/us/app/x/id1'))).text();
+  assert.match(s, /No reports for this App Store page/);
+
+  const page = await (await fetch(`${base}/report/${id}`)).text();
+  assert.match(page, /View the original on Xbox \/ Microsoft Store/);
+  assert.match(page, /<dt>Store<\/dt><dd>Google Play<\/dd>/);
+});

@@ -4,6 +4,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 const { DatabaseSync } = require('node:sqlite');
+const stores = require('./stores');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'clonereport.db');
 if (DB_PATH !== ':memory:') fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
@@ -69,6 +70,25 @@ db.exec(`
   );
 `);
 
+// Store columns on reports: which store each link points to and the game's id
+// there (see stores.js), so lookups work for PlayStation, Xbox, mobile and itch.io
+// pages too, not only Steam. Older rows are filled in from their links.
+{
+  const cols = new Set(db.prepare('PRAGMA table_info(reports)').all().map((c) => c.name));
+  const added = [];
+  for (const c of ['clone_store', 'clone_store_id', 'original_store', 'original_store_id'])
+    if (!cols.has(c)) { db.exec(`ALTER TABLE reports ADD COLUMN ${c} TEXT`); added.push(c); }
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_clone_store ON reports(clone_store, clone_store_id);
+    CREATE INDEX IF NOT EXISTS idx_reports_orig_store ON reports(original_store, original_store_id);`);
+  if (added.length) {
+    const upd = db.prepare('UPDATE reports SET clone_store = ?, clone_store_id = ?, original_store = ?, original_store_id = ? WHERE id = ?');
+    for (const r of db.prepare('SELECT id, clone_url, original_url FROM reports').all()) {
+      const c = stores.parseStoreUrl(r.clone_url), o = stores.parseStoreUrl(r.original_url);
+      if (c || o) upd.run(c?.store ?? null, c?.id ?? null, o?.store ?? null, o?.id ?? null, r.id);
+    }
+  }
+}
+
 // Columns added after the first release of the originals table.
 {
   const cols = new Set(db.prepare('PRAGMA table_info(originals)').all().map((c) => c.name));
@@ -80,13 +100,16 @@ db.exec(`
 const stmts = {
   insert: db.prepare(`INSERT INTO reports
     (clone_name, clone_url, clone_developer, original_name, original_url, original_developer, platform, notes, contact, ip_hash,
-     clone_steam_appid, original_steam_appid)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
-  // Lookup for the browser extension: match by Steam app id or exact (case-insensitive) name.
+     clone_steam_appid, original_steam_appid, clone_store, clone_store_id, original_store, original_store_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+  // Lookup for the browser extension: match by store id (any store) or exact (case-insensitive) name.
   asClone: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
-    AND ((? IS NOT NULL AND clone_steam_appid = ?) OR (? <> '' AND lower(clone_name) = lower(?))) ORDER BY id DESC LIMIT 20`),
+    AND ((? IS NOT NULL AND clone_store = ? AND clone_store_id = ?) OR (? <> '' AND lower(clone_name) = lower(?))) ORDER BY id DESC LIMIT 20`),
   asOriginal: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
-    AND ((? IS NOT NULL AND original_steam_appid = ?) OR (? <> '' AND lower(original_name) = lower(?))) ORDER BY id DESC LIMIT 50`),
+    AND ((? IS NOT NULL AND original_store = ? AND original_store_id = ?) OR (? <> '' AND lower(original_name) = lower(?))) ORDER BY id DESC LIMIT 50`),
+  // Search by a pasted store link: approved reports where either game is that store page.
+  byStoreId: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+    AND ((clone_store = ? AND clone_store_id = ?) OR (original_store = ? AND original_store_id = ?)) ORDER BY id DESC LIMIT 100`),
   search: db.prepare(`SELECT * FROM reports
     WHERE status = 'approved'
       AND (clone_name LIKE ? ESCAPE '\\' OR original_name LIKE ? ESCAPE '\\'
@@ -150,8 +173,10 @@ module.exports = {
     const r = {};
     for (const k of ['clone_name', 'clone_url', 'clone_developer', 'original_name', 'original_url', 'original_developer', 'platform', 'notes', 'contact'])
       r[k] = input[k] || null;
+    const c = stores.parseStoreUrl(r.clone_url), o = stores.parseStoreUrl(r.original_url);
     const res = stmts.insert.run(r.clone_name, r.clone_url, r.clone_developer, r.original_name, r.original_url,
-      r.original_developer, r.platform, r.notes, r.contact, ipHash, steamAppId(r.clone_url), steamAppId(r.original_url));
+      r.original_developer, r.platform, r.notes, r.contact, ipHash, steamAppId(r.clone_url), steamAppId(r.original_url),
+      c?.store ?? null, c?.id ?? null, o?.store ?? null, o?.id ?? null);
     return Number(res.lastInsertRowid);
   },
   search(q) {
@@ -159,13 +184,20 @@ module.exports = {
     return stmts.search.all(like, like, like, like, q, q);
   },
   steamAppId,
-  lookup(appid, name) {
-    const a = Number.isSafeInteger(appid) && appid > 0 ? appid : null;
+  // Approved reports where either game is the given store page.
+  byStoreId: (store, id) => stmts.byStoreId.all(store, id, store, id),
+  // lookup(appid, name) for Steam, or lookup({ store, id }, name) for any store.
+  lookup(key, name) {
+    let st = null, id = null;
+    if (key && typeof key === 'object') {
+      id = stores.normalizeId(key.store, key.id);
+      st = id ? key.store : null;
+    } else if (Number.isSafeInteger(key) && key > 0) { st = 'steam'; id = String(key); }
     const n = String(name || '').trim();
-    // Steam app id wins; only fall back to the name when the id finds nothing.
+    // The store id wins; only fall back to the name when the id finds nothing.
     const run = (stmt) => {
-      const byId = a ? stmt.all(a, a, '', '') : [];
-      return byId.length || !n ? byId : stmt.all(null, null, n, n);
+      const byId = id ? stmt.all(st, st, id, '', '') : [];
+      return byId.length || !n ? byId : stmt.all(null, null, null, n, n);
     };
     return { asClone: run(stmts.asClone), asOriginal: run(stmts.asOriginal) };
   },

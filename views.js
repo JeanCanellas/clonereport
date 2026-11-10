@@ -1,5 +1,6 @@
 'use strict';
 // HTML templates. Every user-supplied value goes through esc().
+const storeInfo = require('./stores');
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const link = (url, text) => (url ? `<a href="${esc(url)}" rel="nofollow ugc noopener" target="_blank">${esc(text)}</a>` : esc(text));
@@ -65,7 +66,7 @@ function home(recent, total, originals = 0) {
   return layout('Find the original game', `
 <section class="hero">
   <h1>Is this game a clone?</h1>
-  <p>Search any game to see whether it has been reported as a copy, and find the original it was based on.</p>
+  <p>Search any game, or paste its store link, to see whether it has been reported as a copy and find the original it was based on.</p>
   <form class="big-search" action="/search" method="get" role="search">
     <input name="q" placeholder="Type a game name" aria-label="Game name" autofocus required>
     <button class="btn">Search</button>
@@ -76,7 +77,15 @@ function home(recent, total, originals = 0) {
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
 }
 
-function searchPage(q, results, originals = []) {
+function searchPage(q, results, originals = [], { storeName = '' } = {}) {
+  if (storeName) {
+    const body = results.length
+      ? `<h1>Reports about this ${esc(storeName)} page</h1><p class="muted">${link(q, q)}</p><ul class="cards">${results.map(card).join('')}</ul>
+         <p class="muted">Know about another clone? <a href="/submit">Report it</a>.</p>`
+      : `<h1>No reports for this ${esc(storeName)} page</h1><p class="muted">${link(q, q)}</p>
+         <p>Nobody has reported this game yet. If it is a clone, or if someone cloned it, you can <a href="/submit">submit a report</a>.</p>`;
+    return layout('Search', body, { q });
+  }
   const origList = originals.length
     ? `<h2>Original games</h2><p class="muted">Listed on Clone Report as originals, not clones.</p>
        <ul class="cards">${originals.map(originalCard).join('')}</ul>` : '';
@@ -106,15 +115,17 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
       <dl>
         <dt>Game</dt><dd>${link(r.original_url, r.original_name)}</dd>
         ${r.original_developer ? `<dt>Developer</dt><dd>${esc(r.original_developer)}</dd>` : ''}
+      ${r.original_store ? `<dt>Store</dt><dd>${esc(storeInfo.storeName(r.original_store))}</dd>` : ''}
       </dl>
-      ${r.original_url ? `<a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">Go to the original</a>` : ''}
+      ${r.original_url ? `<a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">${r.original_store ? `View the original on ${esc(storeInfo.storeName(r.original_store))}` : 'Go to the original'}</a>` : ''}
     </section>
     <section class="box">
       <h2>The clone</h2>
       <dl>
         <dt>Game</dt><dd>${link(r.clone_url, r.clone_name)}</dd>
         ${r.clone_developer ? `<dt>Developer</dt><dd>${esc(r.clone_developer)}</dd>` : ''}
-        ${r.platform ? `<dt>Platform</dt><dd>${esc(r.platform)}</dd>` : ''}
+        ${r.clone_store ? `<dt>Store</dt><dd>${esc(storeInfo.storeName(r.clone_store))}</dd>` : ''}
+        ${r.platform && r.platform !== storeInfo.storeName(r.clone_store) ? `<dt>Platform</dt><dd>${esc(r.platform)}</dd>` : ''}
       </dl>
     </section>
   </div>
@@ -195,6 +206,8 @@ const field = (name, label, v, { type = 'text', required = false, hint = '', pla
   ${hint ? `<small>${esc(hint)}</small>` : ''}
 </label>`;
 
+const STORE_HINT = `Store pages are matched exactly: ${storeInfo.storeKeys().map(storeInfo.storeName).join(', ')}.`;
+
 function submitPage({ token, values = {}, errors = [] }) {
   const v = values;
   return layout('Report a clone', `
@@ -208,14 +221,14 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
     <legend>The original game</legend>
     ${field('original_name', 'Game name', v, { required: true, placeholder: 'e.g. Flappy Bird' })}
     ${field('original_developer', 'Developer or studio', v)}
-    ${field('original_url', 'Link to the original (store page or website)', v, { type: 'url', placeholder: 'https://' })}
+    ${field('original_url', 'Link to the original (store page or website)', v, { type: 'url', placeholder: 'https://', hint: STORE_HINT })}
   </fieldset>
   <fieldset>
     <legend>The clone</legend>
     ${field('clone_name', 'Clone name', v, { required: true })}
     ${field('clone_developer', 'Clone developer or studio', v)}
-    ${field('clone_url', 'Link to the clone', v, { type: 'url', placeholder: 'https://' })}
-    ${field('platform', 'Platform', v, { placeholder: 'e.g. iOS, Android, Steam, web', max: 60 })}
+    ${field('clone_url', 'Link to the clone', v, { type: 'url', placeholder: 'https://', hint: STORE_HINT })}
+    ${field('platform', 'Platform', v, { placeholder: 'e.g. iOS, Android, Steam, web', max: 60, hint: 'Filled in from the store link if you leave it empty.' })}
   </fieldset>
   <label class="field">
     <span>What was copied?</span>
