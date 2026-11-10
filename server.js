@@ -6,7 +6,8 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const store = require('./db');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, submitPage, thanksPage, adminPage, notFound, esc } = require('./views');
+const scanner = require('./scanner');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound, esc } = require('./views');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -173,8 +174,10 @@ async function handle(req, res) {
   if (req.method === 'GET' && p === '/originals') {
     const s = url.searchParams.get('store');
     const storeFilter = ['steam', 'nintendo'].includes(s) ? s : '';
-    const all = store.allOriginals().filter((g) => !storeFilter || (storeFilter === 'steam' ? g.steam_appid : g.eshop_url));
-    return send(res, 200, originalsPage(all, storeFilter));
+    const per = 100;
+    const page = Math.max(1, Math.min(10_000, Number.parseInt(url.searchParams.get('page'), 10) || 1));
+    const { rows, total } = store.pageOriginals(storeFilter, per, (page - 1) * per);
+    return send(res, 200, originalsPage(rows, { storeFilter, page, pages: Math.max(1, Math.ceil(total / per)), total }));
   }
 
   if (req.method === 'GET' && p === '/search') {
@@ -235,12 +238,30 @@ async function handle(req, res) {
       const status = ['pending', 'approved', 'rejected'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'pending';
       return send(res, 200, adminPage(status, store.byStatus(status), store.counts()), { 'Cache-Control': 'no-store' });
     }
+    if (req.method === 'GET' && p === '/admin/originals') {
+      const q = clean(url.searchParams.get('q'), 120);
+      const rows = q ? store.searchOriginals(q) : store.pageOriginals('', 50, 0).rows;
+      return send(res, 200, adminOriginalsPage(q, rows, store.countOriginals(), scanner.state), { 'Cache-Control': 'no-store' });
+    }
+    if (req.method === 'POST' && (m = p.match(/^\/admin\/originals\/(\d+)\/remove$/))) {
+      if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+      store.excludeOriginal(Number(m[1]), 'removed by admin');
+      return redirect(res, '/admin/originals?q=' + encodeURIComponent(url.searchParams.get('q') || ''));
+    }
     if (req.method === 'POST' && (m = p.match(/^\/admin\/(\d+)\/(approve|reject|delete)$/))) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
       const id = Number(m[1]);
       const back = url.searchParams.get('back') || 'pending';
       if (m[2] === 'delete') store.remove(id);
       else store.setStatus(id, m[2] === 'approve' ? 'approved' : 'rejected');
+      // A game confirmed as a clone comes off the originals list for good.
+      if (m[2] === 'approve') {
+        const r = store.get(id);
+        // Match by Steam id, or by name unless the clone shares the original's name.
+        const sameName = r && r.clone_name.toLowerCase() === r.original_name.toLowerCase();
+        const g = r && (store.findOriginal(r.clone_steam_appid, '') || (!sameName && store.findOriginal(null, r.clone_name)));
+        if (g) store.excludeOriginal(g.id, `approved clone report #${id}`);
+      }
       return redirect(res, '/admin?status=' + encodeURIComponent(back));
     }
   }
@@ -255,5 +276,9 @@ const server = http.createServer((req, res) => {
   });
 });
 
-if (require.main === module) server.listen(PORT, () => console.log(`clonereport listening on http://localhost:${PORT}`));
+if (require.main === module) {
+  server.listen(PORT, () => console.log(`clonereport listening on http://localhost:${PORT}`));
+  // Daily Steam scan that grows the originals list. Set STEAM_SCAN=0 to turn it off.
+  if (process.env.STEAM_SCAN !== '0') scanner.startSchedule();
+}
 module.exports = { server, esc };

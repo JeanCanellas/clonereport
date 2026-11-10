@@ -130,3 +130,25 @@ test('original games are seeded, searchable and exposed in the api', async () =>
   j = await (await fetch(base + '/api/lookup?appid=1&name=nothing')).json();
   assert.equal(j.verifiedOriginal, null);
 });
+
+test('admin can remove an original for good; approving a clone report removes it too', async () => {
+  const store = require('../db');
+  const g = store.findOriginal(null, 'Celeste');
+  const r = await fetch(`${base}/admin/originals/${g.id}/remove`, { method: 'POST', headers: auth, redirect: 'manual' });
+  assert.equal(r.status, 303);
+  assert.equal(store.findOriginal(null, 'Celeste'), null);
+  store.seedOriginals(require('../seed/originals.json').games);
+  assert.equal(store.findOriginal(null, 'Celeste'), null, 'reseeding does not bring it back');
+
+  const admin = await (await fetch(base + '/admin/originals?q=hades', { headers: auth })).text();
+  assert.match(admin, /Hades II/);
+  assert.equal((await fetch(base + '/admin/originals')).status, 401);
+
+  // A report saying Bastion (app 107100) is a clone, once approved, takes it off the list.
+  const id = store.createReport({ clone_name: 'Bastion', clone_url: 'https://store.steampowered.com/app/107100/', original_name: 'Something Older', original_url: 'https://example.com' }, 'x');
+  await fetch(`${base}/admin/${id}/approve`, { method: 'POST', headers: auth, redirect: 'manual' });
+  assert.equal(store.findOriginal(107100, ''), null);
+
+  const list = await (await fetch(base + '/originals?page=2')).text();
+  assert.match(list, /Page 2 of \d+/);
+});

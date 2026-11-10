@@ -41,14 +41,41 @@ db.exec(`
     steam_appid INTEGER,
     eshop_url   TEXT,
     note        TEXT,
+    source      TEXT NOT NULL DEFAULT 'checked', -- checked (hand-checked list) | steam-scan (automatic)
+    positive_pct INTEGER,                        -- Steam review score at scan time
+    reviews     INTEGER,
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS idx_originals_appid ON originals(steam_appid);
+  -- Games an admin removed from the originals list (or that were approved as clones).
+  -- Neither the seed file nor the Steam scanner adds them back.
+  CREATE TABLE IF NOT EXISTS excluded_games (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT COLLATE NOCASE,
+    steam_appid INTEGER,
+    reason      TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  -- Every Steam app the scanner has looked at, so it only checks new ones.
+  CREATE TABLE IF NOT EXISTS steam_scan (
+    appid      INTEGER PRIMARY KEY,
+    result     TEXT NOT NULL,  -- added | skipped
+    reason     TEXT,
+    checked_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
   CREATE TABLE IF NOT EXISTS submissions_log (
     ip_hash    TEXT NOT NULL,
     created_at INTEGER NOT NULL
   );
 `);
+
+// Columns added after the first release of the originals table.
+{
+  const cols = new Set(db.prepare('PRAGMA table_info(originals)').all().map((c) => c.name));
+  if (!cols.has('source')) db.exec(`ALTER TABLE originals ADD COLUMN source TEXT NOT NULL DEFAULT 'checked'`);
+  if (!cols.has('positive_pct')) db.exec('ALTER TABLE originals ADD COLUMN positive_pct INTEGER');
+  if (!cols.has('reviews')) db.exec('ALTER TABLE originals ADD COLUMN reviews INTEGER');
+}
 
 const stmts = {
   insert: db.prepare(`INSERT INTO reports
@@ -75,7 +102,21 @@ const stmts = {
   upsertOriginal: db.prepare(`INSERT INTO originals (name, developer, publisher, steam_appid, eshop_url, note)
     VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(name) DO UPDATE SET developer = excluded.developer, publisher = excluded.publisher,
-      steam_appid = excluded.steam_appid, eshop_url = excluded.eshop_url, note = excluded.note`),
+      steam_appid = excluded.steam_appid, eshop_url = excluded.eshop_url, note = excluded.note, source = 'checked'`),
+  insertScanned: db.prepare(`INSERT OR IGNORE INTO originals (name, developer, publisher, steam_appid, source, positive_pct, reviews)
+    VALUES (?, ?, ?, ?, 'steam-scan', ?, ?)`),
+  isExcluded: db.prepare(`SELECT 1 FROM excluded_games WHERE (? IS NOT NULL AND steam_appid = ?) OR name = ? LIMIT 1`),
+  exclude: db.prepare(`INSERT INTO excluded_games (name, steam_appid, reason) VALUES (?, ?, ?)`),
+  delOriginal: db.prepare(`DELETE FROM originals WHERE id = ?`),
+  scanSeen: db.prepare(`SELECT 1 FROM steam_scan WHERE appid = ?`),
+  scanMark: db.prepare(`INSERT OR REPLACE INTO steam_scan (appid, result, reason) VALUES (?, ?, ?)`),
+  isApprovedClone: db.prepare(`SELECT 1 FROM reports WHERE status = 'approved'
+    AND ((? IS NOT NULL AND clone_steam_appid = ?) OR lower(clone_name) = lower(?)) LIMIT 1`),
+  pageOriginals: db.prepare(`SELECT * FROM originals
+    WHERE (? = '' OR (? = 'steam' AND steam_appid IS NOT NULL) OR (? = 'nintendo' AND eshop_url IS NOT NULL))
+    ORDER BY name LIMIT ? OFFSET ?`),
+  countOriginalsBy: db.prepare(`SELECT COUNT(*) AS n FROM originals
+    WHERE (? = '' OR (? = 'steam' AND steam_appid IS NOT NULL) OR (? = 'nintendo' AND eshop_url IS NOT NULL))`),
   getOriginal: db.prepare(`SELECT * FROM originals WHERE id = ?`),
   originalByAppid: db.prepare(`SELECT * FROM originals WHERE steam_appid = ? LIMIT 1`),
   originalByName: db.prepare(`SELECT * FROM originals WHERE name = ? LIMIT 1`),
@@ -152,6 +193,10 @@ module.exports = {
       for (const g of list) {
         if (!g || typeof g.name !== 'string' || !g.name.trim()) continue;
         const appid = Number.isSafeInteger(g.steam_appid) && g.steam_appid > 0 ? g.steam_appid : null;
+        if (stmts.isExcluded.get(appid, appid, g.name.trim())) continue;
+        // A scanned row for the same Steam game under another name gives way to the checked entry.
+        const dup = appid && stmts.originalByAppid.get(appid);
+        if (dup && dup.name.toLowerCase() !== g.name.trim().toLowerCase()) stmts.delOriginal.run(dup.id);
         stmts.upsertOriginal.run(g.name.trim(), g.developer || null, g.publisher || null, appid, g.eshop_url || null, g.note || null);
         n++;
       }
@@ -170,6 +215,30 @@ module.exports = {
     return stmts.searchOriginals.all(like, like, like, q);
   },
   allOriginals: () => stmts.allOriginals.all(),
+  pageOriginals(storeFilter, limit, offset) {
+    const f = storeFilter || '';
+    return { rows: stmts.pageOriginals.all(f, f, f, limit, offset), total: stmts.countOriginalsBy.get(f, f, f).n };
+  },
+  // Remove a game from the originals list for good (the seed file and the scanner skip it).
+  excludeOriginal(id, reason) {
+    const g = stmts.getOriginal.get(id);
+    if (!g) return false;
+    stmts.exclude.run(g.name, g.steam_appid ?? null, reason || null);
+    stmts.delOriginal.run(id);
+    return true;
+  },
+  // Used by the Steam scanner. Returns 'added' or the reason it was skipped.
+  addScanned(g) {
+    const name = String(g.name || '').trim();
+    if (!name) return 'no name';
+    if (stmts.isExcluded.get(g.appid, g.appid, name)) return 'excluded by admin';
+    if (stmts.isApprovedClone.get(g.appid, g.appid, name)) return 'reported as a clone';
+    if (stmts.originalByAppid.get(g.appid)) return 'already listed';
+    const res = stmts.insertScanned.run(name.slice(0, 200), g.developer || null, g.publisher || null, g.appid, g.positive_pct ?? null, g.reviews ?? null);
+    return res.changes ? 'added' : 'name already listed';
+  },
+  scanSeen: (appid) => !!stmts.scanSeen.get(appid),
+  scanMark: (appid, result, reason) => stmts.scanMark.run(appid, result, reason || null),
   countOriginals: () => stmts.countOriginals.get().n,
   reportsAbout(g) {
     const a = g.steam_appid ?? null;

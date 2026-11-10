@@ -4,10 +4,13 @@
   "private": true,
   "description": "clonereport.com: report cloned games and find the original",
   "main": "server.js",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node --no-warnings=ExperimentalWarning server.js",
     "dev": "ADMIN_PASSWORD=admin MIN_FILL_MS=0 node --no-warnings=ExperimentalWarning --watch server.js",
-    "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js"
+    "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js",
+    "scan": "node --no-warnings=ExperimentalWarning scanner.js"
   }
 }

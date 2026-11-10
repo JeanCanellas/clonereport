@@ -71,14 +71,14 @@ function home(recent, total, originals = 0) {
     <button class="btn">Search</button>
   </form>
   <p class="muted">${total} approved report${total === 1 ? '' : 's'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
-  ${originals ? `<p class="muted"><a href="/originals">Browse ${originals} original games</a> from Steam and the Nintendo eShop that are not clones.</p>` : ''}
+  ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam and the Nintendo eShop that are not clones.</p>` : ''}
 </section>
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
 }
 
 function searchPage(q, results, originals = []) {
   const origList = originals.length
-    ? `<h2>Original games</h2><p class="muted">Checked by Clone Report: these games are originals, not clones.</p>
+    ? `<h2>Original games</h2><p class="muted">Listed on Clone Report as originals, not clones.</p>
        <ul class="cards">${originals.map(originalCard).join('')}</ul>` : '';
   const body = !q
     ? `<p>Type a game name to search.</p>`
@@ -129,6 +129,9 @@ function gamePage(g, { clones, asClone }) {
 <article class="report">
   <h1><span class="tag orig">Not a clone</span> ${esc(g.name)}</h1>
   <p class="lead">${esc(g.name)} is an original game${g.developer ? ` made by <strong>${esc(g.developer)}</strong>` : ''}. It is not a copy of another game.</p>
+  <p class="muted">${g.source === 'steam-scan'
+    ? `Listed automatically: one of Steam's most-owned games${g.positive_pct ? `, with ${esc(g.positive_pct)}% positive reviews out of ${esc(Number(g.reviews || 0).toLocaleString('en-US'))}` : ''}, and no approved clone reports.`
+    : 'Checked by Clone Report.'} If you think this game copies another, <a href="/submit?clone_name=${encodeURIComponent(g.name)}">report it</a>.</p>
   ${asClone.length ? `<p class="notice">Note: ${asClone.length} community report${asClone.length === 1 ? '' : 's'} claim${asClone.length === 1 ? 's' : ''} this game copies another: ${asClone.map((r) => `<a href="/report/${r.id}">${esc(r.original_name)}</a>`).join(', ')}.</p>` : ''}
   <section class="box">
     <dl>
@@ -148,14 +151,41 @@ function gamePage(g, { clones, asClone }) {
 </article>`);
 }
 
-function originalsPage(games, storeFilter) {
-  const tab = (key, label) => `<a class="tab${storeFilter === key ? ' on' : ''}" href="/originals${key ? '?store=' + key : ''}">${label}</a>`;
+function originalsPage(games, { storeFilter = '', page = 1, pages = 1, total = games.length } = {}) {
+  const qs = (o) => { const u = new URLSearchParams(); if (o.store) u.set('store', o.store); if (o.page > 1) u.set('page', o.page); const t = u.toString(); return '/originals' + (t ? '?' + t : ''); };
+  const tab = (key, label) => `<a class="tab${storeFilter === key ? ' on' : ''}" href="${qs({ store: key })}">${label}</a>`;
+  const nav = pages > 1 ? `<nav class="pager">
+    ${page > 1 ? `<a class="btn small ghost" href="${qs({ store: storeFilter, page: page - 1 })}">Previous</a>` : ''}
+    <span class="muted">Page ${page} of ${pages}</span>
+    ${page < pages ? `<a class="btn small ghost" href="${qs({ store: storeFilter, page: page + 1 })}">Next</a>` : ''}
+  </nav>` : '';
   return layout('Original games', `
 <h1>Original games</h1>
-<p>Well-known games from Steam and the Nintendo eShop that are originals, not clones. Search any of them to see whether someone has copied it.</p>
+<p>Games from Steam and the Nintendo eShop that are originals, not clones. Search any of them to see whether someone has copied it.</p>
 <nav class="tabs">${tab('', 'All')}${tab('steam', 'Steam')}${tab('nintendo', 'Nintendo eShop')}</nav>
-<p class="muted">${games.length} game${games.length === 1 ? '' : 's'}</p>
-<ul class="cards">${games.map(originalCard).join('')}</ul>`);
+<p class="muted">${total.toLocaleString('en-US')} game${total === 1 ? '' : 's'}</p>
+<ul class="cards">${games.map(originalCard).join('')}</ul>
+${nav}`);
+}
+
+function adminOriginalsPage(q, rows, total, scan) {
+  const row = (g) => `<li class="admin-row">
+  <div>
+    <a href="/game/${g.id}"><strong>${esc(g.name)}</strong></a>${g.developer ? ` <span class="muted">by ${esc(g.developer)}</span>` : ''}
+    <div class="muted">#${g.id} · ${g.source === 'steam-scan' ? `auto from Steam${g.positive_pct ? ` (${esc(g.positive_pct)}% positive, ${esc(g.reviews)} reviews)` : ''}` : 'hand-checked'} · ${esc(stores(g))}</div>
+  </div>
+  <div class="actions">
+    <form method="post" action="/admin/originals/${g.id}/remove?q=${encodeURIComponent(q)}"><button class="btn small danger">Remove</button></form>
+  </div>
+</li>`;
+  const scanLine = scan.running ? `Steam scan running since ${esc(scan.lastStart)} (${esc(scan.lastAdded)} added so far).`
+    : scan.lastEnd ? `Last Steam scan finished ${esc(scan.lastEnd)}, added ${esc(scan.lastAdded)}${scan.lastError ? `, stopped early: ${esc(scan.lastError)}` : ''}.`
+    : 'The Steam scan has not run since the server started.';
+  return layout('Admin: original games', `<h1>Original games</h1>
+<nav class="tabs"><a class="tab" href="/admin">Reports</a><a class="tab on" href="/admin/originals">Original games (${total})</a></nav>
+<p class="muted">${scanLine} Removing a game keeps it off the list for good: the scanner and the seed file will not add it back.</p>
+<form class="big-search" action="/admin/originals" method="get"><input name="q" value="${esc(q)}" placeholder="Find a game to remove" aria-label="Find a game"><button class="btn">Find</button></form>
+${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p class="muted">No games found.</p>'}`);
 }
 
 const field = (name, label, v, { type = 'text', required = false, hint = '', placeholder = '', max = 120 } = {}) => `
@@ -219,10 +249,10 @@ function adminPage(status, rows, counts) {
     ${action(r, 'delete', 'Delete', 'danger')}
   </div>
 </li>`;
-  return layout('Admin', `<h1>Moderation</h1><nav class="tabs">${tabs}</nav>
+  return layout('Admin', `<h1>Moderation</h1><nav class="tabs">${tabs}<a class="tab" href="/admin/originals">Original games</a></nav>
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p class="muted">Nothing here.</p>`}`);
 }
 
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, submitPage, thanksPage, adminPage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound };
