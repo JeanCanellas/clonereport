@@ -30,6 +30,7 @@ ${body}
 </main>
 <footer class="wrap site-foot">
   <p>Reports are submitted by the community and reviewed before they appear. They are claims, not legal findings.</p>
+  <p><a href="/privacy">Privacy policy</a></p>
 </footer>
 </body>
 </html>`;
@@ -253,6 +254,37 @@ function adminPage(status, rows, counts) {
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p class="muted">Nothing here.</p>`}`);
 }
 
+// Privacy policy for the site and the Clone Report browser extension. The
+// Chrome Web Store listing links here, so keep it in step with what the
+// extension actually sends (chrome-extension/background.js).
+const privacyPage = () => layout('Privacy policy', `<article class="prose">
+<h1>Privacy policy</h1>
+<p class="muted">Last updated 10 November 2026</p>
+<p>This policy covers clonereport.com and the Clone Report browser extension. We collect as little as we can, we never sell data, and we do not use advertising or analytics trackers.</p>
+
+<h2>The Clone Report browser extension</h2>
+<p>The extension checks whether the game you are looking at has been reported as a clone, or has been cloned. It runs only on game pages of these stores: Steam, PlayStation Store, Xbox and the Microsoft Store, Nintendo eShop, the App Store, Google Play and itch.io.</p>
+<p><strong>What it sends.</strong> When you open a game page on one of those stores, the extension sends three things to clonereport.com: which store it is (for example "steam"), the game's id from the page address, and the game's name as shown on the page. Nothing else from the page is read or sent. It does not read your browsing history, your account on the store, cookies, passwords, payment details or anything you type.</p>
+<p><strong>What it stores.</strong> Lookup results are kept in your browser's session storage for five minutes so the same page is not looked up twice, and are deleted when you close the browser. If you change the site address in the extension's settings, that one setting is saved with Chrome's sync storage. Nothing is stored on our servers about you or your lookups beyond the standard web server request logs described below.</p>
+<p><strong>What it shows.</strong> If there is a report, the extension adds a banner to the store page and a badge to its toolbar icon. It does not change anything else on the page.</p>
+<p>The extension contains no remote code, no ads and no trackers. Its use of data complies with the Chrome Web Store User Data Policy, including the Limited Use requirements.</p>
+
+<h2>The website</h2>
+<p><strong>Reports you submit.</strong> When you report a clone we store what you enter in the form: game names, links, developers, platform and notes. These appear publicly once a moderator approves the report. The optional email field is private: only moderators see it, and only to ask you about your report.</p>
+<p><strong>Spam protection.</strong> To limit spam we store a one-way keyed hash of your IP address with each submission and use it to count submissions per hour. We do not store the IP address itself.</p>
+<p><strong>Request logs.</strong> Like any website, our hosting provider keeps short-lived server logs (IP address, time, page requested, browser type) for security and debugging.</p>
+<p><strong>Cookies.</strong> The site does not set cookies for visitors.</p>
+
+<h2>Sharing</h2>
+<p>We do not sell, rent or share personal data with third parties, except our hosting provider, which runs the site on our behalf, or when the law requires it.</p>
+
+<h2>Your choices</h2>
+<p>You can uninstall the extension at any time from your browser's extensions page, which removes everything it stored. To have a report you submitted, or your email, removed, submit a request through the <a href="/submit">report form</a> mentioning the report, or use the contact email on the extension's Chrome Web Store page.</p>
+
+<h2>Changes</h2>
+<p>If we change what the extension or the site collects, we will update this page and the date at the top before the change takes effect.</p>
+</article>`);
+
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound, privacyPage };
