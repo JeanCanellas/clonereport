@@ -27,6 +27,7 @@ npm test
 | `MAX_PER_HOUR` | `5` | Reports allowed per IP per hour |
 | `MIN_FILL_MS` | `4000` | Minimum time between loading and submitting the form |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
+| `CHROME_STORE_URL` | *(none)* | Chrome Web Store listing for the extension; until set, `/extension` offers the zip and install steps |
 | `STEAM_SCAN` | on | Set to `0` to turn off the daily Steam scan |
 | `STEAM_SCAN_TARGET` | `5000` | The scanner stops adding once the list has this many games |
 | `STEAM_SCAN_MIN_REVIEWS` | `1000` | Minimum Steam reviews for a game to be added |
@@ -46,7 +47,7 @@ Each game gets a page at `/game/:id` marked "Not a clone", shows up in search, a
 
 ## Pages
 
-- `/` search + recently added, `/search?q=`, `/report/:id`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
+- `/` search + recently added, `/extension` (Chrome extension download), `/search?q=`, `/report/:id`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` or `GET /api/lookup?store=<store>&id=<store id>&name=<game name>` JSON lookup (used by the browser extension).
 
 ## Supported stores
@@ -61,7 +62,7 @@ Reports saved before this change get their store ids filled in from their links 
 
 ## Chrome extension
 
-`chrome-extension/` is the Clone Report browser extension. It shows a banner on game pages of every store above. Its `stores.js` must stay identical to the site's (a test checks this). See `chrome-extension/README.md`.
+`chrome-extension/` is the Clone Report browser extension. It shows a banner on game pages of every store above. The site recommends it on the home, report and game pages and has an install page at `/extension`, which serves `/extension/clone-report-extension.zip` (zipped from `chrome-extension/` when the server starts, so it always matches the code). Once the extension is on the Chrome Web Store, set `CHROME_STORE_URL` to its listing and the page shows an "Add to Chrome" button instead of the install steps. Its `stores.js` must stay identical to the site's (a test checks this). See `chrome-extension/README.md`.
 
 ## Deploy
 

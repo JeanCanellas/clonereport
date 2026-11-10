@@ -8,7 +8,8 @@ const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
 const stores = require('./stores');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound, esc } = require('./views');
+const extension = require('./extension');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, notFound, esc } = require('./views');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -30,6 +31,11 @@ if (process.env.SEED_ORIGINALS !== '0') {
 }
 
 const CSS = fs.readFileSync(path.join(__dirname, 'public', 'style.css'));
+const EXT_SHOT = fs.readFileSync(path.join(__dirname, 'public', 'extension-screenshot.png'));
+// Chrome extension download, built from chrome-extension/ at start. Once the extension
+// is on the Chrome Web Store, set CHROME_STORE_URL and the site links there instead.
+const EXT_ZIP = extension.buildZip();
+const EXT_INFO = { version: extension.version(), storeUrl: process.env.CHROME_STORE_URL || '', zipUrl: '/extension/clone-report-extension.zip' };
 
 // ---------- helpers ----------
 const hmac = (s) => crypto.createHmac('sha256', SECRET).update(s).digest('hex');
@@ -185,6 +191,11 @@ async function handle(req, res) {
     return send(res, 200, CSS, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
   if (req.method === 'GET' && p === '/robots.txt')
     return send(res, 200, 'User-agent: *\nDisallow: /admin\n', { 'Content-Type': 'text/plain' });
+  if (req.method === 'GET' && p === '/extension') return send(res, 200, extensionPage(EXT_INFO));
+  if (req.method === 'GET' && p === EXT_INFO.zipUrl)
+    return send(res, 200, EXT_ZIP, { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="clone-report-extension.zip"', 'Cache-Control': 'public, max-age=3600' });
+  if (req.method === 'GET' && p === '/extension-screenshot.png')
+    return send(res, 200, EXT_SHOT, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
   if (req.method === 'GET' && p === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
 
   if (req.method === 'GET' && p === '/api/lookup') return apiLookup(req, res, url);

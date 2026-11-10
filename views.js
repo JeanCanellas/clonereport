@@ -23,6 +23,7 @@ function layout(title, body, { q = '' } = {}) {
     <form class="mini-search" action="/search" method="get" role="search">
       <input name="q" value="${esc(q)}" placeholder="Search a game…" aria-label="Search a game">
     </form>
+    <a class="nav-link" href="/extension">Chrome extension</a>
     <a class="btn small" href="/submit">Report a clone</a>
   </div>
 </header>
@@ -74,6 +75,7 @@ function home(recent, total, originals = 0) {
   <p class="muted">${total} approved report${total === 1 ? '' : 's'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
   ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam and the Nintendo eShop that are not clones.</p>` : ''}
 </section>
+${extPromo()}
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
 }
 
@@ -131,6 +133,7 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
   </div>
   ${r.notes ? `<section><h2>Details from the reporter</h2><p class="notes">${esc(r.notes)}</p></section>` : ''}
   <p class="muted">Reported ${date(r.created_at)}. This is a community claim reviewed by a moderator, not a legal finding.</p>
+  ${extPromo({ compact: true })}
 </article>`);
 }
 
@@ -159,6 +162,7 @@ function gamePage(g, { clones, asClone }) {
   <h2>Clones of ${esc(g.name)}</h2>
   ${clones.length ? `<ul class="cards">${clones.map(card).join('')}</ul>` : `<p class="muted">No clones of this game have been reported yet.</p>`}
   <p><a href="/submit?original_name=${encodeURIComponent(g.name)}">Report a clone of ${esc(g.name)}</a></p>
+  ${extPromo({ compact: true })}
 </article>`);
 }
 
@@ -266,6 +270,49 @@ function adminPage(status, rows, counts) {
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p class="muted">Nothing here.</p>`}`);
 }
 
+const STORE_LIST = 'Steam, PlayStation Store, Xbox, Nintendo eShop, the App Store, Google Play and itch.io';
+
+// Box that recommends the Chrome extension, shown on the home, report and game pages.
+function extPromo({ compact = false } = {}) {
+  return `<aside class="ext-promo${compact ? ' compact' : ''}">
+  ${compact ? '' : `<img src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235" loading="lazy">`}
+  <div>
+    <h2>Get warned before you buy a clone</h2>
+    <p>Install the free Clone Report extension for Google Chrome. When you open a game's page on ${STORE_LIST}, it tells you right away if the game has been reported as a clone, and points you to the original.</p>
+    <a class="btn" href="/extension">Get the Chrome extension</a>
+  </div>
+</aside>`;
+}
+
+function extensionPage({ version, storeUrl, zipUrl }) {
+  const install = storeUrl
+    ? `<p><a class="btn" href="${esc(storeUrl)}" rel="noopener" target="_blank">Add to Chrome</a></p>
+       <p class="muted">Opens the Chrome Web Store. Click <strong>Add to Chrome</strong>, and you're done.</p>`
+    : `<p><a class="btn" href="${esc(zipUrl)}" download>Download the extension</a> <span class="muted">${version ? `Version ${esc(version)} · ` : ''}free, about 15 KB</span></p>
+       <h2>How to install it</h2>
+       <ol class="steps">
+         <li>Download the file above and unzip it. You'll get a folder called <em>clone-report-extension</em>.</li>
+         <li>In Chrome, open <code>chrome://extensions</code> (type it into the address bar).</li>
+         <li>Turn on <strong>Developer mode</strong> in the top right corner.</li>
+         <li>Click <strong>Load unpacked</strong> and choose the unzipped folder.</li>
+         <li>Pin Clone Report from the puzzle-piece menu so its icon is always visible.</li>
+       </ol>
+       <p class="muted">The extension will be on the Chrome Web Store soon, which will make this a single click.</p>`;
+  return layout('Chrome extension', `
+<h1>Know a game is a clone before you buy it</h1>
+<p class="lead">The free Clone Report extension for Google Chrome checks every game page you open on ${STORE_LIST}. If people have reported the game as a clone, a red warning appears at once with a link to the original. If the game has been cloned, an orange note lists the copies.</p>
+<img class="ext-shot" src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235">
+${install}
+<h2>What it does</h2>
+<ul>
+  <li><strong>Red warning:</strong> the game you're looking at was reported as a copy, with a link to the original and the report.</li>
+  <li><strong>Orange note:</strong> the game is an original that others have cloned.</li>
+  <li><strong>Nothing</strong> when there are no reports, so it stays out of your way. The toolbar icon still shows the result.</li>
+</ul>
+<h2>Privacy</h2>
+<p>The extension only sends the store, game id and game name of the page you're viewing to clonereport.com to look it up. It does not track you, read other sites, or store your browsing.</p>`);
+}
+
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, notFound };

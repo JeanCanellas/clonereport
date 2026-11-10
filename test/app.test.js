@@ -194,3 +194,18 @@ test('reports work for PlayStation, Xbox, mobile and itch.io store pages', async
   assert.match(page, /View the original on Xbox \/ Microsoft Store/);
   assert.match(page, /<dt>Store<\/dt><dd>Google Play<\/dd>/);
 });
+
+test('the site recommends the Chrome extension and serves it', async () => {
+  const home = await (await fetch(base + '/')).text();
+  assert.match(home, /href="\/extension">Get the Chrome extension/);
+  const page = await (await fetch(base + '/extension')).text();
+  assert.match(page, /Load unpacked/);
+  assert.match(page, /href="\/extension\/clone-report-extension.zip"/);
+  const zip = await fetch(base + '/extension/clone-report-extension.zip');
+  assert.equal(zip.headers.get('content-type'), 'application/zip');
+  const buf = Buffer.from(await zip.arrayBuffer());
+  assert.equal(buf.readUInt32LE(0), 0x04034b50, 'zip file');
+  assert.ok(buf.includes('manifest.json') && buf.includes('stores.js'));
+  const img = await fetch(base + '/extension-screenshot.png');
+  assert.equal(img.headers.get('content-type'), 'image/png');
+});
