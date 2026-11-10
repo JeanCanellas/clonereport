@@ -26,10 +26,27 @@ npm test
 | `TRUST_PROXY` | off | Set to `1` behind Render/Railway/Fly so the real visitor IP is used |
 | `MAX_PER_HOUR` | `5` | Reports allowed per IP per hour |
 | `MIN_FILL_MS` | `4000` | Minimum time between loading and submitting the form |
+| `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
+| `STEAM_SCAN` | on | Set to `0` to turn off the daily Steam scan |
+| `STEAM_SCAN_TARGET` | `5000` | The scanner stops adding once the list has this many games |
+| `STEAM_SCAN_MIN_REVIEWS` | `1000` | Minimum Steam reviews for a game to be added |
+| `STEAM_SCAN_MIN_POSITIVE` | `80` | Minimum percent of positive reviews |
+
+## Original games list
+
+`seed/originals.json` lists well-known games from Steam and the Nintendo eShop that are originals, not clones (name, developer, publisher, Steam app id and/or Nintendo eShop link; facts only, no store art). The server loads it into the `originals` table on every start, updating existing rows and never duplicating them, so a redeploy is all it takes to publish changes to the list. Set `SEED_ORIGINALS=0` to skip loading it.
+
+### Steam scanner
+
+`scanner.js` grows the list on its own. About a minute after the server starts, and then once a day, it walks SteamSpy's list of Steam games (most-owned first) and adds games that are very unlikely to be clones: at least 1,000 reviews, at least 80% positive, not a software tool, not removed by an admin, and not the clone in an approved report. It stops once the list holds 5,000 games and only checks each Steam app once, so later runs pick up new games quickly. It respects SteamSpy's rate limits, so the first full run takes about an hour and a half. Run one pass by hand with `npm run scan`.
+
+Admins manage the list at `/admin/originals`: find a game and remove it. A removed game stays off for good (neither the scanner nor the seed file adds it back), and approving a clone report removes the clone from the list automatically.
+
+Each game gets a page at `/game/:id` marked "Not a clone", shows up in search, and is listed at `/originals` (filter with `?store=steam` or `?store=nintendo`). `/api/lookup` returns it as `verifiedOriginal`.
 
 ## Pages
 
-- `/` search + recently added, `/search?q=`, `/report/:id`, `/submit`, `/admin`
+- `/` search + recently added, `/search?q=`, `/report/:id`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` JSON lookup (used by the browser extension). Steam app ids are taken automatically from `store.steampowered.com/app/<id>` links in reports.
 
 ## Deploy
