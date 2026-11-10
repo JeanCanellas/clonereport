@@ -76,28 +76,66 @@ db.exec(`
   if (!cols.has('positive_pct')) db.exec('ALTER TABLE originals ADD COLUMN positive_pct INTEGER');
   if (!cols.has('reviews')) db.exec('ALTER TABLE originals ADD COLUMN reviews INTEGER');
 }
+// Comparison details on reports (release dates, images, shared mechanics).
+{
+  const cols = new Set(db.prepare('PRAGMA table_info(reports)').all().map((c) => c.name));
+  for (const c of ['clone_released', 'original_released', 'clone_image', 'original_image', 'mechanics'])
+    if (!cols.has(c)) db.exec(`ALTER TABLE reports ADD COLUMN ${c} TEXT`);
+}
+
+// Community votes: one per visitor (salted IP hash) per report; voting again changes it.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS votes (
+    report_id  INTEGER NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+    voter      TEXT NOT NULL,
+    choice     TEXT NOT NULL CHECK (choice IN ('clone', 'inspired', 'original')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (report_id, voter)
+  );
+  CREATE INDEX IF NOT EXISTS idx_votes_voter ON votes(voter, updated_at);
+  -- Reports with their vote counts. Rebuilt on every start so changes to it apply.
+  DROP VIEW IF EXISTS reports_v;
+  CREATE VIEW reports_v AS SELECT r.*,
+    (SELECT COUNT(*) FROM votes v WHERE v.report_id = r.id AND v.choice = 'clone')    AS votes_clone,
+    (SELECT COUNT(*) FROM votes v WHERE v.report_id = r.id AND v.choice = 'inspired') AS votes_inspired,
+    (SELECT COUNT(*) FROM votes v WHERE v.report_id = r.id AND v.choice = 'original') AS votes_original
+    FROM reports r;
+`);
 
 const stmts = {
   insert: db.prepare(`INSERT INTO reports
     (clone_name, clone_url, clone_developer, original_name, original_url, original_developer, platform, notes, contact, ip_hash,
-     clone_steam_appid, original_steam_appid)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+     clone_steam_appid, original_steam_appid, clone_released, original_released, clone_image, original_image, mechanics)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+  update: db.prepare(`UPDATE reports SET clone_name = ?, clone_url = ?, clone_developer = ?, original_name = ?, original_url = ?,
+    original_developer = ?, platform = ?, notes = ?, clone_released = ?, original_released = ?, clone_image = ?, original_image = ?,
+    mechanics = ?, clone_steam_appid = ?, original_steam_appid = ? WHERE id = ?`),
+  vote: db.prepare(`INSERT INTO votes (report_id, voter, choice, updated_at) VALUES (?, ?, ?, ?)
+    ON CONFLICT(report_id, voter) DO UPDATE SET choice = excluded.choice, updated_at = excluded.updated_at`),
+  myVote: db.prepare(`SELECT choice FROM votes WHERE report_id = ? AND voter = ?`),
+  votesByVoter: db.prepare(`SELECT COUNT(*) AS n FROM votes WHERE voter = ? AND updated_at > ?`),
+  delVotes: db.prepare(`DELETE FROM votes WHERE report_id = ?`),
   // Lookup for the browser extension: match by Steam app id or exact (case-insensitive) name.
-  asClone: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+  asClone: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND clone_steam_appid = ?) OR (? <> '' AND lower(clone_name) = lower(?))) ORDER BY id DESC LIMIT 20`),
-  asOriginal: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+  asOriginal: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND original_steam_appid = ?) OR (? <> '' AND lower(original_name) = lower(?))) ORDER BY id DESC LIMIT 50`),
-  search: db.prepare(`SELECT * FROM reports
+  search: db.prepare(`SELECT * FROM reports_v
     WHERE status = 'approved'
       AND (clone_name LIKE ? ESCAPE '\\' OR original_name LIKE ? ESCAPE '\\'
            OR clone_developer LIKE ? ESCAPE '\\' OR original_developer LIKE ? ESCAPE '\\')
     ORDER BY (lower(clone_name) = lower(?) OR lower(original_name) = lower(?)) DESC, created_at DESC
     LIMIT 100`),
-  recent: db.prepare(`SELECT * FROM reports WHERE status = 'approved' ORDER BY reviewed_at DESC, id DESC LIMIT ?`),
-  get: db.prepare(`SELECT * FROM reports WHERE id = ?`),
-  byStatus: db.prepare(`SELECT * FROM reports WHERE status = ? ORDER BY created_at DESC LIMIT 200`),
+  recent: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved' ORDER BY reviewed_at DESC, id DESC LIMIT ?`),
+  get: db.prepare(`SELECT * FROM reports_v WHERE id = ?`),
+  byStatus: db.prepare(`SELECT * FROM reports_v WHERE status = ? ORDER BY created_at DESC LIMIT 200`),
   setStatus: db.prepare(`UPDATE reports SET status = ?, reviewed_at = datetime('now') WHERE id = ?`),
   del: db.prepare(`DELETE FROM reports WHERE id = ?`),
+  setComparison: db.prepare(`UPDATE reports SET
+    clone_released = coalesce(clone_released, ?), original_released = coalesce(original_released, ?),
+    clone_image = coalesce(clone_image, ?), original_image = coalesce(original_image, ?),
+    clone_developer = coalesce(clone_developer, ?), original_developer = coalesce(original_developer, ?) WHERE id = ?`),
   counts: db.prepare(`SELECT status, COUNT(*) AS n FROM reports GROUP BY status`),
   upsertOriginal: db.prepare(`INSERT INTO originals (name, developer, publisher, steam_appid, eshop_url, note)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -126,10 +164,10 @@ const stmts = {
   allOriginals: db.prepare(`SELECT * FROM originals ORDER BY name`),
   countOriginals: db.prepare(`SELECT COUNT(*) AS n FROM originals`),
   // Approved reports that name this game as the original (for its page).
-  clonesOf: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+  clonesOf: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND original_steam_appid = ?) OR lower(original_name) = lower(?)) ORDER BY id DESC LIMIT 50`),
   // Approved reports that say this game is itself a clone.
-  reportedAsClone: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+  reportedAsClone: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND clone_steam_appid = ?) OR lower(clone_name) = lower(?)) ORDER BY id DESC LIMIT 20`),
   logSubmission: db.prepare(`INSERT INTO submissions_log (ip_hash, created_at) VALUES (?, ?)`),
   countRecent: db.prepare(`SELECT COUNT(*) AS n FROM submissions_log WHERE ip_hash = ? AND created_at > ?`),
@@ -148,10 +186,12 @@ module.exports = {
   db,
   createReport(input, ipHash) {
     const r = {};
-    for (const k of ['clone_name', 'clone_url', 'clone_developer', 'original_name', 'original_url', 'original_developer', 'platform', 'notes', 'contact'])
+    for (const k of ['clone_name', 'clone_url', 'clone_developer', 'original_name', 'original_url', 'original_developer', 'platform', 'notes', 'contact',
+      'clone_released', 'original_released', 'clone_image', 'original_image', 'mechanics'])
       r[k] = input[k] || null;
     const res = stmts.insert.run(r.clone_name, r.clone_url, r.clone_developer, r.original_name, r.original_url,
-      r.original_developer, r.platform, r.notes, r.contact, ipHash, steamAppId(r.clone_url), steamAppId(r.original_url));
+      r.original_developer, r.platform, r.notes, r.contact, ipHash, steamAppId(r.clone_url), steamAppId(r.original_url),
+      r.clone_released, r.original_released, r.clone_image, r.original_image, r.mechanics);
     return Number(res.lastInsertRowid);
   },
   search(q) {
@@ -173,7 +213,22 @@ module.exports = {
   get: (id) => stmts.get.get(id),
   byStatus: (s) => stmts.byStatus.all(s),
   setStatus: (id, s) => stmts.setStatus.run(s, id),
-  remove: (id) => stmts.del.run(id),
+  // Admin edit of a report's public fields.
+  updateReport(id, r) {
+    const v = (k) => r[k] || null;
+    stmts.update.run(v('clone_name'), v('clone_url'), v('clone_developer'), v('original_name'), v('original_url'), v('original_developer'),
+      v('platform'), v('notes'), v('clone_released'), v('original_released'), v('clone_image'), v('original_image'), v('mechanics'),
+      steamAppId(r.clone_url), steamAppId(r.original_url), id);
+  },
+  remove(id) { stmts.delVotes.run(id); stmts.del.run(id); },
+  // Fill comparison details that are still empty (from Steam). Never overwrites.
+  fillComparison(id, d) {
+    stmts.setComparison.run(d.clone_released ?? null, d.original_released ?? null, d.clone_image ?? null, d.original_image ?? null,
+      d.clone_developer ?? null, d.original_developer ?? null, id);
+  },
+  vote: (id, voter, choice) => stmts.vote.run(id, voter, choice, Date.now()),
+  myVote: (id, voter) => stmts.myVote.get(id, voter)?.choice || null,
+  votesByVoter: (voter, windowMs) => stmts.votesByVoter.get(voter, Date.now() - windowMs).n,
   counts() {
     const out = { pending: 0, approved: 0, rejected: 0 };
     for (const row of stmts.counts.all()) out[row.status] = row.n;

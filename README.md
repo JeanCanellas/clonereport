@@ -26,6 +26,8 @@ npm test
 | `TRUST_PROXY` | off | Set to `1` behind Render/Railway/Fly so the real visitor IP is used |
 | `MAX_PER_HOUR` | `5` | Reports allowed per IP per hour |
 | `MIN_FILL_MS` | `4000` | Minimum time between loading and submitting the form |
+| `MAX_VOTES_PER_HOUR` | `100` | Community votes allowed per IP per hour |
+| `STEAM_ENRICH` | on | Set to `0` to stop filling release dates, images and developers from Steam when a report is approved |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
 | `STEAM_SCAN` | on | Set to `0` to turn off the daily Steam scan |
 | `STEAM_SCAN_TARGET` | `5000` | The scanner stops adding once the list has this many games |
@@ -44,9 +46,15 @@ Admins manage the list at `/admin/originals`: find a game and remove it. A remov
 
 Each game gets a page at `/game/:id` marked "Not a clone", shows up in search, and is listed at `/originals` (filter with `?store=steam` or `?store=nintendo`). `/api/lookup` returns it as `verifiedOriginal`.
 
+## Comparisons and community votes
+
+Each report page (`/report/:id`) is a side-by-side comparison of the original and the clone: images, developers, release dates, platform, store links, and a list of the mechanics they share. Reporters can fill these in on the submit form; admins can change any of them at `/admin/:id/edit`. When a report with Steam links is approved, missing release dates, header images and developers are filled in from Steam's store API (it never overwrites what is already there).
+
+Visitors vote on each approved report: **Clone**, **Inspired by** or **Original**. Each visitor (by salted IP hash) has one vote per report and can change it. The **clone score** is the share of votes saying "clone", with "inspired by" counting half. After 3 votes the report shows a verdict: *Likely a clone* (67% or more), *Inspired by* (34–66%) or *Likely original* (33% or less). The verdict shows on the report page and on report cards in search and on the home page.
+
 ## Pages
 
-- `/` search + recently added, `/search?q=`, `/report/:id`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
+- `/` search + recently added, `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` JSON lookup (used by the browser extension). Steam app ids are taken automatically from `store.steampowered.com/app/<id>` links in reports.
 
 ## Deploy

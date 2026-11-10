@@ -35,6 +35,27 @@ ${body}
 </html>`;
 }
 
+// ---------- community votes ----------
+const CHOICES = [['clone', 'Clone', 'It copies the original'], ['inspired', 'Inspired by', 'Borrows ideas but is its own game'], ['original', 'Original', 'Not a copy']];
+function tally(r) {
+  const t = { clone: r.votes_clone || 0, inspired: r.votes_inspired || 0, original: r.votes_original || 0 };
+  t.total = t.clone + t.inspired + t.original;
+  // Clone score: share of votes saying "clone", with "inspired by" counting half.
+  t.score = t.total ? Math.round((100 * (t.clone + t.inspired / 2)) / t.total) : null;
+  return t;
+}
+const MIN_VOTES = 3; // below this the score is shown as "not enough votes yet"
+function verdict(t) {
+  if (t.total < MIN_VOTES) return null;
+  return t.score >= 67 ? 'Likely a clone' : t.score >= 34 ? 'Inspired by' : 'Likely original';
+}
+const pct = (n, total) => (total ? Math.round((100 * n) / total) : 0);
+function scoreBadge(r) {
+  const t = tally(r);
+  const v = verdict(t);
+  return v ? `<span class="score s${t.score >= 67 ? 'hi' : t.score >= 34 ? 'mid' : 'lo'}" title="${t.total} community votes">${esc(v)} · ${t.score}%</span>` : '';
+}
+
 function card(r) {
   return `<li class="card">
   <a class="card-link" href="/report/${r.id}">
@@ -43,6 +64,7 @@ function card(r) {
       <div class="arrow" aria-hidden="true">copies</div>
       <div><span class="tag orig">Original</span><strong>${esc(r.original_name)}</strong>${r.original_developer ? `<small>by ${esc(r.original_developer)}</small>` : ''}</div>
     </div>
+    ${scoreBadge(r)}
   </a>
 </li>`;
 }
@@ -94,31 +116,66 @@ function searchPage(q, results, originals = []) {
   return layout(q ? `Search: ${q}` : 'Search', body, { q });
 }
 
-function reportPage(r) {
-  return layout(`${r.clone_name} is a clone of ${r.original_name}`, `
+const year = (d) => (d ? Number(String(d).slice(0, 4)) : null);
+function releaseNote(r) {
+  const a = r.original_released, b = r.clone_released;
+  if (!a || !b) return '';
+  const n = Math.min(a.length, b.length);
+  if (a.slice(0, n) === b.slice(0, n)) return '<p class="muted">Both games came out around the same time.</p>';
+  if (a.slice(0, n) > b.slice(0, n)) return '<p class="notice">Note: the listed release date of the clone is earlier than the original\'s.</p>';
+  const yrs = year(b) - year(a);
+  return `<p class="muted">The original came out ${yrs >= 1 ? `${yrs} year${yrs === 1 ? '' : 's'}` : 'shortly'} before the clone.</p>`;
+}
+const shot = (url, name) => (url
+  ? `<img class="shot" src="${esc(url)}" alt="${esc(name)}" loading="lazy" referrerpolicy="no-referrer">`
+  : `<div class="shot none">No image yet</div>`);
+
+function voteBox(r, { myVote, voteToken, voteMsg }) {
+  const t = tally(r);
+  const v = verdict(t);
+  // An SVG bar, since the CSP does not allow inline styles.
+  let x = 0;
+  const bar = t.total ? `<svg class="vbar" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 100 1">${CHOICES.map(([k]) => {
+    const w = (100 * t[k]) / t.total; const rect = w ? `<rect class="v-${k}" x="${x}" y="0" width="${w}" height="1"/>` : ''; x += w; return rect;
+  }).join('')}</svg>` : '';
+  return `<section class="box vote" id="vote">
+  <h2>What do you think?</h2>
+  <p class="muted">${v ? `Community verdict: <strong>${esc(v)}</strong>, clone score ${t.score}% from ${t.total} vote${t.total === 1 ? '' : 's'}.`
+    : `${t.total ? `${t.total} vote${t.total === 1 ? '' : 's'} so far. ` : ''}The community verdict shows after ${MIN_VOTES} votes.`}</p>
+  ${bar}
+  ${voteMsg ? `<p class="notice" role="status">${esc(voteMsg)}</p>` : ''}
+  <form method="post" action="/report/${r.id}/vote" class="vote-form">
+    <input type="hidden" name="token" value="${esc(voteToken || '')}">
+    ${CHOICES.map(([k, label, hint]) => `<button class="vote-btn v-${k}${myVote === k ? ' on' : ''}" name="choice" value="${k}" aria-pressed="${myVote === k}">
+      <strong>${label}</strong><small>${hint}</small><span class="count">${t[k]} · ${pct(t[k], t.total)}%</span></button>`).join('')}
+  </form>
+  ${myVote ? '<p class="muted">You can change your vote at any time.</p>' : ''}
+</section>`;
+}
+
+function reportPage(r, opts = {}) {
+  const mech = String(r.mechanics || '').split('\n').filter(Boolean);
+  const row = (label, o, c) => (o || c ? `<div class="crow"><div class="clabel">${label}</div><div>${o || '<span class="muted">Unknown</span>'}</div><div>${c || '<span class="muted">Unknown</span>'}</div></div>` : '');
+  const steamUrl = (id) => (id ? `https://store.steampowered.com/app/${id}/` : null);
+  return layout(`${r.clone_name} vs ${r.original_name}: clone comparison`, `
 ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.status)}</strong> and only visible to admins.</p>` : ''}
 <article class="report">
   <h1><span class="tag clone">Clone</span> ${esc(r.clone_name)}</h1>
-  <p class="lead">Reported as a clone of <strong>${esc(r.original_name)}</strong>.</p>
-  <div class="grid2">
-    <section class="box">
-      <h2>The original</h2>
-      <dl>
-        <dt>Game</dt><dd>${link(r.original_url, r.original_name)}</dd>
-        ${r.original_developer ? `<dt>Developer</dt><dd>${esc(r.original_developer)}</dd>` : ''}
-      </dl>
-      ${r.original_url ? `<a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">Go to the original</a>` : ''}
-    </section>
-    <section class="box">
-      <h2>The clone</h2>
-      <dl>
-        <dt>Game</dt><dd>${link(r.clone_url, r.clone_name)}</dd>
-        ${r.clone_developer ? `<dt>Developer</dt><dd>${esc(r.clone_developer)}</dd>` : ''}
-        ${r.platform ? `<dt>Platform</dt><dd>${esc(r.platform)}</dd>` : ''}
-      </dl>
-    </section>
-  </div>
+  <p class="lead">Reported as a clone of <strong>${esc(r.original_name)}</strong>. ${scoreBadge(r)}</p>
+  <section class="compare" aria-label="Side-by-side comparison">
+    <div class="crow chead"><div class="clabel"></div><div><span class="tag orig">Original</span></div><div><span class="tag clone">Clone</span></div></div>
+    ${r.original_image || r.clone_image ? `<div class="crow"><div class="clabel"></div><div>${shot(r.original_image, r.original_name)}</div><div>${shot(r.clone_image, r.clone_name)}</div></div>` : ''}
+    ${row('Game', `<strong>${link(r.original_url, r.original_name)}</strong>`, `<strong>${link(r.clone_url, r.clone_name)}</strong>`)}
+    ${row('Developer', esc(r.original_developer), esc(r.clone_developer))}
+    ${row('Released', date(r.original_released), date(r.clone_released))}
+    ${row('Platform', r.platform ? '<span class="muted">Not listed</span>' : '', esc(r.platform))}
+    ${row('Steam', r.original_steam_appid ? link(steamUrl(r.original_steam_appid), 'Store page') : '', r.clone_steam_appid ? link(steamUrl(r.clone_steam_appid), 'Store page') : '')}
+  </section>
+  ${releaseNote(r)}
+  ${r.original_url ? `<p><a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">Go to the original</a></p>` : ''}
+  ${mech.length ? `<section><h2>What they share</h2><ul class="chips">${mech.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
   ${r.notes ? `<section><h2>Details from the reporter</h2><p class="notes">${esc(r.notes)}</p></section>` : ''}
+  ${r.status === 'approved' ? voteBox(r, opts) : ''}
   <p class="muted">Reported ${date(r.created_at)}. This is a community claim reviewed by a moderator, not a legal finding.</p>
 </article>`);
 }
@@ -209,6 +266,8 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
     ${field('original_name', 'Game name', v, { required: true, placeholder: 'e.g. Flappy Bird' })}
     ${field('original_developer', 'Developer or studio', v)}
     ${field('original_url', 'Link to the original (store page or website)', v, { type: 'url', placeholder: 'https://' })}
+    ${field('original_released', 'Release date', v, { placeholder: 'e.g. 2013 or 2013-05-24', max: 10 })}
+    ${field('original_image', 'Screenshot link (optional)', v, { type: 'url', placeholder: 'https://' })}
   </fieldset>
   <fieldset>
     <legend>The clone</legend>
@@ -216,7 +275,14 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
     ${field('clone_developer', 'Clone developer or studio', v)}
     ${field('clone_url', 'Link to the clone', v, { type: 'url', placeholder: 'https://' })}
     ${field('platform', 'Platform', v, { placeholder: 'e.g. iOS, Android, Steam, web', max: 60 })}
+    ${field('clone_released', 'Release date', v, { placeholder: 'e.g. 2014 or 2014-01-30', max: 10 })}
+    ${field('clone_image', 'Screenshot link (optional)', v, { type: 'url', placeholder: 'https://' })}
   </fieldset>
+  <label class="field">
+    <span>Shared mechanics</span>
+    <input name="mechanics" value="${esc(v.mechanics)}" maxlength="600" placeholder="e.g. tap to flap, pipes as obstacles, one-button controls">
+    <small>Separate them with commas. Steam games get their release dates and images filled in automatically.</small>
+  </label>
   <label class="field">
     <span>What was copied?</span>
     <textarea name="notes" rows="5" maxlength="2000" placeholder="Gameplay, art, name, code, level design… Links to comparisons or screenshots help.">${esc(v.notes)}</textarea>
@@ -246,6 +312,7 @@ function adminPage(status, rows, counts) {
   <div class="actions">
     ${status !== 'approved' ? action(r, 'approve', 'Approve') : ''}
     ${status !== 'rejected' ? action(r, 'reject', 'Reject', 'ghost') : ''}
+    <a class="btn small ghost" href="/admin/${r.id}/edit">Edit</a>
     ${action(r, 'delete', 'Delete', 'danger')}
   </div>
 </li>`;
@@ -253,6 +320,37 @@ function adminPage(status, rows, counts) {
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p class="muted">Nothing here.</p>`}`);
 }
 
+function adminEditPage(r, { values, errors = [] }) {
+  const v = { ...values };
+  return layout(`Edit report #${r.id}`, `
+<h1>Edit report #${r.id}</h1>
+<p><a href="/report/${r.id}">View the report</a> · <a href="/admin?status=${esc(r.status)}">Back to moderation</a></p>
+${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+<form class="report-form" method="post" action="/admin/${r.id}/edit">
+  <fieldset>
+    <legend>The original game</legend>
+    ${field('original_name', 'Game name', v, { required: true })}
+    ${field('original_developer', 'Developer or studio', v)}
+    ${field('original_url', 'Link', v, { type: 'url' })}
+    ${field('original_released', 'Release date', v, { max: 10 })}
+    ${field('original_image', 'Screenshot link', v, { type: 'url' })}
+  </fieldset>
+  <fieldset>
+    <legend>The clone</legend>
+    ${field('clone_name', 'Clone name', v, { required: true })}
+    ${field('clone_developer', 'Developer or studio', v)}
+    ${field('clone_url', 'Link', v, { type: 'url' })}
+    ${field('platform', 'Platform', v, { max: 60 })}
+    ${field('clone_released', 'Release date', v, { max: 10 })}
+    ${field('clone_image', 'Screenshot link', v, { type: 'url' })}
+  </fieldset>
+  <label class="field"><span>Shared mechanics (one per line or comma separated)</span>
+    <textarea name="mechanics" rows="4" maxlength="600">${esc(v.mechanics)}</textarea></label>
+  <label class="field"><span>Details</span><textarea name="notes" rows="6" maxlength="2000">${esc(v.notes)}</textarea></label>
+  <button class="btn">Save changes</button>
+</form>`);
+}
+
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, notFound };

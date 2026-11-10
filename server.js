@@ -7,7 +7,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound, esc } = require('./views');
+const steam = require('./steam');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, notFound, esc } = require('./views');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -16,6 +17,8 @@ const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 const MIN_FILL_MS = Number(process.env.MIN_FILL_MS ?? 4000);   // humans take a few seconds to fill the form
 const PUBLIC_URL = (process.env.PUBLIC_URL || '').replace(/\/$/, '');      // e.g. https://clonereport.com
 const MAX_PER_HOUR = Number(process.env.MAX_PER_HOUR ?? 5);    // per IP
+const MAX_VOTES_PER_HOUR = Number(process.env.MAX_VOTES_PER_HOUR ?? 100); // per IP
+const STEAM_ENRICH = process.env.STEAM_ENRICH !== '0';
 
 if (!ADMIN_PASSWORD) console.warn('ADMIN_PASSWORD is not set: the /admin page is disabled.');
 
@@ -40,7 +43,7 @@ function send(res, status, body, headers = {}) {
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Content-Security-Policy': "default-src 'self'; style-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'",
+    'Content-Security-Policy': "default-src 'self'; style-src 'self'; img-src 'self' data: https:; form-action 'self'; frame-ancestors 'none'",
     ...headers,
   });
   res.end(body);
@@ -58,14 +61,15 @@ function readBody(req, limit = 20_000) {
 
 // Form token = timestamp signed with the server secret. Proves the form was
 // loaded from this site and lets us reject submissions that are too fast.
-const makeFormToken = () => { const t = Date.now().toString(); return `${t}.${hmac('form:' + t)}`; };
-function checkFormToken(tok) {
+// `purpose` keeps a token for one form from being replayed on another.
+const makeFormToken = (purpose = 'form') => { const t = Date.now().toString(); return `${t}.${hmac(purpose + ':' + t)}`; };
+function checkFormToken(tok, purpose = 'form', minMs = MIN_FILL_MS, maxMs = 2 * 3600 * 1000) {
   const [t, sig] = String(tok || '').split('.');
   if (!t || !sig || sig.length !== 64) return 'expired';
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(hmac('form:' + t)))) return 'expired';
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(hmac(purpose + ':' + t)))) return 'expired';
   const age = Date.now() - Number(t);
-  if (age < MIN_FILL_MS) return 'too-fast';
-  if (age > 2 * 3600 * 1000) return 'expired';
+  if (age < minMs) return 'too-fast';
+  if (age > maxMs) return 'expired';
   return null;
 }
 
@@ -78,6 +82,18 @@ function cleanUrl(v) {
     return u.toString().slice(0, 500);
   } catch { return null; }
 }
+// Release dates: 2017, 2017-02 or 2017-02-21.
+function cleanDate(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  const m = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(v);
+  if (!m || +m[1] < 1950 || +m[1] > 2100 || (m[2] && (+m[2] < 1 || +m[2] > 12)) || (m[3] && (+m[3] < 1 || +m[3] > 31))) return null;
+  return v;
+}
+// Shared mechanics: comma or line separated, stored one per line.
+const cleanMechanics = (v) => [...new Set(String(v || '').split(/[,\n]/).map((x) => x.replace(/\s+/g, ' ').trim().slice(0, 40)).filter(Boolean))]
+  .slice(0, 12).join('\n');
+const httpsOnly = (u) => (u && !u.startsWith('https://') ? null : u);
 const clean = (v, max) => String(v || '').replace(/\s+/g, (m) => (m.includes('\n') ? '\n' : ' ')).trim().slice(0, max);
 
 function validate(f) {
@@ -91,6 +107,11 @@ function validate(f) {
     platform: clean(f.get('platform'), 60),
     notes: String(f.get('notes') || '').trim().slice(0, 2000),
     contact: clean(f.get('contact'), 200),
+    clone_released: cleanDate(f.get('clone_released')),
+    original_released: cleanDate(f.get('original_released')),
+    clone_image: httpsOnly(cleanUrl(f.get('clone_image'))),
+    original_image: httpsOnly(cleanUrl(f.get('original_image'))),
+    mechanics: cleanMechanics(f.get('mechanics')),
   };
   const errors = [];
   if (!r.clone_name) errors.push('Please enter the name of the clone.');
@@ -100,6 +121,8 @@ function validate(f) {
   if (r.clone_url === null) errors.push('The clone link must be a full web address starting with http:// or https://.');
   if (r.original_url === null) errors.push('The original game link must be a full web address starting with http:// or https://.');
   if (!r.original_url && !r.clone_url) errors.push('Please add at least one link (to the original game or the clone) so reviewers can verify the report.');
+  if (r.clone_released === null || r.original_released === null) errors.push('Release dates must look like 2017, 2017-02 or 2017-02-21.');
+  if (r.clone_image === null || r.original_image === null) errors.push('Screenshot links must be full web addresses starting with https://.');
   const linkCount = (r.notes.match(/https?:\/\//g) || []).length;
   if (linkCount > 5) errors.push('Notes can contain at most 5 links.');
   return { r, errors };
@@ -113,6 +136,8 @@ function isAdmin(req) {
   const a = Buffer.from(hmac(pass)), b = Buffer.from(hmac(ADMIN_PASSWORD));
   return crypto.timingSafeEqual(a, b);
 }
+// One vote per visitor per report, keyed on a salted hash of the IP address.
+const voterId = (req) => hmac('voter:' + clientIp(req));
 const sameOrigin = (req) => {
   const o = req.headers.origin;
   if (!o) return true; // older browsers / curl; Basic auth still required
@@ -189,7 +214,28 @@ async function handle(req, res) {
   if (req.method === 'GET' && (m = p.match(/^\/report\/(\d+)$/))) {
     const r = store.get(Number(m[1]));
     if (!r || (r.status !== 'approved' && !isAdmin(req))) return send(res, 404, notFound());
-    return send(res, 200, reportPage(r));
+    const voted = url.searchParams.get('voted');
+    return send(res, 200, reportPage(r, {
+      myVote: store.myVote(r.id, voterId(req)), voteToken: makeFormToken('vote:' + r.id),
+      voteMsg: voted === 'ok' ? 'Thanks, your vote counts.' : voted === 'limit' ? 'You have voted a lot in the last hour. Please try again later.'
+        : voted === 'expired' ? 'The page was open too long. Please vote again.' : '',
+    }), { 'Cache-Control': 'no-store' });
+  }
+
+  if (req.method === 'POST' && (m = p.match(/^\/report\/(\d+)\/vote$/))) {
+    const r = store.get(Number(m[1]));
+    if (!r || r.status !== 'approved') return send(res, 404, notFound());
+    if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+    let f;
+    try { f = await readBody(req, 2000); } catch { return send(res, 413, layout('Too large', '<p>Too large.</p>')); }
+    const back = (v) => redirect(res, `/report/${r.id}?voted=${v}#vote`);
+    const choice = f.get('choice');
+    if (!['clone', 'inspired', 'original'].includes(choice)) return back('expired');
+    if (checkFormToken(f.get('token'), 'vote:' + r.id, 0, 24 * 3600 * 1000)) return back('expired');
+    const voter = voterId(req);
+    if (store.votesByVoter(voter, 3600 * 1000) >= MAX_VOTES_PER_HOUR) return back('limit');
+    store.vote(r.id, voter, choice);
+    return back('ok');
   }
 
   if (req.method === 'GET' && (m = p.match(/^\/game\/(\d+)$/))) {
@@ -248,6 +294,20 @@ async function handle(req, res) {
       store.excludeOriginal(Number(m[1]), 'removed by admin');
       return redirect(res, '/admin/originals?q=' + encodeURIComponent(url.searchParams.get('q') || ''));
     }
+    if ((m = p.match(/^\/admin\/(\d+)\/edit$/))) {
+      const r = store.get(Number(m[1]));
+      if (!r) return send(res, 404, notFound());
+      if (req.method === 'GET') return send(res, 200, adminEditPage(r, { values: r }), { 'Cache-Control': 'no-store' });
+      if (req.method === 'POST') {
+        if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+        let f;
+        try { f = await readBody(req); } catch { return send(res, 413, layout('Too large', '<p>Too large.</p>')); }
+        const { r: v, errors } = validate(f);
+        if (errors.length) return send(res, 400, adminEditPage(r, { values: Object.fromEntries(f), errors }), { 'Cache-Control': 'no-store' });
+        store.updateReport(r.id, v);
+        return redirect(res, `/report/${r.id}`);
+      }
+    }
     if (req.method === 'POST' && (m = p.match(/^\/admin\/(\d+)\/(approve|reject|delete)$/))) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
       const id = Number(m[1]);
@@ -261,6 +321,8 @@ async function handle(req, res) {
         const sameName = r && r.clone_name.toLowerCase() === r.original_name.toLowerCase();
         const g = r && (store.findOriginal(r.clone_steam_appid, '') || (!sameName && store.findOriginal(null, r.clone_name)));
         if (g) store.excludeOriginal(g.id, `approved clone report #${id}`);
+        // Fill missing release dates, images and developers from Steam in the background.
+        if (r && STEAM_ENRICH) steam.comparisonFor(r).then((d) => store.fillComparison(id, d)).catch(() => {});
       }
       return redirect(res, '/admin?status=' + encodeURIComponent(back));
     }
