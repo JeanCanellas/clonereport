@@ -8,7 +8,9 @@ const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
 const steam = require('./steam');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, developerPage, developersPage, treePage, notFound, esc } = require('./views');
+const api = require('./api');
+const mailer = require('./mailer');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, esc } = require('./views');
 const { familyTree } = require('./tree');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -154,12 +156,28 @@ const sameOrigin = (req) => {
   try { return new URL(o).host === req.headers.host; } catch { return false; }
 };
 
+const baseUrl = (req) => PUBLIC_URL || `${TRUST_PROXY && req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'}://${req.headers.host}`;
+
+// ---------- email alerts ----------
+const gameKey = (name) => clean(name, 120);
+async function sendAlerts(r, base) {
+  for (const f of store.followersOf(r.original_name)) {
+    await mailer.send({
+      to: f.email,
+      subject: `New clone of ${r.original_name} reported: ${r.clone_name}`,
+      text: `${r.clone_name}${r.clone_developer ? ` by ${r.clone_developer}` : ''} was reported as a clone of ${r.original_name} on Clone Report.\n\n`
+        + `See the comparison and vote: ${base}/report/${r.id}\n\n`
+        + `You get this email because you follow ${f.game}. Stop these emails: ${base}/follow/unsubscribe?t=${f.token}\n`,
+    }).catch((err) => console.error('alert email failed:', err.message));
+  }
+}
+
 // ---------- JSON API (used by the browser extension) ----------
 function apiLookup(req, res, url) {
   const appidRaw = url.searchParams.get('appid');
   const appid = /^\d{1,10}$/.test(appidRaw || '') ? Number(appidRaw) : null;
   const name = clean(url.searchParams.get('name'), 120);
-  const base = PUBLIC_URL || `${TRUST_PROXY && req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'}://${req.headers.host}`;
+  const base = baseUrl(req);
   const { asClone, asOriginal } = (appid || name) ? store.lookup(appid, name) : { asClone: [], asOriginal: [] };
   const steamUrl = (id) => (id ? `https://store.steampowered.com/app/${id}` : null);
   const summary = (r) => (r.notes ? (r.notes.length > 160 ? r.notes.slice(0, 157).trimEnd() + '…' : r.notes) : null);
@@ -204,6 +222,46 @@ async function handle(req, res) {
   if (req.method === 'GET' && p === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
 
   if (req.method === 'GET' && p === '/api/lookup') return apiLookup(req, res, url);
+  if (api.handleApi(req, res, url, { base: baseUrl(req), ip: clientIp(req) })) return;
+  if (req.method === 'GET' && p === '/api') return send(res, 200, apiDocsPage(baseUrl(req)));
+  if (req.method === 'GET' && p === '/feed.xml') return api.feed(res, url, baseUrl(req));
+
+  // Follow a game: double opt-in by email, then one email per newly approved clone of it.
+  if (p === '/follow') {
+    const game = gameKey(url.searchParams.get('game'));
+    if (!game) return send(res, 404, notFound());
+    if (req.method === 'GET') return send(res, 200, followPage(game, { token: makeFormToken('follow'), emailOn: mailer.enabled }));
+    if (req.method === 'POST' && mailer.enabled) {
+      let f;
+      try { f = await readBody(req, 2000); } catch { return send(res, 413, layout('Too large', '<p>Too large.</p>')); }
+      if (f.get('website')) return send(res, 200, followPage(game, { done: 'sent', emailOn: true }));
+      const again = (status, error) => send(res, status, followPage(game, { token: makeFormToken('follow'), emailOn: true, error, email: f.get('email') }));
+      if (checkFormToken(f.get('token'), 'follow', Math.min(MIN_FILL_MS, 1500))) return again(400, 'The form expired. Please try again.');
+      const email = clean(f.get('email'), 200);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return again(400, 'Please enter a valid email address.');
+      const ipHash = hmac('ip:' + clientIp(req));
+      if (store.rateCheck(ipHash, 3600 * 1000) >= MAX_PER_HOUR) return again(429, 'Too many requests. Please try again in an hour.');
+      store.logSubmission(ipHash);
+      const row = store.follow(email, game, crypto.randomBytes(24).toString('base64url'));
+      if (!row.confirmed) {
+        const base = baseUrl(req);
+        await mailer.send({ to: email, subject: `Confirm: email alerts for ${game}`,
+          text: `Someone (hopefully you) asked Clone Report to email this address when a clone of ${game} is reported.\n\n`
+            + `Confirm: ${base}/follow/confirm?t=${row.token}\n\nIf it wasn't you, ignore this email and nothing will be sent.\n` })
+          .catch((err) => console.error('confirm email failed:', err.message));
+      }
+      // Same answer either way, so the form does not reveal who already follows what.
+      return send(res, 200, followPage(game, { done: 'sent', emailOn: true }));
+    }
+  }
+  if (req.method === 'GET' && (p === '/follow/confirm' || p === '/follow/unsubscribe')) {
+    const t = String(url.searchParams.get('t') || '').slice(0, 64);
+    const row = t && store.followByToken(t);
+    if (!row) return send(res, 404, layout('Link expired', '<h1>This link no longer works</h1><p>You may have already unsubscribed.</p>'));
+    if (p === '/follow/confirm') { store.confirmFollow(t); return send(res, 200, followPage(row.game, { done: 'confirmed', emailOn: true }), { 'Cache-Control': 'no-store' }); }
+    store.unfollow(t);
+    return send(res, 200, followPage(row.game, { done: 'unsubscribed', emailOn: true }), { 'Cache-Control': 'no-store' });
+  }
 
   if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved, store.countOriginals()));
   if (req.method === 'GET' && p === '/originals') {
@@ -386,6 +444,7 @@ async function handle(req, res) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
       const id = Number(m[1]);
       const back = url.searchParams.get('back') || 'pending';
+      const wasPending = store.get(id)?.status === 'pending';
       if (m[2] === 'delete') store.remove(id);
       else store.setStatus(id, m[2] === 'approve' ? 'approved' : 'rejected');
       // A game confirmed as a clone comes off the originals list for good.
@@ -397,6 +456,8 @@ async function handle(req, res) {
         if (g) store.excludeOriginal(g.id, `approved clone report #${id}`);
         // Fill missing release dates, images and developers from Steam in the background.
         if (r && STEAM_ENRICH) steam.comparisonFor(r).then((d) => store.fillComparison(id, d)).catch(() => {});
+        // Email people who follow the original game (only on the first approval).
+        if (r && wasPending && mailer.enabled) sendAlerts(r, baseUrl(req)).catch(() => {});
       }
       return redirect(res, '/admin?status=' + encodeURIComponent(back));
     }

@@ -2,6 +2,7 @@
 // HTML templates. Every user-supplied value goes through esc().
 
 const { devKey } = require('./keys');
+const { MIN_VOTES, tally, verdict } = require('./scoring');
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const link = (url, text) => (url ? `<a href="${esc(url)}" rel="nofollow ugc noopener" target="_blank">${esc(text)}</a>` : esc(text));
 const devLink = (name) => (name && devKey(name) ? `<a href="/dev/${devKey(name)}">${esc(name)}</a>` : esc(name));
@@ -32,7 +33,7 @@ function layout(title, body, { q = '' } = {}) {
 ${body}
 </main>
 <footer class="wrap site-foot">
-  <nav class="foot-nav"><a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/submit">Report a clone</a></nav>
+  <nav class="foot-nav"><a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/feed.xml">RSS</a> · <a href="/api">API</a> · <a href="/submit">Report a clone</a></nav>
   <p>Reports are submitted by the community and reviewed before they appear. They are claims, not legal findings.</p>
 </footer>
 </body>
@@ -41,18 +42,6 @@ ${body}
 
 // ---------- community votes ----------
 const CHOICES = [['clone', 'Clone', 'It copies the original'], ['inspired', 'Inspired by', 'Borrows ideas but is its own game'], ['original', 'Original', 'Not a copy']];
-function tally(r) {
-  const t = { clone: r.votes_clone || 0, inspired: r.votes_inspired || 0, original: r.votes_original || 0 };
-  t.total = t.clone + t.inspired + t.original;
-  // Clone score: share of votes saying "clone", with "inspired by" counting half.
-  t.score = t.total ? Math.round((100 * (t.clone + t.inspired / 2)) / t.total) : null;
-  return t;
-}
-const MIN_VOTES = 3; // below this the score is shown as "not enough votes yet"
-function verdict(t) {
-  if (t.total < MIN_VOTES) return null;
-  return t.score >= 67 ? 'Likely a clone' : t.score >= 34 ? 'Inspired by' : 'Likely original';
-}
 const pct = (n, total) => (total ? Math.round((100 * n) / total) : 0);
 function scoreBadge(r) {
   const t = tally(r);
@@ -185,7 +174,8 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
   </section>
   ${releaseNote(r)}
   <p class="links">${r.original_url ? `<a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">Go to the original</a>` : ''}
-    <a class="btn ghost" href="${treeUrl(r.original_name)}">Family tree of ${esc(r.original_name)}</a></p>
+    <a class="btn ghost" href="${treeUrl(r.original_name)}">Family tree of ${esc(r.original_name)}</a>
+    <a class="btn ghost" href="/follow?game=${encodeURIComponent(r.original_name)}">Follow ${esc(r.original_name)}</a></p>
   ${mech.length ? `<section><h2>What they share</h2><ul class="chips">${mech.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
   ${r.notes ? `<section><h2>Details from the reporter</h2><p class="notes">${esc(r.notes)}</p></section>` : ''}
   ${evidenceList(r.evidence)}
@@ -222,7 +212,8 @@ function gamePage(g, { clones, asClone }) {
   <h2>Clones of ${esc(g.name)}</h2>
   ${clones.length ? `<ul class="cards">${clones.map(card).join('')}</ul>` : `<p class="muted">No clones of this game have been reported yet.</p>`}
   <p class="links"><a href="/submit?original_name=${encodeURIComponent(g.name)}">Report a clone of ${esc(g.name)}</a>
-    ${clones.length || asClone.length ? `· <a href="${treeUrl(g.name)}">See the family tree</a>` : ''}</p>
+    ${clones.length || asClone.length ? `· <a href="${treeUrl(g.name)}">See the family tree</a>` : ''}
+    · <a href="/follow?game=${encodeURIComponent(g.name)}">Get alerts for new clones</a></p>
 </article>`);
 }
 
@@ -447,6 +438,48 @@ function adminDisputesPage(status, rows, counts) {
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p class="muted">Nothing here.</p>'}`);
 }
 
+// ---------- alerts and API ----------
+function followPage(game, { token = '', emailOn = false, done = '', error = '', email = '' } = {}) {
+  const feed = `/feed.xml?game=${encodeURIComponent(game)}`;
+  const msg = { sent: 'Check your inbox: we sent a link to confirm. No alerts are sent until you click it.',
+    confirmed: `You're all set. We'll email you when a new clone of ${game} is reported.`,
+    unsubscribed: `You won't get any more emails about ${game}.` }[done];
+  return layout(`Follow ${game}`, `
+<h1>Follow ${esc(game)}</h1>
+<p>Get told when someone reports a new clone of ${esc(game)} and a moderator approves it.</p>
+${msg ? `<p class="notice" role="status">${esc(msg)}</p>` : ''}
+${emailOn && !done ? `<form class="report-form" method="post" action="/follow?game=${encodeURIComponent(game)}">
+  <input type="hidden" name="token" value="${esc(token)}">
+  <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off"></label></div>
+  ${error ? `<div class="errors" role="alert"><ul><li>${esc(error)}</li></ul></div>` : ''}
+  <label class="field"><span>Email</span><input type="email" name="email" value="${esc(email)}" required maxlength="200">
+    <small>We send one confirmation email, then one email per new clone. Every email has an unsubscribe link.</small></label>
+  <button class="btn">Email me</button>
+</form>` : ''}
+<h2>RSS</h2>
+<p>Add this feed to any RSS reader: <a href="${esc(feed)}">${esc(feed)}</a></p>
+<p class="muted">There is also a feed of <a href="/feed.xml">every new report</a>, and one per developer at <code>/feed.xml?dev=&lt;developer&gt;</code>.</p>`);
+}
+
+function apiDocsPage(base) {
+  const ep = (path, desc, example) => `<section class="box"><h2><code>GET ${esc(path)}</code></h2><p>${desc}</p>
+    <p class="muted">Example: <a href="${esc(example)}"><code>${esc(base + example)}</code></a></p></section>`;
+  return layout('API', `
+<h1>Public API</h1>
+<p>Free, read-only JSON for other sites, bots and tools. No key needed. CORS is open, responses are cached for 5 minutes,
+and each IP can make 120 requests a minute. Only approved reports are included. Please link back to the report pages you use.</p>
+${ep('/api/v1/games?appid=&name=', 'Clone status of one game: <code>reported-clone</code>, <code>verified-original</code>, <code>cloned-by-others</code> or <code>unknown</code>, with the reports in both directions and the highest clone score.', '/api/v1/games?name=Flappy%20Bird')}
+${ep('/api/v1/reports?q=&developer=&since_id=&limit=&offset=', 'Approved reports, newest first. <code>q</code> searches game and developer names, <code>developer</code> takes a developer key (as in <code>/dev/&lt;key&gt;</code>), <code>since_id</code> returns only newer reports, <code>limit</code> is at most 100.', '/api/v1/reports?limit=5')}
+${ep('/api/v1/reports/:id', 'One report with notes, evidence links, votes, clone score, verdict and published developer responses.', '/api/v1/reports/1')}
+${ep('/api/v1/developers/:key', 'Every report about a developer, and its listed original games.', '/api/v1/developers/supercell')}
+${ep('/api/v1/tree?game=', 'Family tree of a game: what it copies and what copied it, nested.', '/api/v1/tree?game=Tetris')}
+<h2>Report fields</h2>
+<p><code>clone</code> and <code>original</code> each have <code>name</code>, <code>developer</code>, <code>url</code>, <code>steamAppid</code>, <code>steamUrl</code>, <code>released</code> and <code>image</code>.
+<code>votes</code> counts <code>clone</code>, <code>inspired</code> and <code>original</code> votes. <code>cloneScore</code> (0–100) is the share of "clone" votes with "inspired by" counting half, and
+<code>verdict</code> is set once a report has 3 votes.</p>
+<p class="muted">Feeds: <a href="/feed.xml">/feed.xml</a>, <code>/feed.xml?game=&lt;name&gt;</code>, <code>/feed.xml?dev=&lt;key&gt;</code>. The older <code>/api/lookup</code> endpoint used by the browser extension still works.</p>`);
+}
+
 // ---------- developer pages ----------
 function developerPage(key, name, { cloned, wasCloned, originals }) {
   const repeat = cloned.length >= 3;
@@ -500,4 +533,4 @@ ${q ? `<p>No approved reports mention “${esc(q)}”. <a href="/search?q=${enco
 
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, developerPage, developersPage, treePage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound };

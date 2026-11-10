@@ -135,6 +135,20 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_history_report ON report_history(report_id, id);
 `);
 
+// Email alerts: follow a game, get an email when a clone of it is approved.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS follows (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    email      TEXT NOT NULL COLLATE NOCASE,
+    game       TEXT NOT NULL COLLATE NOCASE,   -- the game's name as typed on the site
+    token      TEXT NOT NULL UNIQUE,            -- secret used in confirm and unsubscribe links
+    confirmed  INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (email, game)
+  );
+  CREATE INDEX IF NOT EXISTS idx_follows_game ON follows(game, confirmed);
+`);
+
 // Community votes: one per visitor (salted IP hash) per report; voting again changes it.
 db.exec(`
   CREATE TABLE IF NOT EXISTS votes (
@@ -160,6 +174,21 @@ const stmts = {
     (clone_name, clone_url, clone_developer, original_name, original_url, original_developer, platform, notes, contact, ip_hash,
      clone_steam_appid, original_steam_appid, clone_released, original_released, clone_image, original_image, mechanics, evidence)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+  follow: db.prepare(`INSERT INTO follows (email, game, token) VALUES (?, ?, ?)
+    ON CONFLICT(email, game) DO UPDATE SET token = CASE WHEN confirmed THEN token ELSE excluded.token END RETURNING *`),
+  followByToken: db.prepare(`SELECT * FROM follows WHERE token = ?`),
+  confirmFollow: db.prepare(`UPDATE follows SET confirmed = 1 WHERE token = ?`),
+  unfollow: db.prepare(`DELETE FROM follows WHERE token = ?`),
+  followersOf: db.prepare(`SELECT * FROM follows WHERE confirmed = 1 AND game = ?`),
+  apiReports: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
+    AND (? = '' OR clone_name LIKE ? ESCAPE '\\' OR original_name LIKE ? ESCAPE '\\' OR clone_developer LIKE ? ESCAPE '\\' OR original_developer LIKE ? ESCAPE '\\')
+    AND (? = '' OR clone_dev_key = ? OR original_dev_key = ?)
+    AND (? = 0 OR id > ?)
+    ORDER BY id DESC LIMIT ? OFFSET ?`),
+  feed: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
+    AND (? = '' OR lower(original_name) = lower(?) OR lower(clone_name) = lower(?))
+    AND (? = '' OR clone_dev_key = ? OR original_dev_key = ?)
+    ORDER BY reviewed_at DESC, id DESC LIMIT 50`),
   logHistory: db.prepare(`INSERT INTO report_history (report_id, actor, action, changes) VALUES (?, ?, ?, ?)`),
   history: db.prepare(`SELECT * FROM report_history WHERE report_id = ? ORDER BY id`),
   delHistory: db.prepare(`DELETE FROM report_history WHERE report_id = ?`),
@@ -316,6 +345,18 @@ module.exports = {
   },
   history: (id) => stmts.history.all(id).map((h) => ({ ...h, changes: h.changes ? JSON.parse(h.changes) : null })),
   remove(id) { stmts.delVotes.run(id); stmts.delHistory.run(id); stmts.delDisputes.run(id); stmts.del.run(id); },
+  // Follows (email alerts). Returns the row; an existing confirmed follow keeps its token.
+  follow: (email, game, token) => stmts.follow.get(email, game, token),
+  followByToken: (t) => stmts.followByToken.get(t),
+  confirmFollow: (t) => stmts.confirmFollow.run(t).changes > 0,
+  unfollow: (t) => stmts.unfollow.run(t).changes > 0,
+  followersOf: (game) => stmts.followersOf.all(game),
+  // Public API list. Filters: text query, developer key, only ids after `since`.
+  apiReports({ q = '', dev = '', since = 0, limit = 50, offset = 0 } = {}) {
+    const like = `%${likeEscape(q)}%`;
+    return stmts.apiReports.all(q, like, like, like, like, dev, dev, dev, since, since, limit, offset);
+  },
+  feed: ({ game = '', dev = '' } = {}) => stmts.feed.all(game, game, game, dev, dev, dev),
   // Developer disputes.
   createDispute(reportId, d, ipHash) {
     const res = stmts.insertDispute.run(reportId, d.name, d.role, d.contact, d.message, d.links || null, ipHash);

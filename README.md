@@ -27,6 +27,9 @@ npm test
 | `MAX_PER_HOUR` | `5` | Reports allowed per IP per hour |
 | `MIN_FILL_MS` | `4000` | Minimum time between loading and submitting the form |
 | `MAX_VOTES_PER_HOUR` | `100` | Community votes allowed per IP per hour |
+| `API_PER_MINUTE` | `120` | Public API requests allowed per IP per minute |
+| `RESEND_API_KEY` | *(none: email alerts off)* | API key from [Resend](https://resend.com), used to send alert emails |
+| `ALERT_FROM` | *(none)* | Sender for alert emails, e.g. `Clone Report <alerts@clonereport.com>` (the domain must be verified in Resend) |
 | `STEAM_ENRICH` | on | Set to `0` to stop filling release dates, images and developers from Steam when a report is approved |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
 | `STEAM_SCAN` | on | Set to `0` to turn off the daily Steam scan |
@@ -58,6 +61,20 @@ Visitors vote on each approved report: **Clone**, **Inspired by** or **Original*
 - **Disputes.** Every approved report has a "Dispute this report" link (`/report/:id/dispute`) for the developers involved. They give their name, role, a private email, an explanation and optional links. Disputes land in `/admin/disputes`, where a moderator can **publish** the developer's message as a response next to the report, **dismiss** it, or reopen it. To take a report down, reject it from the Reports tab. Disputes use the same spam protection as the submit form.
 - **Edit history.** `/report/:id/history` lists every change to a report: submitted, approved or rejected, edited by a moderator (field by field, old and new values), filled in from Steam, disputes received and responses published. It never shows contact emails or IP hashes. Changes made before this feature was added are not listed.
 
+## Public API and alerts
+
+`/api` documents a free, read-only JSON API (CORS open, cached 5 minutes, 120 requests per minute per IP). Only approved reports are exposed, never contact details.
+
+- `GET /api/v1/games?appid=&name=`: one game's clone status (`reported-clone`, `verified-original`, `cloned-by-others`, `unknown`) with reports both ways and its clone score
+- `GET /api/v1/reports?q=&developer=&since_id=&limit=&offset=` and `GET /api/v1/reports/:id`
+- `GET /api/v1/developers/:key` and `GET /api/v1/tree?game=`
+
+The older `/api/lookup` used by the browser extension is unchanged.
+
+**RSS:** `/feed.xml` (every newly approved report), `/feed.xml?game=<name>` (clones of one game) and `/feed.xml?dev=<key>` (one developer).
+
+**Email alerts:** each game and report page links to `/follow?game=<name>`. Visitors enter an email, confirm it from a link (double opt-in), and then get one email each time a clone of that game is approved for the first time. Every email has an unsubscribe link. Emails go out through [Resend](https://resend.com): set `RESEND_API_KEY` and `ALERT_FROM` to turn them on. Without them, the follow page offers the RSS feed only.
+
 ## Developer pages and family trees
 
 `/dev/:key` gathers every approved report about one studio: games it was reported to have cloned, its games that others cloned, and its original games. Developer names are matched loosely ("Copycat Studios, Inc." and "copycat studios inc" are the same page). A studio with 3 or more games reported as clones gets a "repeat reports" note. `/developers` ranks studios by reports.
@@ -66,7 +83,7 @@ Visitors vote on each approved report: **Clone**, **Inspired by** or **Original*
 
 ## Pages
 
-- `/` search + recently added, `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/report/:id/history`, `/report/:id/dispute`, `/admin/disputes`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
+- `/` search + recently added, `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/follow?game=`, `/feed.xml`, `/api`, `/api/v1/…`, `/report/:id/history`, `/report/:id/dispute`, `/admin/disputes`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` JSON lookup (used by the browser extension). Steam app ids are taken automatically from `store.steampowered.com/app/<id>` links in reports.
 
 ## Deploy
