@@ -47,7 +47,21 @@ function card(r) {
 </li>`;
 }
 
-function home(recent, total) {
+const steamLink = (g) => (g.steam_appid ? `https://store.steampowered.com/app/${g.steam_appid}/` : null);
+const stores = (g) => [g.steam_appid && 'Steam', g.eshop_url && 'Nintendo eShop'].filter(Boolean).join(' · ');
+
+function originalCard(g) {
+  return `<li class="card">
+  <a class="card-link" href="/game/${g.id}">
+    <div class="solo">
+      <div><span class="tag orig">Not a clone</span><strong>${esc(g.name)}</strong>${g.developer ? `<small>by ${esc(g.developer)}</small>` : ''}</div>
+      <small class="muted">${esc(stores(g))}</small>
+    </div>
+  </a>
+</li>`;
+}
+
+function home(recent, total, originals = 0) {
   return layout('Find the original game', `
 <section class="hero">
   <h1>Is this game a clone?</h1>
@@ -57,17 +71,24 @@ function home(recent, total) {
     <button class="btn">Search</button>
   </form>
   <p class="muted">${total} approved report${total === 1 ? '' : 's'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
+  ${originals ? `<p class="muted"><a href="/originals">Browse ${originals} original games</a> from Steam and the Nintendo eShop that are not clones.</p>` : ''}
 </section>
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
 }
 
-function searchPage(q, results) {
+function searchPage(q, results, originals = []) {
+  const origList = originals.length
+    ? `<h2>Original games</h2><p class="muted">Checked by Clone Report: these games are originals, not clones.</p>
+       <ul class="cards">${originals.map(originalCard).join('')}</ul>` : '';
   const body = !q
     ? `<p>Type a game name to search.</p>`
     : results.length
-      ? `<h1>Results for “${esc(q)}”</h1><ul class="cards">${results.map(card).join('')}</ul>
+      ? `<h1>Results for “${esc(q)}”</h1><h2>Clone reports</h2><ul class="cards">${results.map(card).join('')}</ul>${origList}
          <p class="muted">Know about another clone? <a href="/submit?clone_name=${encodeURIComponent(q)}">Report it</a>.</p>`
-      : `<h1>No reports for “${esc(q)}”</h1>
+      : originals.length
+        ? `<h1>Results for “${esc(q)}”</h1><p>No clone reports for “${esc(q)}”.</p>${origList}
+           <p class="muted">Know about a clone? <a href="/submit?clone_name=${encodeURIComponent(q)}">Report it</a>.</p>`
+        : `<h1>No reports for “${esc(q)}”</h1>
          <p>Nobody has reported this game yet. If it is a clone, or if someone cloned it, you can
          <a href="/submit?clone_name=${encodeURIComponent(q)}">submit a report</a>.</p>`;
   return layout(q ? `Search: ${q}` : 'Search', body, { q });
@@ -100,6 +121,41 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
   ${r.notes ? `<section><h2>Details from the reporter</h2><p class="notes">${esc(r.notes)}</p></section>` : ''}
   <p class="muted">Reported ${date(r.created_at)}. This is a community claim reviewed by a moderator, not a legal finding.</p>
 </article>`);
+}
+
+function gamePage(g, { clones, asClone }) {
+  const steam = steamLink(g);
+  return layout(`${g.name}: original game, not a clone`, `
+<article class="report">
+  <h1><span class="tag orig">Not a clone</span> ${esc(g.name)}</h1>
+  <p class="lead">${esc(g.name)} is an original game${g.developer ? ` made by <strong>${esc(g.developer)}</strong>` : ''}. It is not a copy of another game.</p>
+  ${asClone.length ? `<p class="notice">Note: ${asClone.length} community report${asClone.length === 1 ? '' : 's'} claim${asClone.length === 1 ? 's' : ''} this game copies another: ${asClone.map((r) => `<a href="/report/${r.id}">${esc(r.original_name)}</a>`).join(', ')}.</p>` : ''}
+  <section class="box">
+    <dl>
+      <dt>Game</dt><dd>${esc(g.name)}</dd>
+      ${g.developer ? `<dt>Developer</dt><dd>${esc(g.developer)}</dd>` : ''}
+      ${g.publisher ? `<dt>Publisher</dt><dd>${esc(g.publisher)}</dd>` : ''}
+      <dt>Available on</dt><dd>${esc(stores(g))}</dd>
+    </dl>
+    <p class="links">
+      ${steam ? `<a class="btn" href="${esc(steam)}" rel="noopener" target="_blank">View on Steam</a>` : ''}
+      ${g.eshop_url ? `<a class="btn" href="${esc(g.eshop_url)}" rel="noopener" target="_blank">View on Nintendo eShop</a>` : ''}
+    </p>
+  </section>
+  <h2>Clones of ${esc(g.name)}</h2>
+  ${clones.length ? `<ul class="cards">${clones.map(card).join('')}</ul>` : `<p class="muted">No clones of this game have been reported yet.</p>`}
+  <p><a href="/submit?original_name=${encodeURIComponent(g.name)}">Report a clone of ${esc(g.name)}</a></p>
+</article>`);
+}
+
+function originalsPage(games, storeFilter) {
+  const tab = (key, label) => `<a class="tab${storeFilter === key ? ' on' : ''}" href="/originals${key ? '?store=' + key : ''}">${label}</a>`;
+  return layout('Original games', `
+<h1>Original games</h1>
+<p>Well-known games from Steam and the Nintendo eShop that are originals, not clones. Search any of them to see whether someone has copied it.</p>
+<nav class="tabs">${tab('', 'All')}${tab('steam', 'Steam')}${tab('nintendo', 'Nintendo eShop')}</nav>
+<p class="muted">${games.length} game${games.length === 1 ? '' : 's'}</p>
+<ul class="cards">${games.map(originalCard).join('')}</ul>`);
 }
 
 const field = (name, label, v, { type = 'text', required = false, hint = '', placeholder = '', max = 120 } = {}) => `
@@ -169,4 +225,4 @@ ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p cl
 
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, submitPage, thanksPage, adminPage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, submitPage, thanksPage, adminPage, notFound };

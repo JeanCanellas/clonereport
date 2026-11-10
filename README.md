@@ -26,10 +26,17 @@ npm test
 | `TRUST_PROXY` | off | Set to `1` behind Render/Railway/Fly so the real visitor IP is used |
 | `MAX_PER_HOUR` | `5` | Reports allowed per IP per hour |
 | `MIN_FILL_MS` | `4000` | Minimum time between loading and submitting the form |
+| `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
+
+## Original games list
+
+`seed/originals.json` lists well-known games from Steam and the Nintendo eShop that are originals, not clones (name, developer, publisher, Steam app id and/or Nintendo eShop link; facts only, no store art). The server loads it into the `originals` table on every start, updating existing rows and never duplicating them, so a redeploy is all it takes to publish changes to the list. Set `SEED_ORIGINALS=0` to skip loading it.
+
+Each game gets a page at `/game/:id` marked "Not a clone", shows up in search, and is listed at `/originals` (filter with `?store=steam` or `?store=nintendo`). `/api/lookup` returns it as `verifiedOriginal`.
 
 ## Pages
 
-- `/` search + recently added, `/search?q=`, `/report/:id`, `/submit`, `/admin`
+- `/` search + recently added, `/search?q=`, `/report/:id`, `/game/:id`, `/originals`, `/submit`, `/admin`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` JSON lookup (used by the browser extension). Steam app ids are taken automatically from `store.steampowered.com/app/<id>` links in reports.
 
 ## Deploy

@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const store = require('./db');
-const { layout, home, searchPage, reportPage, submitPage, thanksPage, adminPage, notFound, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, submitPage, thanksPage, adminPage, notFound, esc } = require('./views');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -17,6 +17,15 @@ const PUBLIC_URL = (process.env.PUBLIC_URL || '').replace(/\/$/, '');      // e.
 const MAX_PER_HOUR = Number(process.env.MAX_PER_HOUR ?? 5);    // per IP
 
 if (!ADMIN_PASSWORD) console.warn('ADMIN_PASSWORD is not set: the /admin page is disabled.');
+
+// Load the list of verified original games (seed/originals.json) into the database.
+// Idempotent: existing rows are updated, nothing is duplicated. Set SEED_ORIGINALS=0 to skip.
+if (process.env.SEED_ORIGINALS !== '0') {
+  try {
+    const { games } = JSON.parse(fs.readFileSync(path.join(__dirname, 'seed', 'originals.json'), 'utf8'));
+    console.log(`Loaded ${store.seedOriginals(games)} original games from seed/originals.json`);
+  } catch (err) { console.error('Could not load seed/originals.json:', err.message); }
+}
 
 const CSS = fs.readFileSync(path.join(__dirname, 'public', 'style.css'));
 
@@ -132,6 +141,12 @@ function apiLookup(req, res, url) {
   const hit = asClone[0] ? { name: asClone[0].clone_name, appid: asClone[0].clone_steam_appid ?? appid }
     : asOriginal[0] ? { name: asOriginal[0].original_name, appid: asOriginal[0].original_steam_appid ?? appid } : null;
   const body = hit ? { found: true, game: hit, cloneOf, clonedBy } : { found: false, cloneOf: [], clonedBy: [] };
+  // Extra field: the game is on the site's list of verified originals (not clones).
+  const orig = (appid || name) ? store.findOriginal(appid, name) : null;
+  body.verifiedOriginal = orig ? {
+    name: orig.name, developer: orig.developer || null, appid: orig.steam_appid ?? null,
+    steamUrl: steamUrl(orig.steam_appid), eshopUrl: orig.eshop_url || null, pageUrl: `${base}/game/${orig.id}`,
+  } : null;
   res.writeHead(200, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
@@ -154,11 +169,17 @@ async function handle(req, res) {
 
   if (req.method === 'GET' && p === '/api/lookup') return apiLookup(req, res, url);
 
-  if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved));
+  if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved, store.countOriginals()));
+  if (req.method === 'GET' && p === '/originals') {
+    const s = url.searchParams.get('store');
+    const storeFilter = ['steam', 'nintendo'].includes(s) ? s : '';
+    const all = store.allOriginals().filter((g) => !storeFilter || (storeFilter === 'steam' ? g.steam_appid : g.eshop_url));
+    return send(res, 200, originalsPage(all, storeFilter));
+  }
 
   if (req.method === 'GET' && p === '/search') {
     const q = clean(url.searchParams.get('q'), 120);
-    return send(res, 200, searchPage(q, q ? store.search(q) : []));
+    return send(res, 200, searchPage(q, q ? store.search(q) : [], q ? store.searchOriginals(q) : []));
   }
 
   let m;
@@ -166,6 +187,12 @@ async function handle(req, res) {
     const r = store.get(Number(m[1]));
     if (!r || (r.status !== 'approved' && !isAdmin(req))) return send(res, 404, notFound());
     return send(res, 200, reportPage(r));
+  }
+
+  if (req.method === 'GET' && (m = p.match(/^\/game\/(\d+)$/))) {
+    const g = store.getOriginal(Number(m[1]));
+    if (!g) return send(res, 404, notFound());
+    return send(res, 200, gamePage(g, store.reportsAbout(g)));
   }
 
   if (p === '/submit') {

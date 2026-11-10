@@ -75,3 +75,8 @@ legend { font-weight: 700; padding: 0 6px; }
 .actions form { margin: 0; }
 
 .site-foot { border-top: 1px solid var(--line); margin-top: 48px; padding-top: 8px; padding-bottom: 24px; }
+
+.solo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.solo strong { margin-right: 6px; }
+.solo small { color: var(--muted); }
+.links { display: flex; gap: 8px; flex-wrap: wrap; }
