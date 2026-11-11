@@ -13,7 +13,7 @@ Shows a banner on game store pages when the game is reported on clonereport.com.
 What it shows:
 
 - **Red "Reported as a clone"** banner listing the original game(s), with links to their store pages and the report.
-- **Orange "This game has been cloned"** banner listing the reported clones. Games from a different store are labelled with that store.
+- **Orange "Reported clones of this game"** banner listing the reported clones. Games from a different store are labelled with that store.
 - Nothing on the page when there are no reports. The toolbar icon still shows status (CLN, a count, or blank) and its popup has a "Report a clone" link.
 
 On Steam the banner sits under the game title. The other stores redraw their pages as you browse, so there it floats in the bottom right corner. Those stores also change pages without reloading, so the extension checks again whenever the address changes.

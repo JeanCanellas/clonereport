@@ -80,20 +80,20 @@ test('side-by-side comparison with dates, images and shared mechanics', async ()
   assert.match(page, /<img class="shot" src="https:\/\/img.example\/o.jpg"/);
   assert.match(page, /No image yet/, 'placeholder when only one side has an image');
   assert.match(page, /1984-06/);
-  assert.match(page, /The original came out 35 years before the clone/);
+  assert.match(page, /The original came out 35 years before the reported clone/);
   assert.match(page, /<li>line clears<\/li><li>rotating pieces<\/li>/);
 });
 
 test('submit form accepts comparison fields and validates them', async () => {
   const tok = async () => (await (await fetch(base + '/submit')).text()).match(/name="token" value="([^"]+)"/)[1];
-  let res = await fetch(base + '/submit', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ token: await tok(),
+  let res = await fetch(base + '/submit', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ token: await tok(), agree: 'yes',
     clone_name: 'Bad Date', original_name: 'X', original_url: 'https://e.com', clone_released: 'yesterday', clone_image: 'http://insecure.example/a.png' }) });
   assert.equal(res.status, 400);
   const html = await res.text();
   assert.match(html, /Release dates must look like/);
   assert.match(html, /must be full web addresses starting with https/);
 
-  res = await fetch(base + '/submit', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ token: await tok(),
+  res = await fetch(base + '/submit', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ token: await tok(), agree: 'yes',
     clone_name: 'Good Clone', original_name: 'Good Orig', original_url: 'https://e.com', clone_released: '2020', mechanics: 'a, b,\n a , c' }) });
   assert.equal(res.status, 303);
   const r = store.byStatus('pending').find((x) => x.clone_name === 'Good Clone');
@@ -144,7 +144,7 @@ test('developer pages group reports by studio', async () => {
   assert.match(page, /Repeat reports/);
   assert.match(page, /Copy Two/);
   const real = await (await fetch(`${base}/dev/real-devs`)).text();
-  assert.match(real, /Their games that others cloned/);
+  assert.match(real, /Their games that others were reported to have copied/);
   assert.equal((await fetch(`${base}/dev/nobody-here`)).status, 404);
   const list = await (await fetch(`${base}/developers`)).text();
   assert.match(list, /<a href="\/dev\/copycat-studios-inc">[^<]+<\/a>\s*<span class="muted">3 games reported as clones/);
@@ -161,8 +161,8 @@ test('family trees follow reports both ways', async () => {
   const pending = store.createReport({ clone_name: 'Tree Hidden', original_name: 'Tree A', original_url: 'https://e.com' }, 'x');
   const page = await (await fetch(`${base}/tree?game=tree%20b`)).text();
   assert.match(page, /Family tree of Tree B/);
-  assert.match(page, /Tree B copies<\/h2><ul class="tree"><li><a href="\/tree\?game=Tree%20A">Tree A<\/a>/);
-  assert.match(page, /Copied by<\/h2><ul class="tree"><li><a href="\/tree\?game=Tree%20C">/);
+  assert.match(page, /Tree B is reported as copying<\/h2><ul class="tree"><li><a href="\/tree\?game=Tree%20A">Tree A<\/a>/);
+  assert.match(page, /Reported as copied by<\/h2><ul class="tree"><li><a href="\/tree\?game=Tree%20C">/);
   const a = await (await fetch(`${base}/tree?game=Tree%20A`)).text();
   assert.match(a, /Tree C/, 'grandchildren are shown');
   assert.ok(!a.includes('Tree Hidden'), 'pending reports are left out');

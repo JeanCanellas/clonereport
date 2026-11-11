@@ -17,11 +17,11 @@ const auth = { Authorization: 'Basic ' + Buffer.from('admin:pw').toString('base6
 const tokenFrom = async (path) => (await (await fetch(base + path)).text()).match(/name="token" value="([^"]+)"/)[1];
 
 test('evidence links are submitted, validated and shown', async () => {
-  let res = await fetch(base + '/submit', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ token: await tokenFrom('/submit'),
+  let res = await fetch(base + '/submit', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ token: await tokenFrom('/submit'), agree: 'yes',
     clone_name: 'Ev Clone', original_name: 'Ev Orig', original_url: 'https://e.com', evidence: 'not a link' }) });
   assert.equal(res.status, 400);
   assert.match(await res.text(), /Evidence must be/);
-  res = await fetch(base + '/submit', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ token: await tokenFrom('/submit'),
+  res = await fetch(base + '/submit', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ token: await tokenFrom('/submit'), agree: 'yes',
     clone_name: 'Ev Clone', original_name: 'Ev Orig', original_url: 'https://e.com', evidence: 'https://www.youtube.com/watch?v=abc\n\nhttps://news.example/article' }) });
   assert.equal(res.status, 303);
   const r = store.byStatus('pending').find((x) => x.clone_name === 'Ev Clone');

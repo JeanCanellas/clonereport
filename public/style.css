@@ -143,3 +143,5 @@ legend { font-weight: 700; padding: 0 6px; }
 .history dl { margin: 8px 0 0; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; overflow-wrap: anywhere; background: color-mix(in srgb, var(--fg) 8%, transparent); padding: 1px 5px; border-radius: 4px; }
 .prose { max-width: 720px; } .prose h2 { margin-top: 28px; font-size: 1.2rem; }
+.check { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0; }
+.check input { width: auto; margin-top: 4px; flex: none; }

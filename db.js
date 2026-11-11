@@ -197,6 +197,31 @@ db.exec(`
     FROM reports r;
 `);
 
+// Terms of Service: which version of the terms the reporter agreed to when submitting.
+{
+  const cols = new Set(db.prepare('PRAGMA table_info(reports)').all().map((c) => c.name));
+  if (!cols.has('terms_accepted')) db.exec('ALTER TABLE reports ADD COLUMN terms_accepted TEXT');
+}
+// Takedown, correction and legal requests sent through /contact. Only admins see them.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS contact_requests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind        TEXT NOT NULL,      -- removal | correction | copyright | privacy | legal | other
+    report_id   INTEGER,            -- the report it is about, if any
+    name        TEXT NOT NULL,
+    organization TEXT,
+    email       TEXT NOT NULL,      -- private
+    message     TEXT NOT NULL,
+    links       TEXT,               -- one per line
+    sworn       INTEGER NOT NULL DEFAULT 0, -- confirmed the statement is accurate and made in good faith
+    status      TEXT NOT NULL DEFAULT 'open', -- open | done
+    ip_hash     TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_requests_status ON contact_requests(status);
+`);
+
 const stmts = {
   insert: db.prepare(`INSERT INTO reports
     (clone_name, clone_url, clone_developer, original_name, original_url, original_developer, platform, notes, contact, ip_hash,
@@ -229,6 +254,14 @@ const stmts = {
   disputeCounts: db.prepare(`SELECT status, COUNT(*) AS n FROM disputes GROUP BY status`),
   setDispute: db.prepare(`UPDATE disputes SET status = ?, resolved_at = datetime('now') WHERE id = ?`),
   delDisputes: db.prepare(`DELETE FROM disputes WHERE report_id = ?`),
+  setTerms: db.prepare(`UPDATE reports SET terms_accepted = ? WHERE id = ?`),
+  insertRequest: db.prepare(`INSERT INTO contact_requests (kind, report_id, name, organization, email, message, links, sworn, ip_hash)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+  getRequest: db.prepare(`SELECT * FROM contact_requests WHERE id = ?`),
+  requestsByStatus: db.prepare(`SELECT q.*, r.clone_name, r.original_name FROM contact_requests q LEFT JOIN reports r ON r.id = q.report_id
+    WHERE q.status = ? ORDER BY q.id DESC LIMIT 200`),
+  requestCounts: db.prepare(`SELECT status, COUNT(*) AS n FROM contact_requests GROUP BY status`),
+  setRequest: db.prepare(`UPDATE contact_requests SET status = ?, resolved_at = CASE WHEN ? = 'done' THEN datetime('now') END WHERE id = ?`),
   update: db.prepare(`UPDATE reports SET clone_name = ?, clone_url = ?, clone_developer = ?, original_name = ?, original_url = ?,
     original_developer = ?, platform = ?, notes = ?, clone_released = ?, original_released = ?, clone_image = ?, original_image = ?,
     mechanics = ?, evidence = ?, clone_steam_appid = ?, original_steam_appid = ?,
@@ -536,4 +569,18 @@ module.exports = {
     return { clones: stmts.clonesOf.all(a, a, g.name), asClone: stmts.reportedAsClone.all(a, a, g.name) };
   },
   logSubmission: (ipHash) => stmts.logSubmission.run(ipHash, Date.now()),
+  setTermsAccepted: (id, version) => stmts.setTerms.run(version, id),
+  // Takedown and contact requests.
+  createRequest(q, ipHash) {
+    const res = stmts.insertRequest.run(q.kind, q.report_id || null, q.name, q.organization || null, q.email, q.message, q.links || null, q.sworn ? 1 : 0, ipHash);
+    return Number(res.lastInsertRowid);
+  },
+  getRequest: (id) => stmts.getRequest.get(id),
+  requestsByStatus: (s) => stmts.requestsByStatus.all(s),
+  requestCounts() {
+    const out = { open: 0, done: 0 };
+    for (const row of stmts.requestCounts.all()) out[row.status] = row.n;
+    return out;
+  },
+  setRequestStatus: (id, s) => stmts.setRequest.run(s, s, id).changes > 0,
 };

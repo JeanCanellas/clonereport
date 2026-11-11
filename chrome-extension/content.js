@@ -110,15 +110,15 @@
     if (isClone) {
       banner.append(
         el('div', { class: 'cr-title' }, '⚠ Reported as a clone'),
-        el('div', { class: 'cr-text' }, `Clone Report users say ${name || 'this game'} is a clone of:`),
+        el('div', { class: 'cr-text' }, `Clone Report users have reported ${name || 'this game'} as a clone of:`),
         entryList(result.cloneOf, pageStore)
       );
     }
     if (result.clonedBy.length) {
-      if (isClone) banner.append(el('div', { class: 'cr-text cr-gap' }, 'It has also been cloned by:'));
+      if (isClone) banner.append(el('div', { class: 'cr-text cr-gap' }, 'Other games have also been reported as copies of it:'));
       else banner.append(
-        el('div', { class: 'cr-title' }, '★ This game has been cloned'),
-        el('div', { class: 'cr-text' }, `Clone Report users say these games copy ${name || 'this game'}:`)
+        el('div', { class: 'cr-title' }, '★ Reported clones of this game'),
+        el('div', { class: 'cr-text' }, `Clone Report users have reported these games as copies of ${name || 'this game'}:`)
       );
       banner.append(entryList(result.clonedBy, pageStore));
     }
@@ -128,7 +128,7 @@
     banner.append(
       close,
       el('div', { class: 'cr-footer' }, 'From ', link(result.siteUrl, result.siteUrl ? new URL(result.siteUrl).host : 'clonereport.com'),
-        ` · ${storeName(pageStore)} page`)
+        ` · ${storeName(pageStore)} page · User reports, not verified facts`)
     );
 
     // Steam pages are server-rendered, so the banner sits under the title.
