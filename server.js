@@ -8,7 +8,7 @@ const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
 const classic = require('./classic');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound, privacyPage, esc } = require('./views');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -169,6 +169,7 @@ async function handle(req, res) {
     return send(res, 200, 'User-agent: *\nDisallow: /admin\n', { 'Content-Type': 'text/plain' });
   if (req.method === 'GET' && p === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
 
+  if (req.method === 'GET' && p === '/privacy') return send(res, 200, privacyPage());
   if (req.method === 'GET' && p === '/api/lookup') return apiLookup(req, res, url);
 
   if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved, store.countOriginals()));
