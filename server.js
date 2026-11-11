@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
+const classic = require('./classic');
 const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, notFound, privacyPage, esc } = require('./views');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -174,7 +175,7 @@ async function handle(req, res) {
   if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved, store.countOriginals()));
   if (req.method === 'GET' && p === '/originals') {
     const s = url.searchParams.get('store');
-    const storeFilter = ['steam', 'nintendo'].includes(s) ? s : '';
+    const storeFilter = ['steam', 'nintendo', 'classic'].includes(s) ? s : '';
     const per = 100;
     const page = Math.max(1, Math.min(10_000, Number.parseInt(url.searchParams.get('page'), 10) || 1));
     const { rows, total } = store.pageOriginals(storeFilter, per, (page - 1) * per);
@@ -242,7 +243,7 @@ async function handle(req, res) {
     if (req.method === 'GET' && p === '/admin/originals') {
       const q = clean(url.searchParams.get('q'), 120);
       const rows = q ? store.searchOriginals(q) : store.pageOriginals('', 50, 0).rows;
-      return send(res, 200, adminOriginalsPage(q, rows, store.countOriginals(), scanner.state), { 'Cache-Control': 'no-store' });
+      return send(res, 200, adminOriginalsPage(q, rows, store.countOriginals(), scanner.state, classic.state), { 'Cache-Control': 'no-store' });
     }
     if (req.method === 'POST' && (m = p.match(/^\/admin\/originals\/(\d+)\/remove$/))) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
@@ -279,7 +280,7 @@ const server = http.createServer((req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, () => console.log(`clonereport listening on http://localhost:${PORT}`));
-  // Daily Steam scan that grows the originals list. Set STEAM_SCAN=0 to turn it off.
+  // Daily scans (classic consoles, then Steam) that grow the originals list. Set STEAM_SCAN=0 to turn both off.
   if (process.env.STEAM_SCAN !== '0') scanner.startSchedule();
 }
 module.exports = { server, esc };
