@@ -1,0 +1,386 @@
+{
+ "_about": "Clone reports seeded on Clone Report. Every entry is a publicly documented case: a lawsuit or court ruling, a store takedown, or a public statement by the original game's developer, with links to press coverage in `sources`. Notes describe what was claimed and what happened, not a finding by Clone Report. Steam ids were checked against SteamSpy in Nov 2026. Loaded automatically on server start; each `key` is added once, so a report an admin later edits, rejects or deletes is left alone. Set SEED_REPORTS=0 to skip.",
+ "reports": [
+  {
+   "key": "mino-tetris",
+   "clone_name": "Mino",
+   "clone_developer": "Xio Interactive",
+   "clone_released": "2009",
+   "original_name": "Tetris",
+   "original_developer": "Alexey Pajitnov / The Tetris Company",
+   "original_url": "https://tetris.com/",
+   "original_released": "1984",
+   "platform": "iOS",
+   "notes": "In 2012 a US federal court (District of New Jersey) ruled in Tetris Holding v. Xio Interactive that Mino copied the look of Tetris, including its board, piece shapes and screen layout, and granted summary judgment to The Tetris Company. The case is often cited as the first US ruling that a game clone infringed copyright.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tetris_Holding,_LLC_v._Xio_Interactive,_Inc.",
+    "https://www.pcgamer.com/court-declares-tetris-clone-a-breach-of-copyright-big-implications-for-derivative-games/"
+   ]
+  },
+  {
+   "key": "yeti-town-triple-town",
+   "clone_name": "Yeti Town",
+   "clone_developer": "6waves Lolapps",
+   "clone_released": "2012",
+   "original_name": "Triple Town",
+   "original_developer": "Spry Fox",
+   "original_url": "https://store.steampowered.com/app/209950/",
+   "original_released": "2011",
+   "platform": "iOS, Facebook",
+   "notes": "Spry Fox sued 6waves Lolapps in 2012, saying Yeti Town copied Triple Town after 6waves had seen the game in confidential talks about publishing it. The case settled in October 2012: Spry Fox took ownership of the Yeti Town IP and the game left the App Store.",
+   "sources": [
+    "https://www.pocketgamer.com/news/6waves-settles-with-spry-fox-in-yeti-town-triple-town-clone-debate/",
+    "https://edery.org/2012/10/spry-fox-settlement-with-6waves/",
+    "https://www.pocketgamer.com/news/yeti-town-disappears-from-the-app-store-as-triple-town-dev-lands-the-final-blow"
+   ]
+  },
+  {
+   "key": "westworld-fallout-shelter",
+   "clone_name": "Westworld (mobile game)",
+   "clone_developer": "Behaviour Interactive / Warner Bros.",
+   "clone_released": "2018",
+   "original_name": "Fallout Shelter",
+   "original_developer": "Bethesda Game Studios",
+   "original_url": "https://store.steampowered.com/app/588430/",
+   "original_released": "2015",
+   "platform": "iOS, Android",
+   "notes": "Bethesda sued Warner Bros. and Behaviour Interactive in 2018, claiming the Westworld mobile game copied Fallout Shelter's design and reused its code (Behaviour had co-developed Fallout Shelter). The companies settled at the turn of 2019 and the Westworld game was shut down.",
+   "sources": [
+    "https://pcgamer.com/bethesda-settles-lawsuit-alleging-that-westworld-ripped-off-fallout-shelter",
+    "https://www.gamespot.com/articles/bethesda-settles-lawsuit-over-westworld-game-it-cl/1100-6464158"
+   ]
+  },
+  {
+   "key": "area-f2-rainbow-six-siege",
+   "clone_name": "Area F2",
+   "clone_developer": "Ejoy (Alibaba Group)",
+   "clone_released": "2020",
+   "original_name": "Tom Clancy's Rainbow Six Siege",
+   "original_developer": "Ubisoft Montreal",
+   "original_url": "https://store.steampowered.com/app/359550/",
+   "original_released": "2015",
+   "platform": "iOS, Android",
+   "notes": "In May 2020 Ubisoft sued Apple and Google in a US federal court for distributing Area F2, which Ubisoft's complaint described as a near carbon copy of Rainbow Six Siege, from its operator selection screen to its maps and scoring.",
+   "sources": [
+    "https://www.pcgamer.com/ubisoft-is-suing-apple-and-google-over-an-alleged-rainbow-six-siege-clone",
+    "https://www.bloomberg.com/news/articles/2020-05-16/ubisoft-sues-apple-google-over-alibaba-s-rainbow-six-ripoff",
+    "https://www.pocketgamer.biz/ubisoft-sues-apple-google-rainbow-six-siege-clone"
+   ]
+  },
+  {
+   "key": "rules-of-survival-pubg",
+   "clone_name": "Rules of Survival",
+   "clone_developer": "NetEase",
+   "clone_released": "2017",
+   "original_name": "PUBG: BATTLEGROUNDS",
+   "original_developer": "PUBG Corporation",
+   "original_url": "https://store.steampowered.com/app/578080/",
+   "original_released": "2017",
+   "platform": "iOS, Android, PC",
+   "notes": "PUBG Corp. sued NetEase in a US federal court in 2018, claiming Rules of Survival and Knives Out copied PUBG's look, items and gameplay. The companies settled in 2019.",
+   "sources": [
+    "https://www.pocketgamer.biz/pubg-corp-sues-netease-over-rules-of-survival-and-knives-out-clones",
+    "https://www.pocketgamer.biz/pubg-corp-and-netease-settle-the-battle-royale-cloning-dispute"
+   ]
+  },
+  {
+   "key": "knives-out-pubg",
+   "clone_name": "Knives Out",
+   "clone_developer": "NetEase",
+   "clone_released": "2017",
+   "original_name": "PUBG: BATTLEGROUNDS",
+   "original_developer": "PUBG Corporation",
+   "original_url": "https://store.steampowered.com/app/578080/",
+   "original_released": "2017",
+   "platform": "iOS, Android, PC",
+   "notes": "PUBG Corp. sued NetEase in 2018, claiming Knives Out and Rules of Survival copied PUBG; that case settled in 2019. Krafton, PUBG's parent company, later brought another copyright case over Knives Out, which was settled in December 2023.",
+   "sources": [
+    "https://www.pocketgamer.biz/pubg-corp-sues-netease-over-rules-of-survival-and-knives-out-clones",
+    "https://www.gamedeveloper.com/business/krafton-and-netease-settle-over-i-pubg-i-i-knives-out-i-copyright-quarrel",
+    "https://law.com/therecorder/2023/12/12/video-game-developers-krafton-netease-settle-copyright-dispute-after-court-finds-no-actual-damages/"
+   ]
+  },
+  {
+   "key": "free-fire-pubg",
+   "clone_name": "Garena Free Fire",
+   "clone_developer": "Garena",
+   "clone_released": "2017",
+   "original_name": "PUBG: BATTLEGROUNDS",
+   "original_developer": "PUBG Corporation",
+   "original_url": "https://store.steampowered.com/app/578080/",
+   "original_released": "2017",
+   "platform": "iOS, Android",
+   "notes": "In January 2022 Krafton, PUBG's publisher, sued Garena in a US federal court, claiming Free Fire and Free Fire Max copied many elements of PUBG. The suit also named Apple and Google for distributing the games. This report does not cover how the case ended.",
+   "sources": [
+    "https://www.pcgamer.com/krafton-sues-google-youtube-and-apple-over-alleged-pubg-clones",
+    "https://gamedeveloper.com/business/-i-pubg-i-maker-krafton-is-suing-free-fire-dev-garena-in-the-u-s-"
+   ]
+  },
+  {
+   "key": "heroes-charge-dota-2",
+   "clone_name": "Heroes Charge",
+   "clone_developer": "uCool",
+   "clone_released": "2014",
+   "original_name": "Dota 2",
+   "original_developer": "Valve",
+   "original_url": "https://store.steampowered.com/app/570/",
+   "original_released": "2013",
+   "platform": "iOS, Android",
+   "notes": "Blizzard and Valve sued uCool and Lilith Games in a US federal court in September 2015, claiming their mobile games copied characters and art from Dota 2 and Blizzard games. In 2018 the court let the claims against Heroes Charge go forward; Blizzard and Valve later dropped them, which was widely read as a private settlement.",
+   "sources": [
+    "https://www.patentarcade.com/?p=5098",
+    "https://www.courthousenews.com/ucool-ducks-video-game-copyright-claims/"
+   ]
+  },
+  {
+   "key": "mobile-legends-league-of-legends",
+   "clone_name": "Mobile Legends: Bang Bang",
+   "clone_developer": "Moonton",
+   "clone_released": "2016",
+   "original_name": "League of Legends",
+   "original_developer": "Riot Games",
+   "original_url": "https://www.leagueoflegends.com/",
+   "original_released": "2009",
+   "platform": "iOS, Android",
+   "notes": "Riot Games sued Moonton in 2017 and again in 2022, claiming Mobile Legends copied League of Legends and League of Legends: Wild Rift. Both US cases were dismissed on the grounds that another country's courts were better placed to hear them. The companies signed a global settlement in April 2024 and Riot withdrew its lawsuits.",
+   "sources": [
+    "https://www.oneesports.gg/mobile-legends/moonton-games-riot-games-lawsuit/",
+    "https://sportslitigationalert.com/shanghai-moonton-defeats-riot-games-copyright-lawsuit-on-jurisdictional-grounds/"
+   ]
+  },
+  {
+   "key": "clash-of-fighters-overwatch",
+   "clone_name": "Clash of Fighters",
+   "clone_developer": "4399 Network",
+   "original_name": "Overwatch 2",
+   "original_developer": "Blizzard Entertainment",
+   "original_url": "https://store.steampowered.com/app/2357570/",
+   "original_released": "2016",
+   "platform": "Mobile",
+   "notes": "In November 2019 the Pudong New Area People's Court in Shanghai ruled that 4399 Network's Clash of Fighters and Gunplay Battlefront infringed the copyright of Overwatch and awarded Blizzard and NetEase 4 million yuan (about $570,000). The original Overwatch has since been replaced by Overwatch 2.",
+   "sources": [
+    "https://www.videogameschronicle.com/news/blizzard-wins-overwatch-copyright-lawsuit-in-china/",
+    "https://www.scmp.com/print/tech/article/3037901/overwatch-wins-china-lawsuit-over-game-clones"
+   ]
+  },
+  {
+   "key": "gunplay-battlefront-overwatch",
+   "clone_name": "Gunplay Battlefront",
+   "clone_developer": "4399 Network",
+   "original_name": "Overwatch 2",
+   "original_developer": "Blizzard Entertainment",
+   "original_url": "https://store.steampowered.com/app/2357570/",
+   "original_released": "2016",
+   "platform": "Mobile",
+   "notes": "In November 2019 the Pudong New Area People's Court in Shanghai ruled that 4399 Network's Gunplay Battlefront and Clash of Fighters infringed the copyright of Overwatch and awarded Blizzard and NetEase 4 million yuan (about $570,000). The original Overwatch has since been replaced by Overwatch 2.",
+   "sources": [
+    "https://www.videogameschronicle.com/news/blizzard-wins-overwatch-copyright-lawsuit-in-china/",
+    "https://www.scmp.com/print/tech/article/3037901/overwatch-wins-china-lawsuit-over-game-clones"
+   ]
+  },
+  {
+   "key": "pocket-monster-reissue-pokemon",
+   "clone_name": "Pocket Monster Reissue",
+   "clone_released": "2015",
+   "original_name": "Pokémon",
+   "original_developer": "Game Freak / The Pokémon Company",
+   "original_url": "https://www.pokemon.com/",
+   "original_released": "1996",
+   "platform": "iOS, Android",
+   "notes": "The Pokémon Company sued the companies behind Pocket Monster Reissue in China in December 2021. In September 2024 it announced that the Shenzhen Intermediate People's Court had found the game copied Pokémon characters and creatures, including Ash and Pikachu, and ordered 107 million yuan (about $15 million) in damages. Some defendants appealed.",
+   "sources": [
+    "https://automaton-media.com/en/news/the-pokemon-company-wins-15-million-copyright-infringement-lawsuit-against-china-based-game-developers/",
+    "https://www.nintendolife.com/news/2024/09/pokemon-wins-usd15-million-copyright-lawsuit-against-chinese-mobile-game-developers"
+   ]
+  },
+  {
+   "key": "the-ville-sims-social",
+   "clone_name": "The Ville",
+   "clone_developer": "Zynga",
+   "clone_released": "2012",
+   "original_name": "The Sims Social",
+   "original_developer": "Playfish / Electronic Arts",
+   "original_released": "2011",
+   "platform": "Facebook",
+   "notes": "Electronic Arts sued Zynga in August 2012, claiming The Ville copied the design, look and features of The Sims Social. The companies settled out of court in February 2013.",
+   "sources": [
+    "https://gamespot.com/articles/ea-vs-zynga-suit-settled/1100-6404013/",
+    "https://jolt.law.harvard.edu/digest/zynga-and-ea-reach-settlement-over-zyngas-the-ville"
+   ]
+  },
+  {
+   "key": "ninja-fishing-ridiculous-fishing",
+   "clone_name": "Ninja Fishing",
+   "clone_developer": "Gamenauts",
+   "clone_released": "2011",
+   "original_name": "Ridiculous Fishing",
+   "original_developer": "Vlambeer",
+   "original_released": "2013",
+   "platform": "iOS",
+   "notes": "Vlambeer said Ninja Fishing copied the design of Radical Fishing, its 2010 web game, while Vlambeer was still making the mobile version, Ridiculous Fishing (released 2013). Vlambeer wrote an open letter to Gamenauts and later said the episode nearly ended the studio. Gamenauts responded publicly at the time.",
+   "sources": [
+    "https://www.gamedeveloper.com/business/-i-ridiculous-fishing-i-the-game-that-nearly-ended-vlambeer",
+    "https://www.pocketgamer.com/ridiculous-fishing/update-ridiculous-fishing-creator-writes-an-open-letter-to-gamenauts-over-clone/",
+    "https://www.engadget.com/2011-09-07-a-ridiculous-fishing-story-reel-talk-from-vlambeer-and-gamenauts.html"
+   ]
+  },
+  {
+   "key": "1024-threes",
+   "clone_name": "1024",
+   "clone_developer": "Veewo Studio",
+   "clone_released": "2014",
+   "original_name": "Threes!",
+   "original_developer": "Sirvo (Asher Vollmer, Greg Wohlwend)",
+   "original_released": "2014",
+   "platform": "iOS, Android",
+   "notes": "1024 came out weeks after Threes! with the same sliding, number-merging grid. The Threes! team published a long post in March 2014 about the copies that followed their game, naming 1024 among them. Press at the time described 1024 and 2048 as copies of Threes!.",
+   "sources": [
+    "https://techcrunch.com/2014/03/24/clones-clones-everywhere-1024-2048-and-other-copies-of-popular-paid-game-threes-fill-the-app-stores/",
+    "https://gameinformer.com/b/news/archive/2014/03/28/threes-developer-speaks-out-against-flood-of-clones.aspx"
+   ]
+  },
+  {
+   "key": "2048-threes",
+   "clone_name": "2048",
+   "clone_developer": "Gabriele Cirulli",
+   "clone_url": "https://play2048.co/",
+   "clone_released": "2014",
+   "original_name": "Threes!",
+   "original_developer": "Sirvo (Asher Vollmer, Greg Wohlwend)",
+   "original_released": "2014",
+   "platform": "Web, iOS, Android",
+   "notes": "2048 was released as a free web game weeks after Threes!. Its creator said it was based on 1024, itself a copy of Threes!. The Threes! team spoke out publicly about 2048 and the other copies, and press widely described 2048 as a Threes! knockoff.",
+   "sources": [
+    "https://techcrunch.com/2014/03/24/clones-clones-everywhere-1024-2048-and-other-copies-of-popular-paid-game-threes-fill-the-app-stores/",
+    "https://www.complex.com/pop-culture/2014/03/threes-developers-discuss-clones-2048",
+    "https://www.huffpost.com/entry/2048-knockoff-threes-iphone-game_b_5064541"
+   ]
+  },
+  {
+   "key": "dream-heights-tiny-tower",
+   "clone_name": "Dream Heights",
+   "clone_developer": "Zynga",
+   "clone_released": "2012",
+   "original_name": "Tiny Tower",
+   "original_developer": "NimbleBit",
+   "original_released": "2011",
+   "platform": "iOS",
+   "notes": "When Zynga released Dream Heights in January 2012, NimbleBit published an open letter sarcastically 'congratulating' Zynga, with side-by-side images comparing it to Tiny Tower, which Apple had named its iPhone game of the year.",
+   "sources": [
+    "https://gameinformer.com/b/news/archive/2012/01/25/tiny-tower-creators-take-on-zynga-in-snarky-open-letter.aspx",
+    "https://www.pocketgamer.com/tiny-tower/just-how-similar-is-dream-heights-to-tiny-tower",
+    "https://www.cbsnews.com/news/zynga-steal-tiny-tower-thats-what-developers-say"
+   ]
+  },
+  {
+   "key": "wordle-the-app",
+   "clone_name": "Wordle - The App",
+   "clone_developer": "Zach Shakked",
+   "clone_released": "2022",
+   "original_name": "Wordle",
+   "original_developer": "Josh Wardle (now The New York Times)",
+   "original_url": "https://www.nytimes.com/games/wordle/index.html",
+   "original_released": "2021",
+   "platform": "iOS",
+   "notes": "In January 2022 Apple removed Wordle - The App and other paid copies of Wordle from the App Store after a public backlash. The app's creator later apologized and said he had crossed a line.",
+   "sources": [
+    "https://www.nbcnews.com/pop-culture/pop-culture-news/creator-wordle-copycat-app-says-crossed-line-backlash-rcna11903",
+    "https://appleinsider.com/articles/22/01/12/amidst-backlash-apple-has-purged-most-of-the-wordle-clones-from-the-app-store"
+   ]
+  },
+  {
+   "key": "unpacking-master-unpacking",
+   "clone_name": "Unpacking Master",
+   "clone_developer": "SayGames",
+   "clone_released": "2022",
+   "original_name": "Unpacking",
+   "original_developer": "Witch Beam",
+   "original_url": "https://store.steampowered.com/app/1135690/",
+   "original_released": "2021",
+   "platform": "iOS, Android",
+   "notes": "Witch Beam called Unpacking Master a near 1:1 imitation of Unpacking. The game briefly topped the App Store download charts in January 2022 and was then removed from the App Store and Google Play. SayGames said it had underestimated how similar the two games were.",
+   "sources": [
+    "https://gamedeveloper.com/business/-unpacking-clone-pulled-from-app-store-after-topping-download-charts",
+    "https://gameworldobserver.com/2022/01/25/saygames-on-unpacking-cloning-allegations-we-underestimated-the-degree-of-similarity-between-the-two-games",
+    "https://www.gamesradar.com/apple-takes-down-mobile-unpacking-clone-after-complaints-from-the-developer"
+   ]
+  },
+  {
+   "key": "kc-munchkin-pac-man",
+   "clone_name": "K.C. Munchkin!",
+   "clone_developer": "Philips (Magnavox)",
+   "clone_released": "1981",
+   "original_name": "Pac-Man",
+   "original_developer": "Namco",
+   "original_released": "1980",
+   "platform": "Magnavox Odyssey²",
+   "notes": "Atari, which held the home console rights to Pac-Man, sued Philips. In 1982 the US Court of Appeals for the Seventh Circuit found K.C. Munchkin! substantially similar to Pac-Man and ordered a preliminary injunction that took the game off store shelves.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Atari,_Inc._v._North_American_Philips_Consumer_Electronics_Corp.",
+    "https://www.patentarcade.com/?p=1222"
+   ]
+  },
+  {
+   "key": "palworld-pokemon",
+   "clone_name": "Palworld",
+   "clone_developer": "Pocketpair",
+   "clone_url": "https://store.steampowered.com/app/1623730/",
+   "clone_released": "2024",
+   "original_name": "Pokémon",
+   "original_developer": "Game Freak / The Pokémon Company",
+   "original_url": "https://www.pokemon.com/",
+   "original_released": "1996",
+   "platform": "PC, Xbox",
+   "notes": "Palworld has been widely compared to Pokémon in the press since its 2024 launch. In September 2024 Nintendo and The Pokémon Company sued Pocketpair in Tokyo for patent infringement over game mechanics such as throwing a ball to catch creatures. The suit is about patents, not copied characters, and was still unresolved as of 2026.",
+   "sources": [
+    "https://automaton-media.com/en/news/nintendo-and-the-pokemon-company-have-reportedly-narrowed-palworld-lawsuit-to-older-versions-of-the-game-only-likely-thanks-to-preventive-updates-by-pocketpair/",
+    "https://www.gamesradar.com/games/survival/as-palworld-lawsuit-drags-on-nintendo-tries-and-fails-to-secure-another-patent-on-monster-capturing-mechanics/"
+   ]
+  },
+  {
+   "key": "fake-cuphead-ios",
+   "clone_name": "Cuphead (unofficial iOS app)",
+   "clone_released": "2017",
+   "original_name": "Cuphead",
+   "original_developer": "Studio MDHR",
+   "original_url": "https://store.steampowered.com/app/268910/",
+   "original_released": "2017",
+   "platform": "iOS",
+   "notes": "In December 2017 a paid app called Cuphead appeared on the App Store using the game's name and art. Studio MDHR said it had nothing to do with the app, and Apple removed it.",
+   "sources": [
+    "https://www.engadget.com/2017/12/18/fake-cuphead-itunes/",
+    "https://gameinformer.com/b/news/archive/2017/12/18/fraudulent-ios-version-of-cuphead-pulled-from-app-store"
+   ]
+  },
+  {
+   "key": "mafia-wars-mob-wars",
+   "clone_name": "Mafia Wars",
+   "clone_developer": "Zynga",
+   "clone_released": "2008",
+   "original_name": "Mob Wars",
+   "original_developer": "David Maestri",
+   "original_released": "2008",
+   "platform": "Facebook",
+   "notes": "Mob Wars creator David Maestri sued Zynga in February 2009, claiming Mafia Wars copied his game. The case settled later in 2009; TechCrunch reported a payment in the high seven figures.",
+   "sources": [
+    "https://techcrunch.com/2009/09/13/zynga-settles-mob-wars-litigation-as-it-settles-in-to-playdom-war/amp/",
+    "https://www.adweek.com/performance-marketing/2009/02/24/mob-wars-creator-sues-zynga/"
+   ]
+  },
+  {
+   "key": "great-giana-sisters-super-mario-bros",
+   "clone_name": "The Great Giana Sisters",
+   "clone_developer": "Time Warp Software / Rainbow Arts",
+   "clone_released": "1987",
+   "original_name": "Super Mario Bros.",
+   "original_developer": "Nintendo",
+   "original_released": "1985",
+   "platform": "Commodore 64, Amiga",
+   "notes": "Reviewers at the time called The Great Giana Sisters a rip-off of Super Mario Bros., and its UK box read 'The Brothers are History!'. It was pulled from sale in 1988 after Nintendo sent Rainbow Arts a letter about the similarities. Accounts differ on whether there was a formal settlement.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/The_Great_Giana_Sisters",
+    "https://kotaku.com/the-greatest-mario-rip-off-of-them-all-5822474"
+   ]
+  }
+ ]
+}
