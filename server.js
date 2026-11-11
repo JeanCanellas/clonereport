@@ -7,10 +7,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const store = require('./db');
 const scanner = require('./scanner');
+const steam = require('./steam');
+const api = require('./api');
+const mailer = require('./mailer');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, esc } = require('./views');
+const { familyTree } = require('./tree');
 const classic = require('./classic');
 const stores = require('./stores');
 const extension = require('./extension');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, notFound, privacyPage, esc } = require('./views');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -19,6 +23,8 @@ const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 const MIN_FILL_MS = Number(process.env.MIN_FILL_MS ?? 4000);   // humans take a few seconds to fill the form
 const PUBLIC_URL = (process.env.PUBLIC_URL || '').replace(/\/$/, '');      // e.g. https://clonereport.com
 const MAX_PER_HOUR = Number(process.env.MAX_PER_HOUR ?? 5);    // per IP
+const MAX_VOTES_PER_HOUR = Number(process.env.MAX_VOTES_PER_HOUR ?? 100); // per IP
+const STEAM_ENRICH = process.env.STEAM_ENRICH !== '0';
 
 if (!ADMIN_PASSWORD) console.warn('ADMIN_PASSWORD is not set: the /admin page is disabled.');
 
@@ -57,7 +63,7 @@ function send(res, status, body, headers = {}) {
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Content-Security-Policy': "default-src 'self'; style-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'",
+    'Content-Security-Policy': "default-src 'self'; style-src 'self'; img-src 'self' data: https:; form-action 'self'; frame-ancestors 'none'",
     ...headers,
   });
   res.end(body);
@@ -75,14 +81,15 @@ function readBody(req, limit = 20_000) {
 
 // Form token = timestamp signed with the server secret. Proves the form was
 // loaded from this site and lets us reject submissions that are too fast.
-const makeFormToken = () => { const t = Date.now().toString(); return `${t}.${hmac('form:' + t)}`; };
-function checkFormToken(tok) {
+// `purpose` keeps a token for one form from being replayed on another.
+const makeFormToken = (purpose = 'form') => { const t = Date.now().toString(); return `${t}.${hmac(purpose + ':' + t)}`; };
+function checkFormToken(tok, purpose = 'form', minMs = MIN_FILL_MS, maxMs = 2 * 3600 * 1000) {
   const [t, sig] = String(tok || '').split('.');
   if (!t || !sig || sig.length !== 64) return 'expired';
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(hmac('form:' + t)))) return 'expired';
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(hmac(purpose + ':' + t)))) return 'expired';
   const age = Date.now() - Number(t);
-  if (age < MIN_FILL_MS) return 'too-fast';
-  if (age > 2 * 3600 * 1000) return 'expired';
+  if (age < minMs) return 'too-fast';
+  if (age > maxMs) return 'expired';
   return null;
 }
 
@@ -95,6 +102,25 @@ function cleanUrl(v) {
     return u.toString().slice(0, 500);
   } catch { return null; }
 }
+// Release dates: 2017, 2017-02 or 2017-02-21.
+function cleanDate(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  const m = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(v);
+  if (!m || +m[1] < 1950 || +m[1] > 2100 || (m[2] && (+m[2] < 1 || +m[2] > 12)) || (m[3] && (+m[3] < 1 || +m[3] > 31))) return null;
+  return v;
+}
+// Shared mechanics: comma or line separated, stored one per line.
+const cleanMechanics = (v) => [...new Set(String(v || '').split(/[,\n]/).map((x) => x.replace(/\s+/g, ' ').trim().slice(0, 40)).filter(Boolean))]
+  .slice(0, 12).join('\n');
+// Evidence links: one per line, http(s) only, at most 8. Returns null if any line is not a link.
+function cleanLinks(v, max = 8) {
+  const lines = String(v || '').split(/\s*\n\s*/).map((x) => x.trim()).filter(Boolean);
+  const out = [];
+  for (const l of lines) { const u = cleanUrl(l); if (!u) return null; if (!out.includes(u)) out.push(u); }
+  return out.length > max ? null : out.join('\n');
+}
+const httpsOnly = (u) => (u && !u.startsWith('https://') ? null : u);
 const clean = (v, max) => String(v || '').replace(/\s+/g, (m) => (m.includes('\n') ? '\n' : ' ')).trim().slice(0, max);
 
 function validate(f) {
@@ -108,6 +134,12 @@ function validate(f) {
     platform: clean(f.get('platform'), 60),
     notes: String(f.get('notes') || '').trim().slice(0, 2000),
     contact: clean(f.get('contact'), 200),
+    clone_released: cleanDate(f.get('clone_released')),
+    original_released: cleanDate(f.get('original_released')),
+    clone_image: httpsOnly(cleanUrl(f.get('clone_image'))),
+    original_image: httpsOnly(cleanUrl(f.get('original_image'))),
+    mechanics: cleanMechanics(f.get('mechanics')),
+    evidence: cleanLinks(f.get('evidence')),
   };
   // Fill in the platform from the clone's store link when the reporter left it empty.
   if (!r.platform && r.clone_url) r.platform = stores.storeName(stores.parseStoreUrl(r.clone_url)?.store) || '';
@@ -119,6 +151,9 @@ function validate(f) {
   if (r.clone_url === null) errors.push('The clone link must be a full web address starting with http:// or https://.');
   if (r.original_url === null) errors.push('The original game link must be a full web address starting with http:// or https://.');
   if (!r.original_url && !r.clone_url) errors.push('Please add at least one link (to the original game or the clone) so reviewers can verify the report.');
+  if (r.clone_released === null || r.original_released === null) errors.push('Release dates must look like 2017, 2017-02 or 2017-02-21.');
+  if (r.clone_image === null || r.original_image === null) errors.push('Screenshot links must be full web addresses starting with https://.');
+  if (r.evidence === null) errors.push('Evidence must be up to 8 web addresses, one per line, each starting with http:// or https://.');
   const linkCount = (r.notes.match(/https?:\/\//g) || []).length;
   if (linkCount > 5) errors.push('Notes can contain at most 5 links.');
   return { r, errors };
@@ -132,11 +167,29 @@ function isAdmin(req) {
   const a = Buffer.from(hmac(pass)), b = Buffer.from(hmac(ADMIN_PASSWORD));
   return crypto.timingSafeEqual(a, b);
 }
+// One vote per visitor per report, keyed on a salted hash of the IP address.
+const voterId = (req) => hmac('voter:' + clientIp(req));
 const sameOrigin = (req) => {
   const o = req.headers.origin;
   if (!o) return true; // older browsers / curl; Basic auth still required
   try { return new URL(o).host === req.headers.host; } catch { return false; }
 };
+
+const baseUrl = (req) => PUBLIC_URL || `${TRUST_PROXY && req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'}://${req.headers.host}`;
+
+// ---------- email alerts ----------
+const gameKey = (name) => clean(name, 120);
+async function sendAlerts(r, base) {
+  for (const f of store.followersOf(r.original_name)) {
+    await mailer.send({
+      to: f.email,
+      subject: `New clone of ${r.original_name} reported: ${r.clone_name}`,
+      text: `${r.clone_name}${r.clone_developer ? ` by ${r.clone_developer}` : ''} was reported as a clone of ${r.original_name} on Clone Report.\n\n`
+        + `See the comparison and vote: ${base}/report/${r.id}\n\n`
+        + `You get this email because you follow ${f.game}. Stop these emails: ${base}/follow/unsubscribe?t=${f.token}\n`,
+    }).catch((err) => console.error('alert email failed:', err.message));
+  }
+}
 
 // ---------- JSON API (used by the browser extension) ----------
 // Query: ?appid=<steam app id> (Steam), or ?store=<key>&id=<store id> for any
@@ -153,7 +206,7 @@ function apiLookup(req, res, url) {
     if (key?.store === 'steam') appid = Number(id);
   }
   const name = clean(url.searchParams.get('name'), 120);
-  const base = PUBLIC_URL || `${TRUST_PROXY && req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'}://${req.headers.host}`;
+  const base = baseUrl(req);
   const { asClone, asOriginal } = (key || name) ? store.lookup(key, name) : { asClone: [], asOriginal: [] };
   const steamUrl = (id) => (id ? `https://store.steampowered.com/app/${id}` : null);
   const summary = (r) => (r.notes ? (r.notes.length > 160 ? r.notes.slice(0, 157).trimEnd() + '…' : r.notes) : null);
@@ -210,6 +263,46 @@ async function handle(req, res) {
 
   if (req.method === 'GET' && p === '/privacy') return send(res, 200, privacyPage());
   if (req.method === 'GET' && p === '/api/lookup') return apiLookup(req, res, url);
+  if (api.handleApi(req, res, url, { base: baseUrl(req), ip: clientIp(req) })) return;
+  if (req.method === 'GET' && p === '/api') return send(res, 200, apiDocsPage(baseUrl(req)));
+  if (req.method === 'GET' && p === '/feed.xml') return api.feed(res, url, baseUrl(req));
+
+  // Follow a game: double opt-in by email, then one email per newly approved clone of it.
+  if (p === '/follow') {
+    const game = gameKey(url.searchParams.get('game'));
+    if (!game) return send(res, 404, notFound());
+    if (req.method === 'GET') return send(res, 200, followPage(game, { token: makeFormToken('follow'), emailOn: mailer.enabled }));
+    if (req.method === 'POST' && mailer.enabled) {
+      let f;
+      try { f = await readBody(req, 2000); } catch { return send(res, 413, layout('Too large', '<p>Too large.</p>')); }
+      if (f.get('website')) return send(res, 200, followPage(game, { done: 'sent', emailOn: true }));
+      const again = (status, error) => send(res, status, followPage(game, { token: makeFormToken('follow'), emailOn: true, error, email: f.get('email') }));
+      if (checkFormToken(f.get('token'), 'follow', Math.min(MIN_FILL_MS, 1500))) return again(400, 'The form expired. Please try again.');
+      const email = clean(f.get('email'), 200);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return again(400, 'Please enter a valid email address.');
+      const ipHash = hmac('ip:' + clientIp(req));
+      if (store.rateCheck(ipHash, 3600 * 1000) >= MAX_PER_HOUR) return again(429, 'Too many requests. Please try again in an hour.');
+      store.logSubmission(ipHash);
+      const row = store.follow(email, game, crypto.randomBytes(24).toString('base64url'));
+      if (!row.confirmed) {
+        const base = baseUrl(req);
+        await mailer.send({ to: email, subject: `Confirm: email alerts for ${game}`,
+          text: `Someone (hopefully you) asked Clone Report to email this address when a clone of ${game} is reported.\n\n`
+            + `Confirm: ${base}/follow/confirm?t=${row.token}\n\nIf it wasn't you, ignore this email and nothing will be sent.\n` })
+          .catch((err) => console.error('confirm email failed:', err.message));
+      }
+      // Same answer either way, so the form does not reveal who already follows what.
+      return send(res, 200, followPage(game, { done: 'sent', emailOn: true }));
+    }
+  }
+  if (req.method === 'GET' && (p === '/follow/confirm' || p === '/follow/unsubscribe')) {
+    const t = String(url.searchParams.get('t') || '').slice(0, 64);
+    const row = t && store.followByToken(t);
+    if (!row) return send(res, 404, layout('Link expired', '<h1>This link no longer works</h1><p>You may have already unsubscribed.</p>'));
+    if (p === '/follow/confirm') { store.confirmFollow(t); return send(res, 200, followPage(row.game, { done: 'confirmed', emailOn: true }), { 'Cache-Control': 'no-store' }); }
+    store.unfollow(t);
+    return send(res, 200, followPage(row.game, { done: 'unsubscribed', emailOn: true }), { 'Cache-Control': 'no-store' });
+  }
 
   if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved, store.countOriginals()));
   if (req.method === 'GET' && p === '/originals') {
@@ -236,7 +329,83 @@ async function handle(req, res) {
   if (req.method === 'GET' && (m = p.match(/^\/report\/(\d+)$/))) {
     const r = store.get(Number(m[1]));
     if (!r || (r.status !== 'approved' && !isAdmin(req))) return send(res, 404, notFound());
-    return send(res, 200, reportPage(r));
+    const voted = url.searchParams.get('voted');
+    return send(res, 200, reportPage(r, {
+      responses: store.disputesFor(r.id, 'published'),
+      myVote: store.myVote(r.id, voterId(req)), voteToken: makeFormToken('vote:' + r.id),
+      voteMsg: voted === 'ok' ? 'Thanks, your vote counts.' : voted === 'limit' ? 'You have voted a lot in the last hour. Please try again later.'
+        : voted === 'expired' ? 'The page was open too long. Please vote again.' : '',
+    }), { 'Cache-Control': 'no-store' });
+  }
+
+  if (req.method === 'GET' && (m = p.match(/^\/report\/(\d+)\/history$/))) {
+    const r = store.get(Number(m[1]));
+    if (!r || (r.status !== 'approved' && !isAdmin(req))) return send(res, 404, notFound());
+    return send(res, 200, historyPage(r, store.history(r.id)));
+  }
+
+  if ((m = p.match(/^\/report\/(\d+)\/dispute$/))) {
+    const r = store.get(Number(m[1]));
+    if (!r || r.status !== 'approved') return send(res, 404, notFound());
+    if (req.method === 'GET') return send(res, 200, disputePage(r, { token: makeFormToken('dispute'), values: {} }));
+    if (req.method === 'POST') {
+      let f;
+      try { f = await readBody(req); } catch { return send(res, 413, layout('Too large', '<p>That message is too large.</p>')); }
+      if (f.get('website')) return redirect(res, `/report/${r.id}/dispute/thanks`);
+      const values = Object.fromEntries(f);
+      const again = (status, errors) => send(res, status, disputePage(r, { token: makeFormToken('dispute'), values, errors }));
+      const tokErr = checkFormToken(f.get('token'), 'dispute');
+      if (tokErr) return again(400, [tokErr === 'too-fast' ? 'That was very quick! Please check your message and send it again.' : 'The form expired. Please send it again.']);
+      const ipHash = hmac('ip:' + clientIp(req));
+      if (store.rateCheck(ipHash, 3600 * 1000) >= MAX_PER_HOUR) return again(429, ['You have sent several messages recently. Please try again in an hour.']);
+      const d = {
+        name: clean(f.get('name'), 120),
+        role: ['clone-developer', 'original-developer', 'other'].includes(f.get('role')) ? f.get('role') : '',
+        contact: clean(f.get('contact'), 200),
+        message: String(f.get('message') || '').trim().slice(0, 4000),
+        links: cleanLinks(f.get('links'), 5),
+      };
+      const errors = [];
+      if (!d.name) errors.push('Please enter your name or studio.');
+      if (!d.role) errors.push('Please say how you are connected to this report.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contact)) errors.push('Please enter an email address so a moderator can reply.');
+      if (d.message.length < 20) errors.push('Please explain why the report is wrong (at least 20 characters).');
+      if (d.links === null) errors.push('Links must be up to 5 web addresses, one per line.');
+      if (errors.length) return again(400, errors);
+      store.logSubmission(ipHash);
+      store.createDispute(r.id, d, ipHash);
+      return redirect(res, `/report/${r.id}/dispute/thanks`);
+    }
+  }
+  if (req.method === 'GET' && (m = p.match(/^\/report\/(\d+)\/dispute\/thanks$/))) return send(res, 200, disputeThanksPage(Number(m[1])));
+
+  if (req.method === 'POST' && (m = p.match(/^\/report\/(\d+)\/vote$/))) {
+    const r = store.get(Number(m[1]));
+    if (!r || r.status !== 'approved') return send(res, 404, notFound());
+    if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+    let f;
+    try { f = await readBody(req, 2000); } catch { return send(res, 413, layout('Too large', '<p>Too large.</p>')); }
+    const back = (v) => redirect(res, `/report/${r.id}?voted=${v}#vote`);
+    const choice = f.get('choice');
+    if (!['clone', 'inspired', 'original'].includes(choice)) return back('expired');
+    if (checkFormToken(f.get('token'), 'vote:' + r.id, 0, 24 * 3600 * 1000)) return back('expired');
+    const voter = voterId(req);
+    if (store.votesByVoter(voter, 3600 * 1000) >= MAX_VOTES_PER_HOUR) return back('limit');
+    store.vote(r.id, voter, choice);
+    return back('ok');
+  }
+
+  if (req.method === 'GET' && (m = p.match(/^\/dev\/([a-z0-9-]{1,80})$/))) {
+    const d = store.developer(m[1]);
+    const any = d.cloned[0] || d.wasCloned[0];
+    const name = d.cloned[0]?.clone_developer || d.wasCloned[0]?.original_developer || d.originals[0]?.developer;
+    if (!any && !d.originals.length) return send(res, 404, notFound());
+    return send(res, 200, developerPage(m[1], name, d));
+  }
+  if (req.method === 'GET' && p === '/developers') return send(res, 200, developersPage(store.topDevelopers(50)));
+  if (req.method === 'GET' && p === '/tree') {
+    const q = clean(url.searchParams.get('game'), 120);
+    return send(res, 200, treePage(q, q ? familyTree(store.approvedEdges(), q) : null));
   }
 
   if (req.method === 'GET' && (m = p.match(/^\/game\/(\d+)$/))) {
@@ -283,22 +452,46 @@ async function handle(req, res) {
       return send(res, 401, layout('Admin', '<p>Sign in required.</p>'), { 'WWW-Authenticate': 'Basic realm="clonereport admin", charset="UTF-8"' });
     if (req.method === 'GET' && p === '/admin') {
       const status = ['pending', 'approved', 'rejected'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'pending';
-      return send(res, 200, adminPage(status, store.byStatus(status), store.counts()), { 'Cache-Control': 'no-store' });
+      return send(res, 200, adminPage(status, store.byStatus(status), store.counts(), store.disputeCounts().open), { 'Cache-Control': 'no-store' });
     }
     if (req.method === 'GET' && p === '/admin/originals') {
       const q = clean(url.searchParams.get('q'), 120);
       const rows = q ? store.searchOriginals(q) : store.pageOriginals('', 50, 0).rows;
       return send(res, 200, adminOriginalsPage(q, rows, store.countOriginals(), scanner.state, classic.state), { 'Cache-Control': 'no-store' });
     }
+    if (req.method === 'GET' && p === '/admin/disputes') {
+      const status = ['open', 'published', 'dismissed'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'open';
+      return send(res, 200, adminDisputesPage(status, store.disputesByStatus(status), store.disputeCounts()), { 'Cache-Control': 'no-store' });
+    }
+    if (req.method === 'POST' && (m = p.match(/^\/admin\/disputes\/(\d+)\/(publish|dismiss|reopen)$/))) {
+      if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+      store.setDisputeStatus(Number(m[1]), { publish: 'published', dismiss: 'dismissed', reopen: 'open' }[m[2]]);
+      return redirect(res, '/admin/disputes?status=' + encodeURIComponent(url.searchParams.get('back') || 'open'));
+    }
     if (req.method === 'POST' && (m = p.match(/^\/admin\/originals\/(\d+)\/remove$/))) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
       store.excludeOriginal(Number(m[1]), 'removed by admin');
       return redirect(res, '/admin/originals?q=' + encodeURIComponent(url.searchParams.get('q') || ''));
     }
+    if ((m = p.match(/^\/admin\/(\d+)\/edit$/))) {
+      const r = store.get(Number(m[1]));
+      if (!r) return send(res, 404, notFound());
+      if (req.method === 'GET') return send(res, 200, adminEditPage(r, { values: r }), { 'Cache-Control': 'no-store' });
+      if (req.method === 'POST') {
+        if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+        let f;
+        try { f = await readBody(req); } catch { return send(res, 413, layout('Too large', '<p>Too large.</p>')); }
+        const { r: v, errors } = validate(f);
+        if (errors.length) return send(res, 400, adminEditPage(r, { values: Object.fromEntries(f), errors }), { 'Cache-Control': 'no-store' });
+        store.updateReport(r.id, v);
+        return redirect(res, `/report/${r.id}`);
+      }
+    }
     if (req.method === 'POST' && (m = p.match(/^\/admin\/(\d+)\/(approve|reject|delete)$/))) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
       const id = Number(m[1]);
       const back = url.searchParams.get('back') || 'pending';
+      const wasPending = store.get(id)?.status === 'pending';
       if (m[2] === 'delete') store.remove(id);
       else store.setStatus(id, m[2] === 'approve' ? 'approved' : 'rejected');
       // A game confirmed as a clone comes off the originals list for good.
@@ -308,6 +501,10 @@ async function handle(req, res) {
         const sameName = r && r.clone_name.toLowerCase() === r.original_name.toLowerCase();
         const g = r && (store.findOriginal(r.clone_steam_appid, '') || (!sameName && store.findOriginal(null, r.clone_name)));
         if (g) store.excludeOriginal(g.id, `approved clone report #${id}`);
+        // Fill missing release dates, images and developers from Steam in the background.
+        if (r && STEAM_ENRICH) steam.comparisonFor(r).then((d) => store.fillComparison(id, d)).catch(() => {});
+        // Email people who follow the original game (only on the first approval).
+        if (r && wasPending && mailer.enabled) sendAlerts(r, baseUrl(req)).catch(() => {});
       }
       return redirect(res, '/admin?status=' + encodeURIComponent(back));
     }

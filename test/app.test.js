@@ -3,6 +3,8 @@ process.env.DB_PATH = ':memory:';
 process.env.ADMIN_PASSWORD = 'pw';
 process.env.MIN_FILL_MS = '0';
 process.env.MAX_PER_HOUR = '3';
+process.env.STEAM_ENRICH = '0';
+process.env.MAX_VOTES_PER_HOUR = '5';
 const test = require('node:test');
 const assert = require('node:assert');
 const { server } = require('../server');
@@ -192,7 +194,7 @@ test('reports work for PlayStation, Xbox, mobile and itch.io store pages', async
 
   const page = await (await fetch(`${base}/report/${id}`)).text();
   assert.match(page, /View the original on Xbox \/ Microsoft Store/);
-  assert.match(page, /<dt>Store<\/dt><dd>Google Play<\/dd>/);
+  assert.match(page, /<div class="clabel">Store<\/div><div><a [^>]*>Xbox \/ Microsoft Store<\/a><\/div><div><a [^>]*>Google Play<\/a><\/div>/);
 });
 
 test('the site recommends the Chrome extension and serves it', async () => {

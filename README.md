@@ -26,6 +26,11 @@ npm test
 | `TRUST_PROXY` | off | Set to `1` behind Render/Railway/Fly so the real visitor IP is used |
 | `MAX_PER_HOUR` | `5` | Reports allowed per IP per hour |
 | `MIN_FILL_MS` | `4000` | Minimum time between loading and submitting the form |
+| `MAX_VOTES_PER_HOUR` | `100` | Community votes allowed per IP per hour |
+| `API_PER_MINUTE` | `120` | Public API requests allowed per IP per minute |
+| `RESEND_API_KEY` | *(none: email alerts off)* | API key from [Resend](https://resend.com), used to send alert emails |
+| `ALERT_FROM` | *(none)* | Sender for alert emails, e.g. `Clone Report <alerts@clonereport.com>` (the domain must be verified in Resend) |
+| `STEAM_ENRICH` | on | Set to `0` to stop filling release dates, images and developers from Steam when a report is approved |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
 | `CHROME_STORE_URL` | *(none)* | Chrome Web Store listing for the extension; until set, `/extension` offers the zip and install steps |
 | `STEAM_SCAN` | on | Set to `0` to turn off both daily scans |
@@ -53,9 +58,41 @@ Admins manage the list at `/admin/originals`: find a game and remove it. A remov
 
 Each game gets a page at `/game/:id` marked "Not a clone", shows up in search, and is listed at `/originals` (filter with `?store=steam` or `?store=nintendo`). `/api/lookup` returns it as `verifiedOriginal`.
 
+## Comparisons and community votes
+
+Each report page (`/report/:id`) is a side-by-side comparison of the original and the clone: images, developers, release dates, platform, store links, and a list of the mechanics they share. Reporters can fill these in on the submit form; admins can change any of them at `/admin/:id/edit`. When a report with Steam links is approved, missing release dates, header images and developers are filled in from Steam's store API (it never overwrites what is already there).
+
+Visitors vote on each approved report: **Clone**, **Inspired by** or **Original**. Each visitor (by salted IP hash) has one vote per report and can change it. The **clone score** is the share of votes saying "clone", with "inspired by" counting half. After 3 votes the report shows a verdict: *Likely a clone* (67% or more), *Inspired by* (34–66%) or *Likely original* (33% or less). The verdict shows on the report page and on report cards in search and on the home page.
+
+## Moderation tools
+
+- **Evidence links.** Reporters can add up to 8 links (comparison videos, articles, screenshots), one per line. They show under "Evidence" on the report page, and admins can change them at `/admin/:id/edit`.
+- **Disputes.** Every approved report has a "Dispute this report" link (`/report/:id/dispute`) for the developers involved. They give their name, role, a private email, an explanation and optional links. Disputes land in `/admin/disputes`, where a moderator can **publish** the developer's message as a response next to the report, **dismiss** it, or reopen it. To take a report down, reject it from the Reports tab. Disputes use the same spam protection as the submit form.
+- **Edit history.** `/report/:id/history` lists every change to a report: submitted, approved or rejected, edited by a moderator (field by field, old and new values), filled in from Steam, disputes received and responses published. It never shows contact emails or IP hashes. Changes made before this feature was added are not listed.
+
+## Public API and alerts
+
+`/api` documents a free, read-only JSON API (CORS open, cached 5 minutes, 120 requests per minute per IP). Only approved reports are exposed, never contact details.
+
+- `GET /api/v1/games?appid=&name=`: one game's clone status (`reported-clone`, `verified-original`, `cloned-by-others`, `unknown`) with reports both ways and its clone score
+- `GET /api/v1/reports?q=&developer=&since_id=&limit=&offset=` and `GET /api/v1/reports/:id`
+- `GET /api/v1/developers/:key` and `GET /api/v1/tree?game=`
+
+The older `/api/lookup` used by the browser extension is unchanged.
+
+**RSS:** `/feed.xml` (every newly approved report), `/feed.xml?game=<name>` (clones of one game) and `/feed.xml?dev=<key>` (one developer).
+
+**Email alerts:** each game and report page links to `/follow?game=<name>`. Visitors enter an email, confirm it from a link (double opt-in), and then get one email each time a clone of that game is approved for the first time. Every email has an unsubscribe link. Emails go out through [Resend](https://resend.com): set `RESEND_API_KEY` and `ALERT_FROM` to turn them on. Without them, the follow page offers the RSS feed only.
+
+## Developer pages and family trees
+
+`/dev/:key` gathers every approved report about one studio: games it was reported to have cloned, its games that others cloned, and its original games. Developer names are matched loosely ("Copycat Studios, Inc." and "copycat studios inc" are the same page). A studio with 3 or more games reported as clones gets a "repeat reports" note. `/developers` ranks studios by reports.
+
+`/tree?game=<name>` shows a game's family tree: what it copies (and what that copied, up the chain) and what copied it (and their clones), built from approved reports. Games are matched by Steam app id when known, otherwise by name.
+
 ## Pages
 
-- `/` search + recently added, `/extension` (Chrome extension download), `/search?q=`, `/report/:id`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
+- `/` search + recently added, `/extension` (Chrome extension download), `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/follow?game=`, `/feed.xml`, `/api`, `/api/v1/…`, `/report/:id/history`, `/report/:id/dispute`, `/admin/disputes`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` or `GET /api/lookup?store=<store>&id=<store id>&name=<game name>` JSON lookup (used by the browser extension).
 
 ## Supported stores
