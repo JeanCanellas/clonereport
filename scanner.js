@@ -57,6 +57,11 @@ const decode = (s) => String(s || '')
   .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
   .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
+// A substring can keep its whole parent string alive in V8. Names cut out of a search page
+// would each hold on to that page's ~400 KB of HTML, and the scanner keeps every name for
+// its later stages, so after ~600 pages the server ran out of memory. Copy the bytes instead.
+const ownCopy = (s) => Buffer.from(s, 'utf8').toString('utf8');
+
 // Turn one page of Steam store search results (its results_html) into
 // [{ appid, name, positive_pct, reviews }]. Bundles and packages are left out.
 function parseSearchPage(html) {
@@ -68,7 +73,7 @@ function parseSearchPage(html) {
     const review = /(\d+)% of the ([\d,.]+) user reviews/.exec(decode(chunk));
     out.push({
       appid: Number(id[1]),
-      name: decode(title[1]).trim(),
+      name: ownCopy(decode(title[1]).trim()),
       positive_pct: review ? Number(review[1]) : null,
       reviews: review ? Number(review[2].replace(/[,.]/g, '')) : 0,
     });
