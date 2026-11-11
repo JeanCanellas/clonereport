@@ -27,6 +27,15 @@ if (process.env.SEED_ORIGINALS !== '0') {
     console.log(`Loaded ${store.seedOriginals(games)} original games from seed/originals.json`);
   } catch (err) { console.error('Could not load seed/originals.json:', err.message); }
 }
+// Load publicly documented clone cases (seed/clone-reports.json) as approved reports.
+// Each entry is added once, so admin edits and deletions stick. Set SEED_REPORTS=0 to skip.
+// Skipped under `node --test` (so tests start from an empty reports table) unless SEED_REPORTS=1.
+if (process.env.SEED_REPORTS === '1' || (process.env.SEED_REPORTS !== '0' && !process.env.NODE_TEST_CONTEXT)) {
+  try {
+    const { added, moved } = require('./seed-reports').loadSeedReports(store);
+    if (added || moved) console.log(`Seeded ${added} clone reports from seed/clone-reports.json` + (moved ? ` (${moved} moved sources to evidence)` : ''));
+  } catch (err) { console.error('Could not load seed/clone-reports.json:', err.message); }
+}
 
 const CSS = fs.readFileSync(path.join(__dirname, 'public', 'style.css'));
 
