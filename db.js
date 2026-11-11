@@ -45,6 +45,11 @@ db.exec(`
     source      TEXT NOT NULL DEFAULT 'checked', -- checked (hand-checked list) | steam-scan (automatic)
     positive_pct INTEGER,                        -- Steam review score at scan time
     reviews     INTEGER,
+    platforms   TEXT,                            -- classic consoles, e.g. "SNES, Game Boy"
+    year        INTEGER,                         -- first release year
+    wiki_url    TEXT,                            -- English Wikipedia article
+    wikidata_id TEXT,                            -- e.g. Q12345
+    wiki_langs  INTEGER,                         -- number of Wikipedia language editions
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS idx_originals_appid ON originals(steam_appid);
@@ -95,6 +100,9 @@ db.exec(`
   if (!cols.has('source')) db.exec(`ALTER TABLE originals ADD COLUMN source TEXT NOT NULL DEFAULT 'checked'`);
   if (!cols.has('positive_pct')) db.exec('ALTER TABLE originals ADD COLUMN positive_pct INTEGER');
   if (!cols.has('reviews')) db.exec('ALTER TABLE originals ADD COLUMN reviews INTEGER');
+  for (const [c, t] of [['platforms', 'TEXT'], ['year', 'INTEGER'], ['wiki_url', 'TEXT'], ['wikidata_id', 'TEXT'], ['wiki_langs', 'INTEGER']])
+    if (!cols.has(c)) db.exec(`ALTER TABLE originals ADD COLUMN ${c} ${t}`);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_originals_wikidata ON originals(wikidata_id)');
 }
 
 const stmts = {
@@ -128,6 +136,10 @@ const stmts = {
       steam_appid = excluded.steam_appid, eshop_url = excluded.eshop_url, note = excluded.note, source = 'checked'`),
   insertScanned: db.prepare(`INSERT OR IGNORE INTO originals (name, developer, publisher, steam_appid, source, positive_pct, reviews)
     VALUES (?, ?, ?, ?, 'steam-scan', ?, ?)`),
+  insertClassic: db.prepare(`INSERT OR IGNORE INTO originals (name, developer, publisher, source, platforms, year, wiki_url, wikidata_id, wiki_langs)
+    VALUES (?, ?, ?, 'classic-scan', ?, ?, ?, ?, ?)`),
+  originalByWikidata: db.prepare(`SELECT * FROM originals WHERE wikidata_id = ? LIMIT 1`),
+  setPlatforms: db.prepare(`UPDATE originals SET platforms = ? WHERE id = ?`),
   isExcluded: db.prepare(`SELECT 1 FROM excluded_games WHERE (? IS NOT NULL AND steam_appid = ?) OR name = ? LIMIT 1`),
   exclude: db.prepare(`INSERT INTO excluded_games (name, steam_appid, reason) VALUES (?, ?, ?)`),
   delOriginal: db.prepare(`DELETE FROM originals WHERE id = ?`),
@@ -136,10 +148,10 @@ const stmts = {
   isApprovedClone: db.prepare(`SELECT 1 FROM reports WHERE status = 'approved'
     AND ((? IS NOT NULL AND clone_steam_appid = ?) OR lower(clone_name) = lower(?)) LIMIT 1`),
   pageOriginals: db.prepare(`SELECT * FROM originals
-    WHERE (? = '' OR (? = 'steam' AND steam_appid IS NOT NULL) OR (? = 'nintendo' AND eshop_url IS NOT NULL))
+    WHERE (? = '' OR (? = 'steam' AND steam_appid IS NOT NULL) OR (? = 'nintendo' AND eshop_url IS NOT NULL) OR (? = 'classic' AND platforms IS NOT NULL))
     ORDER BY name LIMIT ? OFFSET ?`),
   countOriginalsBy: db.prepare(`SELECT COUNT(*) AS n FROM originals
-    WHERE (? = '' OR (? = 'steam' AND steam_appid IS NOT NULL) OR (? = 'nintendo' AND eshop_url IS NOT NULL))`),
+    WHERE (? = '' OR (? = 'steam' AND steam_appid IS NOT NULL) OR (? = 'nintendo' AND eshop_url IS NOT NULL) OR (? = 'classic' AND platforms IS NOT NULL))`),
   getOriginal: db.prepare(`SELECT * FROM originals WHERE id = ?`),
   originalByAppid: db.prepare(`SELECT * FROM originals WHERE steam_appid = ? LIMIT 1`),
   originalByName: db.prepare(`SELECT * FROM originals WHERE name = ? LIMIT 1`),
@@ -249,7 +261,7 @@ module.exports = {
   allOriginals: () => stmts.allOriginals.all(),
   pageOriginals(storeFilter, limit, offset) {
     const f = storeFilter || '';
-    return { rows: stmts.pageOriginals.all(f, f, f, limit, offset), total: stmts.countOriginalsBy.get(f, f, f).n };
+    return { rows: stmts.pageOriginals.all(f, f, f, f, limit, offset), total: stmts.countOriginalsBy.get(f, f, f, f).n };
   },
   // Remove a game from the originals list for good (the seed file and the scanner skip it).
   excludeOriginal(id, reason) {
@@ -267,6 +279,23 @@ module.exports = {
     if (stmts.isApprovedClone.get(g.appid, g.appid, name)) return 'reported as a clone';
     if (stmts.originalByAppid.get(g.appid)) return 'already listed';
     const res = stmts.insertScanned.run(name.slice(0, 200), g.developer || null, g.publisher || null, g.appid, g.positive_pct ?? null, g.reviews ?? null);
+    return res.changes ? 'added' : 'name already listed';
+  },
+  // Used by the classic console scanner. Returns 'added', 'updated' or why it was skipped.
+  addClassic(g) {
+    const name = String(g.name || '').trim();
+    if (!name || !g.wikidata_id) return 'no name';
+    const same = stmts.originalByWikidata.get(g.wikidata_id);
+    if (same) {
+      // Same game seen on another console: add the console to its list.
+      const list = String(same.platforms || '').split(', ').filter(Boolean);
+      if (g.platform && !list.includes(g.platform)) { stmts.setPlatforms.run([...list, g.platform].join(', '), same.id); return 'updated'; }
+      return 'already listed';
+    }
+    if (stmts.isExcluded.get(null, null, name)) return 'excluded by admin';
+    if (stmts.isApprovedClone.get(null, null, name)) return 'reported as a clone';
+    const res = stmts.insertClassic.run(name.slice(0, 200), g.developer || null, g.publisher || null, g.platform || null,
+      g.year ?? null, g.wiki_url || null, g.wikidata_id, g.wiki_langs ?? null);
     return res.changes ? 'added' : 'name already listed';
   },
   scanSeen: (appid) => !!stmts.scanSeen.get(appid),

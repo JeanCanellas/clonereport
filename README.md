@@ -28,18 +28,26 @@ npm test
 | `MIN_FILL_MS` | `4000` | Minimum time between loading and submitting the form |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
 | `CHROME_STORE_URL` | *(none)* | Chrome Web Store listing for the extension; until set, `/extension` offers the zip and install steps |
-| `STEAM_SCAN` | on | Set to `0` to turn off the daily Steam scan |
-| `STEAM_SCAN_TARGET` | `5000` | The scanner stops adding once the list has this many games |
-| `STEAM_SCAN_MIN_REVIEWS` | `1000` | Minimum Steam reviews for a game to be added |
-| `STEAM_SCAN_MIN_POSITIVE` | `80` | Minimum percent of positive reviews |
+| `STEAM_SCAN` | on | Set to `0` to turn off both daily scans |
+| `CLASSIC_SCAN` | on | Set to `0` to turn off only the classic console scan |
+| `STEAM_SCAN_TARGET` | `25000` | The scanners stop adding once the list has this many games |
+| `STEAM_SCAN_STAGES` | `1000:80,300:80,100:75` | Steam filter stages: min reviews : min % positive |
+| `CLASSIC_SCAN_STAGES` | `20,10,5` | Classic filter stages: min Wikipedia languages |
+| `SCANNER_USER_AGENT` | generic | How the scanners identify themselves to Wikidata |
 
 ## Original games list
 
 `seed/originals.json` lists well-known games from Steam and the Nintendo eShop that are originals, not clones (name, developer, publisher, Steam app id and/or Nintendo eShop link; facts only, no store art). The server loads it into the `originals` table on every start, updating existing rows and never duplicating them, so a redeploy is all it takes to publish changes to the list. Set `SEED_ORIGINALS=0` to skip loading it.
 
-### Steam scanner
+### Scanners
 
-`scanner.js` grows the list on its own. About a minute after the server starts, and then once a day, it walks SteamSpy's list of Steam games (most-owned first) and adds games that are very unlikely to be clones: at least 1,000 reviews, at least 80% positive, not a software tool, not removed by an admin, and not the clone in an approved report. It stops once the list holds 5,000 games and only checks each Steam app once, so later runs pick up new games quickly. It respects SteamSpy's rate limits, so the first full run takes about an hour and a half. Run one pass by hand with `npm run scan`.
+Two scanners grow the list on their own. About a minute after the server starts, and then once a day, they run one after the other until the list holds 25,000 games (`STEAM_SCAN_TARGET`).
+
+**Classic consoles (`classic.js`)** asks Wikidata, the structured data behind Wikipedia, for games on 24 consoles from the Atari 2600 and NES to the PS3, Wii U and handhelds. A game qualifies if it has an English Wikipedia article plus articles in several other languages (a sign it is well known), and is not marked as "based on" or "inspired by" another video game (this filters out remakes, ports and known copies). The most famous go in first: 20+ languages, then 10+, then 5+ (`CLASSIC_SCAN_STAGES`). A game on several consoles gets one entry listing all of them. It takes a few minutes. Wikimedia asks automated clients to identify themselves, so set `SCANNER_USER_AGENT` to something like `MySiteScanner/1.0 (https://example.com; you@example.com)`.
+
+**Steam (`scanner.js`)** reads Steam's own store search (games only, 100 per page), which shows each game's review score, and adds games that are well reviewed and not software tools; developer and publisher come from each game's store details. It starts strict and loosens in steps once those run out (`STEAM_SCAN_STAGES`, default `1000:80,300:80,100:75`, meaning at least 1,000 reviews and 80% positive, then 300 and 80%, then 100 and 75%). Each game is checked in detail once, and requests are spaced out (and back off if Steam says "too many requests"), so a full run can take most of a day; later runs are quicker. If it stops, the reason shows on `/admin/originals`.
+
+Both skip games an admin removed and games an approved report names as clones. Run them by hand with `npm run scan` (Steam) or `npm run scan:classic`.
 
 Admins manage the list at `/admin/originals`: find a game and remove it. A removed game stays off for good (neither the scanner nor the seed file adds it back), and approving a clone report removes the clone from the list automatically.
 
