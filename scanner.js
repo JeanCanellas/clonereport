@@ -1,16 +1,17 @@
 'use strict';
 // Steam scanner: keeps the "original games" list growing on its own.
 //
-// It walks SteamSpy's list of Steam games (most-owned first, 1,000 per page) and adds
-// games that are very unlikely to be clones: many reviews, mostly positive, not a
-// software tool, not on the admin's exclusion list, and not reported as a clone.
-// It applies its filters in stages, strictest first, until the list reaches the target.
-// Each Steam app is checked in detail once; later runs only look at games it has not seen.
-// SteamSpy asks for at most 1 "all" request per minute and 1 "appdetails" request per second.
+// It reads Steam's own store search (games only, most relevant first, 100 per page),
+// which shows each game's review score, and adds games that are very unlikely to be
+// clones: many reviews, mostly positive, a game rather than a software tool, not on the
+// admin's exclusion list, and not reported as a clone. Developer and publisher come from
+// the game's store details. Filters apply in stages, strictest first, until the list
+// reaches the target. Each Steam app is checked in detail once; later runs only look at
+// games it has not seen. Requests are spaced out to stay well inside Steam's rate limits.
 
 const store = require('./db');
 
-const API = 'https://steamspy.com/api.php';
+const STORE = 'https://store.steampowered.com';
 const SOFTWARE_GENRES = ['Utilities', 'Design & Illustration', 'Animation & Modeling', 'Video Production', 'Audio Production',
   'Photo Editing', 'Web Publishing', 'Software Training', 'Education', 'Game Development', 'Accounting'];
 const GAME_GENRES = ['Action', 'Adventure', 'RPG', 'Strategy', 'Simulation', 'Casual', 'Sports', 'Racing', 'Massively Multiplayer'];
@@ -31,33 +32,61 @@ const defaults = {
     { minReviews: 300, minPositive: 80 },
     { minReviews: 100, minPositive: 75 },
   ],
-  maxPages: Number(process.env.STEAM_SCAN_MAX_PAGES ?? 150),
-  pageDelayMs: 61_000,
-  detailDelayMs: 1_100,
+  maxPages: Number(process.env.STEAM_SCAN_MAX_PAGES ?? 2000), // 100 games per page
+  pageDelayMs: 2_000,
+  detailDelayMs: 1_600,
+  backoffMs: 5 * 60_000,                                        // after Steam says "too many requests"
 };
 
 const state = { running: false, lastStart: null, lastEnd: null, lastAdded: 0, lastError: null, stage: null, page: null };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function getJson(url, fetchImpl) {
-  const res = await fetchImpl(url, { headers: { Accept: 'application/json', 'User-Agent': 'clonereport-scanner/1.0' } });
-  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
-  return res.json();
+// Fetch JSON; on HTTP 429 wait and try once more.
+async function getJson(url, fetchImpl, wait, backoffMs) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetchImpl(url, { headers: { Accept: 'application/json', 'User-Agent': 'Mozilla/5.0 (compatible; original-games-scanner/1.0)' } });
+    if (res.status === 429 && attempt === 0) { await wait(backoffMs); continue; }
+    if (!res.ok) throw new Error(`HTTP ${res.status} from ${url.split('?')[0]}`);
+    return res.json();
+  }
 }
 
-// Decide from the SteamSpy list entry alone. Returns null when the game passes.
+const decode = (s) => String(s || '')
+  .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+  .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+  .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
+// Turn one page of Steam store search results (its results_html) into
+// [{ appid, name, positive_pct, reviews }]. Bundles and packages are left out.
+function parseSearchPage(html) {
+  const out = [];
+  for (const chunk of String(html || '').split('<a href=').slice(1)) {
+    const id = /data-ds-appid="(\d+)"/.exec(chunk);
+    const title = /<span class="title">([^<]*)<\/span>/.exec(chunk);
+    if (!id || !title) continue;
+    const review = /(\d+)% of the ([\d,.]+) user reviews/.exec(decode(chunk));
+    out.push({
+      appid: Number(id[1]),
+      name: decode(title[1]).trim(),
+      positive_pct: review ? Number(review[1]) : null,
+      reviews: review ? Number(review[2].replace(/[,.]/g, '')) : 0,
+    });
+  }
+  return out;
+}
+
+// Decide from the search result alone. Returns null when the game passes.
 function quickReject(g, o) {
-  const pos = Number(g.positive) || 0, neg = Number(g.negative) || 0;
-  const reviews = pos + neg;
   if (!g.name || NOT_A_GAME.test(g.name)) return 'not a game';
-  if (reviews < o.minReviews) return 'too few reviews';
-  if ((pos * 100) / reviews < o.minPositive) return 'reviews not positive enough';
+  if ((g.reviews || 0) < o.minReviews) return 'too few reviews';
+  if ((g.positive_pct || 0) < o.minPositive) return 'reviews not positive enough';
   return null;
 }
 
+// details = the "data" object from the store's appdetails API.
 function isSoftware(details) {
-  const genres = String(details.genre || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const genres = (details.genres || []).map((x) => x.description);
   return genres.some((x) => SOFTWARE_GENRES.includes(x)) && !genres.some((x) => GAME_GENRES.includes(x));
 }
 
@@ -81,13 +110,18 @@ async function scanSteam(opts = {}) {
     if (why) return;
     await wait(o.detailDelayMs);
     let details;
-    try { details = await getJson(`${API}?request=appdetails&appid=${appid}`, fetchImpl); }
-    catch (err) { log(`scanner: details for ${appid} failed: ${err.message}`); return; } // retried next run
-    if (isSoftware(details)) { store.scanMark(appid, 'skipped', 'software, not a game'); return; }
-    const pos = Number(g.positive), neg = Number(g.negative);
+    try {
+      const body = await getJson(`${STORE}/api/appdetails?appids=${appid}&cc=us&l=english`, fetchImpl, wait, o.backoffMs);
+      details = body && body[appid];
+    } catch (err) { log(`scanner: details for ${appid} failed: ${err.message}`); return; } // retried next run
+    if (!details || !details.success || !details.data) { store.scanMark(appid, 'skipped', 'no store details'); return; }
+    const d = details.data;
+    if (d.type && d.type !== 'game') { store.scanMark(appid, 'skipped', `not a game (${d.type})`); return; }
+    if (isSoftware(d)) { store.scanMark(appid, 'skipped', 'software, not a game'); return; }
+    const list = (x) => (Array.isArray(x) ? x.filter(Boolean).join(', ').slice(0, 200) : null) || null;
     const result = store.addScanned({
-      appid, name: g.name, developer: g.developer, publisher: g.publisher,
-      positive_pct: Math.round((pos * 100) / (pos + neg)), reviews: pos + neg,
+      appid, name: g.name, developer: list(d.developers), publisher: list(d.publishers),
+      positive_pct: g.positive_pct, reviews: g.reviews,
     });
     store.scanMark(appid, result === 'added' ? 'added' : 'skipped', result === 'added' ? null : result);
     if (result === 'added') { added++; state.lastAdded = added; }
@@ -101,16 +135,16 @@ async function scanSteam(opts = {}) {
     for (let page = 0; page < o.maxPages && !full(); page++) {
       state.page = page;
       if (page > 0) await wait(o.pageDelayMs);
-      const list = await getJson(`${API}?request=all&page=${page}`, fetchImpl);
-      const games = Object.values(list || {}).map(({ appid, name, developer, publisher, positive, negative, owners }) =>
-        ({ appid, name, developer, publisher, positive, negative, owners: parseOwners(owners) }));
+      const url = `${STORE}/search/results/?infinite=1&start=${page * 100}&count=100&category1=998&cc=us&l=english`;
+      const body = await getJson(url, fetchImpl, wait, o.backoffMs);
+      const games = parseSearchPage(body && body.results_html);
       if (!games.length) break;
-      games.sort((a, b) => b.owners - a.owners); // most-owned first
       cache.push(...games);
       for (const g of games) { if (full()) break; await consider(g, first); }
-      log(`scanner: page ${page} done, ${added} added so far, ${store.countOriginals()} games listed`);
+      if (page % 10 === 0) log(`scanner: page ${page} done, ${added} added so far, ${store.countOriginals()} games listed`);
     }
-    cache.sort((a, b) => b.owners - a.owners);
+    // Later stages: biggest games (most reviews) first.
+    cache.sort((a, b) => b.reviews - a.reviews);
     for (const [i, filters] of rest.entries()) {
       if (full()) break;
       state.stage = i + 2; state.page = null;
@@ -126,11 +160,6 @@ async function scanSteam(opts = {}) {
   return { added, total: store.countOriginals() };
 }
 
-// "20,000,000 .. 50,000,000" -> 20000000
-function parseOwners(s) {
-  return Number(String(s || '').split('..')[0].replace(/[^\d]/g, '')) || 0;
-}
-
 // Run shortly after start, then once a day: classic consoles first (a few minutes),
 // then Steam (hours on the first run, quick afterwards).
 function startSchedule({ firstDelayMs = 60_000, everyMs = 24 * 3600 * 1000 } = {}) {
@@ -143,7 +172,7 @@ function startSchedule({ firstDelayMs = 60_000, everyMs = 24 * 3600 * 1000 } = {
   setInterval(run, everyMs).unref();
 }
 
-module.exports = { scanSteam, startSchedule, state, quickReject, isSoftware, parseOwners, parseStages };
+module.exports = { scanSteam, startSchedule, state, quickReject, isSoftware, parseSearchPage, parseStages };
 
 if (require.main === module) {
   // npm run scan: one pass now, printing progress.

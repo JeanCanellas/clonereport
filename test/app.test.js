@@ -119,7 +119,7 @@ test('original games are seeded, searchable and exposed in the api', async () =>
   const list = await (await fetch(base + '/originals?store=nintendo')).text();
   assert.match(list, /Super Mario Odyssey/);
   assert.match(list, /Hollow Knight/, 'games on both stores show in each');
-  assert.ok(!list.includes('Celeste'), 'steam-only games are filtered out');
+  assert.ok(!list.includes('Factorio'), 'steam-only games are filtered out');
 
   let j = await (await fetch(base + '/api/lookup?appid=367520')).json();
   assert.equal(j.found, false);

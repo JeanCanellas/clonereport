@@ -3,20 +3,30 @@ process.env.DB_PATH = ':memory:';
 const test = require('node:test');
 const assert = require('node:assert');
 const store = require('../db');
-const { scanSteam, quickReject, isSoftware, parseOwners } = require('../scanner');
+const { scanSteam, quickReject, isSoftware, parseSearchPage } = require('../scanner');
 
 const o = { minReviews: 1000, minPositive: 80 };
-const game = (appid, name, positive, negative, owners = '1,000,000 .. 2,000,000') => ({ appid, name, developer: 'Dev ' + appid, publisher: 'Pub', positive, negative, owners });
+// One search result the way Steam's store search renders it.
+const item = (appid, name, pct, reviews) => `<a href="https://store.steampowered.com/app/${appid}/x/?snr=1" data-ds-appid="${appid}" data-ds-itemkey="App_${appid}" class="search_result_row">
+<div class="search_name ellipsis"><span class="title">${name}</span></div>
+<div class="search_reviewscore responsive_secondrow"><span class="search_review_summary positive" data-tooltip-html="Very Positive&lt;br&gt;${pct}% of the ${Number(reviews).toLocaleString('en-US')} user reviews for this game are positive.">
+</span></div></a>`;
 
-test('filters', () => {
-  assert.equal(quickReject(game(1, 'Great Game', 9000, 1000), o), null);
-  assert.equal(quickReject(game(1, 'Small Game', 500, 10), o), 'too few reviews');
-  assert.equal(quickReject(game(1, 'Mixed Game', 6000, 4000), o), 'reviews not positive enough');
-  assert.equal(quickReject(game(1, 'Great Game Soundtrack', 9000, 10), o), 'not a game');
-  assert.equal(isSoftware({ genre: 'Utilities, Design & Illustration' }), true);
-  assert.equal(isSoftware({ genre: 'Action, Indie' }), false);
-  assert.equal(isSoftware({ genre: 'Simulation, Utilities' }), false);
-  assert.equal(parseOwners('20,000,000 .. 50,000,000'), 20000000);
+test('parses Steam search results and filters', () => {
+  const html = '<!-- List Items -->' + item(10, 'Tom &amp; Jerry&#39;s', 91, 12345)
+    + '<a href="https://store.steampowered.com/bundle/5/" data-ds-bundleid="5" data-ds-appid="1,2"><span class="title">A Bundle</span></a>'
+    + '<a href="https://store.steampowered.com/app/11/" data-ds-appid="11"><span class="title">No Reviews Yet</span></a>';
+  assert.deepEqual(parseSearchPage(html), [
+    { appid: 10, name: "Tom & Jerry's", positive_pct: 91, reviews: 12345 },
+    { appid: 11, name: 'No Reviews Yet', positive_pct: null, reviews: 0 },
+  ]);
+  assert.equal(quickReject({ name: 'Great Game', positive_pct: 90, reviews: 10000 }, o), null);
+  assert.equal(quickReject({ name: 'Small Game', positive_pct: 99, reviews: 500 }, o), 'too few reviews');
+  assert.equal(quickReject({ name: 'Mixed Game', positive_pct: 60, reviews: 10000 }, o), 'reviews not positive enough');
+  assert.equal(quickReject({ name: 'Great Game Soundtrack', positive_pct: 99, reviews: 9000 }, o), 'not a game');
+  assert.equal(isSoftware({ genres: [{ description: 'Utilities' }, { description: 'Design & Illustration' }] }), true);
+  assert.equal(isSoftware({ genres: [{ description: 'Action' }, { description: 'Indie' }] }), false);
+  assert.equal(isSoftware({ genres: [{ description: 'Simulation' }, { description: 'Utilities' }] }), false);
 });
 
 test('scan adds good games, skips the rest, and never re-adds removed ones', async () => {
@@ -24,22 +34,24 @@ test('scan adds good games, skips the rest, and never re-adds removed ones', asy
   const rid = store.createReport({ clone_name: 'Copycat', clone_url: 'https://store.steampowered.com/app/5/', original_name: 'Real', original_url: 'https://example.com' }, 'x');
   store.setStatus(rid, 'approved');
 
-  const pages = [{
-    1: game(1, 'Big Original', 50000, 2000, '10,000,000 .. 20,000,000'),
-    2: game(2, 'Paint Tool', 20000, 100),
-    3: game(3, 'Tiny Game', 50, 1),
-    4: game(4, 'Disliked Game', 3000, 3000),
-    5: game(5, 'Copycat', 9000, 100),
-    6: game(6, 'Second Original', 8000, 400),
-    7: game(7, 'Smaller Original', 450, 50, '50,000 .. 100,000'),
-  }, {}];
-  const details = { 1: { genre: 'Action' }, 2: { genre: 'Utilities' }, 5: { genre: 'Casual' }, 6: { genre: 'Indie, RPG' }, 7: { genre: 'Adventure' } };
+  const pages = [
+    item(1, 'Big Original', 96, 52000) + item(2, 'Paint Tool', 99, 20100) + item(3, 'Tiny Game', 98, 51)
+      + item(4, 'Disliked Game', 50, 6000) + item(5, 'Copycat', 99, 9100) + item(6, 'Second Original', 95, 8400)
+      + item(7, 'Smaller Original', 90, 500) + item(8, 'A Video', 99, 5000),
+    '',
+  ];
+  const data = (o) => ({ success: true, data: { type: 'game', developers: ['Dev'], publishers: ['Pub'], genres: [{ description: 'Action' }], ...o } });
+  const details = { 1: data(), 2: data({ genres: [{ description: 'Utilities' }] }), 5: data(), 6: data({ developers: ['A', 'B'] }), 7: data(), 8: data({ type: 'video' }) };
   const calls = [];
   const fetch = async (url) => {
     calls.push(url);
     const u = new URL(url);
-    const body = u.searchParams.get('request') === 'all' ? pages[Number(u.searchParams.get('page'))] : details[u.searchParams.get('appid')];
-    return { ok: true, json: async () => body };
+    if (u.pathname.startsWith('/search/')) {
+      const page = Number(u.searchParams.get('start')) / 100;
+      return { ok: true, status: 200, json: async () => ({ success: 1, results_html: pages[page] || '' }) };
+    }
+    const id = u.searchParams.get('appids');
+    return { ok: true, status: 200, json: async () => ({ [id]: details[id] || { success: false } }) };
   };
   const opts = { fetch, sleep: async () => {}, log: () => {}, target: 100, stages: [{ minReviews: 1000, minPositive: 80 }] };
 
@@ -49,16 +61,18 @@ test('scan adds good games, skips the rest, and never re-adds removed ones', asy
   assert.equal(g1.name, 'Big Original');
   assert.equal(g1.source, 'steam-scan');
   assert.equal(g1.positive_pct, 96);
-  assert.ok(store.findOriginal(6, ''));
-  for (const id of [2, 3, 4, 5]) assert.equal(store.findOriginal(id, ''), null, `app ${id} skipped`);
+  assert.equal(g1.reviews, 52000);
+  assert.equal(g1.developer, 'Dev');
+  assert.equal(store.findOriginal(6, '').developer, 'A, B');
+  for (const id of [2, 3, 4, 5, 8]) assert.equal(store.findOriginal(id, ''), null, `app ${id} skipped`);
 
-  // Admin removes one; a second run checks nothing new and adds nothing back.
+  // Admin removes one; a second run checks nothing new in detail and adds nothing back.
   store.excludeOriginal(g1.id, 'test');
   calls.length = 0;
   r = await scanSteam(opts);
   assert.equal(r.added, 0);
   assert.equal(store.findOriginal(1, ''), null);
-  assert.ok(calls.every((u) => u.includes('request=all')), 'already-seen apps are not fetched again');
+  assert.ok(calls.every((u) => u.includes('/search/')), 'already-seen apps are not fetched again');
 
   // The hand-checked seed list also respects the exclusion.
   store.seedOriginals([{ name: 'Big Original', steam_appid: 1 }]);
@@ -73,6 +87,17 @@ test('scan adds good games, skips the rest, and never re-adds removed ones', asy
   // Stops at the target.
   r = await scanSteam({ ...opts, target: store.countOriginals() });
   assert.equal(r.added, 0);
+});
+
+test('scan backs off once when Steam says too many requests, and reports errors', async () => {
+  let n = 0;
+  const waits = [];
+  const fetch = async () => (++n === 1 ? { ok: false, status: 429 } : { ok: false, status: 403 });
+  const { state } = require('../scanner');
+  const r = await scanSteam({ fetch, sleep: async (ms) => waits.push(ms), log: () => {}, target: 100000, backoffMs: 123 });
+  assert.equal(r.added, 0);
+  assert.ok(waits.includes(123));
+  assert.match(state.lastError, /HTTP 403/);
 });
 
 test('classic console scan: adds famous games, merges consoles, respects exclusions', async () => {
