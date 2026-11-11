@@ -19,7 +19,7 @@ async function token() {
   return html.match(/name="token" value="([^"]+)"/)[1];
 }
 async function submit(fields) {
-  const body = new URLSearchParams({ token: await token(), ...fields });
+  const body = new URLSearchParams({ token: await token(), agree: 'yes', ...fields });
   return fetch(base + '/submit', { method: 'POST', body, redirect: 'manual' });
 }
 

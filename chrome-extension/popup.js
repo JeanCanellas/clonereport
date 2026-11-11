@@ -58,7 +58,7 @@ document.getElementById('options').addEventListener('click', e => {
     }
     if (r.clonedBy.length) {
       if (!r.cloneOf.length) statusEl.classList.add('cloned');
-      statusEl.append(el('strong', `${gameName} has been cloned by:`), list(r.clonedBy));
+      statusEl.append(el('strong', `Games reported as copies of ${gameName}:`), list(r.clonedBy));
     }
   }
 })();

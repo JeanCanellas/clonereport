@@ -79,7 +79,7 @@ function setBadge(tabId, result) {
   } else if (result?.clonedBy?.length) {
     text = String(result.clonedBy.length);
     color = '#ef6c00';
-    title = `Clone Report: cloned by ${result.clonedBy.length} game(s)`;
+    title = `Clone Report: ${result.clonedBy.length} game(s) reported as copies of this one`;
   }
   chrome.action.setBadgeText({ tabId, text });
   chrome.action.setBadgeBackgroundColor({ tabId, color });

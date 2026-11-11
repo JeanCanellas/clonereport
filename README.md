@@ -30,6 +30,7 @@ npm test
 | `API_PER_MINUTE` | `120` | Public API requests allowed per IP per minute |
 | `RESEND_API_KEY` | *(none: email alerts off)* | API key from [Resend](https://resend.com), used to send alert emails |
 | `ALERT_FROM` | *(none)* | Sender for alert emails, e.g. `Clone Report <alerts@clonereport.com>` (the domain must be verified in Resend) |
+| `ADMIN_EMAIL` | *(none)* | Gets an email for each request sent through `/contact` (needs email alerts set up). Requests always appear at `/admin/requests` |
 | `STEAM_ENRICH` | on | Set to `0` to stop filling release dates, images and developers from Steam when a report is approved |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
 | `CHROME_STORE_URL` | *(none)* | Chrome Web Store listing for the extension; until set, `/extension` offers the zip and install steps |
@@ -83,6 +84,14 @@ The older `/api/lookup` used by the browser extension is unchanged.
 **RSS:** `/feed.xml` (every newly approved report), `/feed.xml?game=<name>` (clones of one game) and `/feed.xml?dev=<key>` (one developer).
 
 **Email alerts:** each game and report page links to `/follow?game=<name>`. Visitors enter an email, confirm it from a link (double opt-in), and then get one email each time a clone of that game is approved for the first time. Every email has an unsubscribe link. Emails go out through [Resend](https://resend.com): set `RESEND_API_KEY` and `ALERT_FROM` to turn them on. Without them, the follow page offers the RSS feed only.
+
+## Terms, takedowns and wording
+
+`/terms` is the Terms of Service. The submit form has a required checkbox where reporters confirm their report is truthful and that they agree to the terms; each report stores the terms version (`terms_accepted`, set from `TERMS_VERSION` in `views.js`, which you bump when the terms change).
+
+`/contact` is the contact and takedown page: removal, correction, copyright, privacy, legal and other requests, with a good-faith statement. Requests are private and listed at `/admin/requests` (open/done); set `ADMIN_EMAIL` to also get them by email. Report pages link to it as "Request a correction or removal", next to the developer dispute link.
+
+The site and extension describe reports as claims ("reported clone", "reported as a copy of") rather than facts. Keep that wording in new pages. The terms and contact pages were not written by a lawyer: have them reviewed before relying on them.
 
 ## Developer pages and family trees
 

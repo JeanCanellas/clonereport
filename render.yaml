@@ -24,6 +24,9 @@ services:
         sync: false
       - key: ALERT_FROM
         sync: false
+      # Optional: email address that receives contact and takedown requests
+      - key: ADMIN_EMAIL
+        sync: false
     disk:
       name: data
       mountPath: /var/data

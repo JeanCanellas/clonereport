@@ -36,8 +36,8 @@ ${body}
 </main>
 <footer class="wrap site-foot">
   <nav class="foot-nav"><a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/feed.xml">RSS</a> · <a href="/api">API</a> · <a href="/submit">Report a clone</a></nav>
-  <p>Reports are submitted by the community and reviewed before they appear. They are claims, not legal findings.</p>
-  <p><a href="/privacy">Privacy policy</a></p>
+  <p>Reports are claims and opinions submitted by the community and reviewed before they appear. They are not verified facts or legal findings.</p>
+  <p><a href="/terms">Terms of Service</a> · <a href="/privacy">Privacy policy</a> · <a href="/contact">Contact and takedown requests</a></p>
 </footer>
 </body>
 </html>`;
@@ -56,8 +56,8 @@ function card(r) {
   return `<li class="card">
   <a class="card-link" href="/report/${r.id}">
     <div class="pair">
-      <div><span class="tag clone">Clone</span><strong>${esc(r.clone_name)}</strong>${r.clone_developer ? `<small>by ${esc(r.clone_developer)}</small>` : ''}</div>
-      <div class="arrow" aria-hidden="true">copies</div>
+      <div><span class="tag clone">Reported clone</span><strong>${esc(r.clone_name)}</strong>${r.clone_developer ? `<small>by ${esc(r.clone_developer)}</small>` : ''}</div>
+      <div class="arrow" aria-hidden="true">reported copy of</div>
       <div><span class="tag orig">Original</span><strong>${esc(r.original_name)}</strong>${r.original_developer ? `<small>by ${esc(r.original_developer)}</small>` : ''}</div>
     </div>
     ${scoreBadge(r)}
@@ -127,9 +127,9 @@ function releaseNote(r) {
   if (!a || !b) return '';
   const n = Math.min(a.length, b.length);
   if (a.slice(0, n) === b.slice(0, n)) return '<p class="muted">Both games came out around the same time.</p>';
-  if (a.slice(0, n) > b.slice(0, n)) return '<p class="notice">Note: the listed release date of the clone is earlier than the original\'s.</p>';
+  if (a.slice(0, n) > b.slice(0, n)) return '<p class="notice">Note: the listed release date of the reported clone is earlier than the original\'s.</p>';
   const yrs = year(b) - year(a);
-  return `<p class="muted">The original came out ${yrs >= 1 ? `${yrs} year${yrs === 1 ? '' : 's'}` : 'shortly'} before the clone.</p>`;
+  return `<p class="muted">The original came out ${yrs >= 1 ? `${yrs} year${yrs === 1 ? '' : 's'}` : 'shortly'} before the reported clone.</p>`;
 }
 const shot = (url, name) => (url
   ? `<img class="shot" src="${esc(url)}" alt="${esc(name)}" loading="lazy" referrerpolicy="no-referrer">`
@@ -170,13 +170,13 @@ function reportPage(r, opts = {}) {
   const mech = String(r.mechanics || '').split('\n').filter(Boolean);
   const row = (label, o, c) => (o || c ? `<div class="crow"><div class="clabel">${label}</div><div>${o || '<span class="muted">Unknown</span>'}</div><div>${c || '<span class="muted">Unknown</span>'}</div></div>` : '');
   const steamUrl = (id) => (id ? `https://store.steampowered.com/app/${id}/` : null);
-  return layout(`${r.clone_name} vs ${r.original_name}: clone comparison`, `
+  return layout(`${r.clone_name} vs ${r.original_name}: clone report`, `
 ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.status)}</strong> and only visible to admins.</p>` : ''}
 <article class="report">
-  <h1><span class="tag clone">Clone</span> ${esc(r.clone_name)}</h1>
+  <h1><span class="tag clone">Reported clone</span> ${esc(r.clone_name)}</h1>
   <p class="lead">Reported as a clone of <strong>${esc(r.original_name)}</strong>. ${scoreBadge(r)}</p>
   <section class="compare" aria-label="Side-by-side comparison">
-    <div class="crow chead"><div class="clabel"></div><div><span class="tag orig">Original</span></div><div><span class="tag clone">Clone</span></div></div>
+    <div class="crow chead"><div class="clabel"></div><div><span class="tag orig">Original</span></div><div><span class="tag clone">Reported clone</span></div></div>
     ${r.original_image || r.clone_image ? `<div class="crow"><div class="clabel"></div><div>${shot(r.original_image, r.original_name)}</div><div>${shot(r.clone_image, r.clone_name)}</div></div>` : ''}
     ${row('Game', `<strong>${link(r.original_url, r.original_name)}</strong>`, `<strong>${link(r.clone_url, r.clone_name)}</strong>`)}
     ${row('Developer', devLink(r.original_developer), devLink(r.clone_developer))}
@@ -195,8 +195,8 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
   ${(opts.responses || []).map((d) => `<section class="box response"><h2>Response from ${esc(d.name)}</h2>
     <p class="muted">${esc(ROLES[d.role] || 'Response')} · ${date(d.created_at)}</p><p class="notes">${esc(d.message)}</p>${evidenceList(d.links, 'Their links')}</section>`).join('')}
   ${r.status === 'approved' ? voteBox(r, opts) : ''}
-  <p class="muted">Reported ${date(r.created_at)}. This is a community claim reviewed by a moderator, not a legal finding.
-    <a href="/report/${r.id}/history">Edit history</a>${r.status === 'approved' ? ` · <a href="/report/${r.id}/dispute">Are you the developer? Dispute this report</a>` : ''}</p>
+  <p class="muted">Reported ${date(r.created_at)}. This report reflects the claims and opinions of the person who submitted it and of voters. A moderator checked it for plausibility, but it is not a verified fact or a legal finding.
+    <a href="/report/${r.id}/history">Edit history</a>${r.status === 'approved' ? ` · <a href="/report/${r.id}/dispute">Are you the developer? Dispute this report</a> · <a href="/contact?report=${r.id}">Request a correction or removal</a>` : ''}</p>
   ${extPromo({ compact: true })}
 </article>`);
 }
@@ -206,7 +206,7 @@ function gamePage(g, { clones, asClone }) {
   return layout(`${g.name}: original game, not a clone`, `
 <article class="report">
   <h1><span class="tag orig">Not a clone</span> ${esc(g.name)}</h1>
-  <p class="lead">${esc(g.name)} is an original game${g.developer ? ` made by <strong>${esc(g.developer)}</strong>` : ''}. It is not a copy of another game.</p>
+  <p class="lead">${esc(g.name)} is an original game${g.developer ? ` made by <strong>${esc(g.developer)}</strong>` : ''}. No approved report says it copies another game.</p>
   <p class="muted">${g.source === 'steam-scan'
     ? `Listed automatically: one of Steam's most-owned games${g.positive_pct ? `, with ${esc(g.positive_pct)}% positive reviews out of ${esc(Number(g.reviews || 0).toLocaleString('en-US'))}` : ''}, and no approved clone reports.`
     : g.source === 'classic-scan'
@@ -227,7 +227,7 @@ function gamePage(g, { clones, asClone }) {
       ${g.wiki_url ? `<a class="btn ghost" href="${esc(g.wiki_url)}" rel="noopener" target="_blank">Read about it on Wikipedia</a>` : ''}
     </p>
   </section>
-  <h2>Clones of ${esc(g.name)}</h2>
+  <h2>Reported clones of ${esc(g.name)}</h2>
   ${clones.length ? `<ul class="cards">${clones.map(card).join('')}</ul>` : `<p class="muted">No clones of this game have been reported yet.</p>`}
   <p class="links"><a href="/submit?original_name=${encodeURIComponent(g.name)}">Report a clone of ${esc(g.name)}</a>
     ${clones.length || asClone.length ? `· <a href="${treeUrl(g.name)}">See the family tree</a>` : ''}
@@ -290,7 +290,7 @@ function submitPage({ token, values = {}, errors = [] }) {
   const v = values;
   return layout('Report a clone', `
 <h1>Report a cloned game</h1>
-<p>Tell us which game copied which. A moderator checks each report before it goes public.</p>
+<p>Tell us which game you think copied which. A moderator checks each report before it goes public. Stick to facts you can point to, such as release dates, screenshots, videos and articles, and say clearly what is your opinion.</p>
 ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
 <form class="report-form" method="post" action="/submit">
   <input type="hidden" name="token" value="${esc(token)}">
@@ -327,6 +327,8 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
     <small>Up to 8 links, one per line: comparison videos, articles, screenshots.</small>
   </label>
   ${field('contact', 'Your email (optional, private)', v, { type: 'email', hint: 'Only moderators see this, in case we have questions.', max: 200 })}
+  <label class="check"><input type="checkbox" name="agree" value="yes" ${v.agree === 'yes' ? 'checked' : ''} required>
+    <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a>. To the best of my knowledge this report is truthful and accurate, it describes my honest opinion, and I am not hiding a conflict of interest (for example, working for a competitor of the game I am reporting). <em>*</em></span></label>
   <button class="btn">Submit report</button>
 </form>`);
 }
@@ -336,7 +338,7 @@ const thanksPage = () => layout('Thanks', `
 <p>A moderator will review it soon. Once approved, it will show up in search.</p>
 <p><a class="btn" href="/">Back to search</a></p>`);
 
-function adminPage(status, rows, counts, openDisputes = 0) {
+function adminPage(status, rows, counts, openDisputes = 0, openRequests = 0) {
   const tabs = ['pending', 'approved', 'rejected'].map((s) =>
     `<a class="tab${s === status ? ' on' : ''}" href="/admin?status=${s}">${s} (${counts[s] || 0})</a>`).join('');
   const action = (r, act, label, cls = '') =>
@@ -355,7 +357,7 @@ function adminPage(status, rows, counts, openDisputes = 0) {
     ${action(r, 'delete', 'Delete', 'danger')}
   </div>
 </li>`;
-  return layout('Admin', `<h1>Moderation</h1><nav class="tabs">${tabs}<a class="tab" href="/admin/disputes">Disputes (${openDisputes} open)</a><a class="tab" href="/admin/originals">Original games</a></nav>
+  return layout('Admin', `<h1>Moderation</h1><nav class="tabs">${tabs}<a class="tab" href="/admin/disputes">Disputes (${openDisputes} open)</a><a class="tab" href="/admin/requests">Requests (${openRequests} open)</a><a class="tab" href="/admin/originals">Original games</a></nav>
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p class="muted">Nothing here.</p>`}`);
 }
 
@@ -389,13 +391,13 @@ function extensionPage({ version, storeUrl, zipUrl }) {
        <p class="muted">The extension will be on the Chrome Web Store soon, which will make this a single click.</p>`;
   return layout('Chrome extension', `
 <h1>Know a game is a clone before you buy it</h1>
-<p class="lead">The free Clone Report extension for Google Chrome checks every game page you open on ${STORE_LIST}. If people have reported the game as a clone, a red warning appears at once with a link to the original. If the game has been cloned, an orange note lists the copies.</p>
+<p class="lead">The free Clone Report extension for Google Chrome checks every game page you open on ${STORE_LIST}. If people have reported the game as a clone, a red warning appears at once with a link to the original. If other games have been reported as copies of it, an orange note lists them.</p>
 <img class="ext-shot" src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235">
 ${install}
 <h2>What it does</h2>
 <ul>
   <li><strong>Red warning:</strong> the game you're looking at was reported as a copy, with a link to the original and the report.</li>
-  <li><strong>Orange note:</strong> the game is an original that others have cloned.</li>
+  <li><strong>Orange note:</strong> other games have been reported as copies of this one.</li>
   <li><strong>Nothing</strong> when there are no reports, so it stays out of your way. The toolbar icon still shows the result.</li>
 </ul>
 <h2>Privacy</h2>
@@ -501,7 +503,7 @@ function adminDisputesPage(status, rows, counts) {
   </div>
 </li>`;
   return layout('Admin: disputes', `<h1>Disputes</h1>
-<nav class="tabs"><a class="tab" href="/admin">Reports</a>${tabs}<a class="tab" href="/admin/originals">Original games</a></nav>
+<nav class="tabs"><a class="tab" href="/admin">Reports</a>${tabs}<a class="tab" href="/admin/requests">Requests</a><a class="tab" href="/admin/originals">Original games</a></nav>
 <p class="muted">Publishing shows the developer's message on the report page as their response. To remove a report, reject it from Reports.</p>
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p class="muted">Nothing here.</p>'}`);
 }
@@ -556,12 +558,12 @@ function developerPage(key, name, { cloned, wasCloned, originals }) {
   <h1>${esc(name)}</h1>
   <p class="lead">${[
     cloned.length ? `<strong>${cloned.length}</strong> game${cloned.length === 1 ? '' : 's'} reported as clones` : '',
-    wasCloned.length ? `<strong>${wasCloned.length}</strong> report${wasCloned.length === 1 ? '' : 's'} of others cloning their games` : '',
+    wasCloned.length ? `<strong>${wasCloned.length}</strong> report${wasCloned.length === 1 ? '' : 's'} of others copying their games` : '',
     originals.length ? `<strong>${originals.length}</strong> original game${originals.length === 1 ? '' : 's'} listed` : '',
   ].filter(Boolean).join(' · ') || 'No approved reports yet.'}</p>
-  ${repeat ? `<p class="notice">Repeat reports: the community has reported ${cloned.length} games from this developer as clones.</p>` : ''}
+  ${repeat ? `<p class="notice">Repeat reports: community members have reported ${cloned.length} games from this developer as clones. Each report is a claim, not a finding.</p>` : ''}
   ${cloned.length ? `<h2>Reported as clones</h2><ul class="cards">${cloned.map(card).join('')}</ul>` : ''}
-  ${wasCloned.length ? `<h2>Their games that others cloned</h2><ul class="cards">${wasCloned.map(card).join('')}</ul>` : ''}
+  ${wasCloned.length ? `<h2>Their games that others were reported to have copied</h2><ul class="cards">${wasCloned.map(card).join('')}</ul>` : ''}
   ${originals.length ? `<h2>Original games</h2><ul class="cards">${originals.map(originalCard).join('')}</ul>` : ''}
   <p class="muted">Reports are matched by the developer name given in each report. <a href="/developers">All developers</a></p>
 </article>`);
@@ -575,7 +577,7 @@ function developersPage({ cloners, cloned }) {
 <p>Studios ranked by approved community reports. Open one to see every report about it.</p>
 <div class="grid2">
   <section><h2>Most reported for cloning</h2>${list(cloners, 'game reported as a clone', 'games reported as clones')}</section>
-  <section><h2>Most cloned</h2>${list(cloned, 'clone report', 'clone reports')}</section>
+  <section><h2>Most often reported as copied</h2>${list(cloned, 'clone report', 'clone reports')}</section>
 </div>`);
 }
 
@@ -588,13 +590,13 @@ function treeList(nodes, label) {
 function treePage(q, t) {
   if (!t) return layout('Family tree', `<h1>Family tree</h1>
 <form class="big-search" action="/tree" method="get"><input name="game" value="${esc(q)}" placeholder="Game name" aria-label="Game name" required><button class="btn">Show tree</button></form>
-${q ? `<p>No approved reports mention “${esc(q)}”. <a href="/search?q=${encodeURIComponent(q)}">Search instead</a>.</p>` : '<p>Type a game to see what it copied and what copied it.</p>'}`, { q });
+${q ? `<p>No approved reports mention “${esc(q)}”. <a href="/search?q=${encodeURIComponent(q)}">Search instead</a>.</p>` : '<p>Type a game to see what it is reported to have copied, and what is reported to have copied it.</p>'}`, { q });
   return layout(`${t.name}: family tree`, `
 <h1>Family tree of ${esc(t.name)}</h1>
 <p class="muted">Built from approved community reports. Click a game to center the tree on it.</p>
 <div class="grid2">
-  <section class="box"><h2>${esc(t.name)} copies</h2>${t.ancestors.length ? treeList(t.ancestors, 'report') : '<p class="muted">Nothing reported. As far as Clone Report knows, it is an original.</p>'}</section>
-  <section class="box"><h2>Copied by</h2>${t.descendants.length ? treeList(t.descendants, 'report') : '<p class="muted">No clones reported yet.</p>'}</section>
+  <section class="box"><h2>${esc(t.name)} is reported as copying</h2>${t.ancestors.length ? treeList(t.ancestors, 'report') : '<p class="muted">Nothing reported. As far as Clone Report knows, it is an original.</p>'}</section>
+  <section class="box"><h2>Reported as copied by</h2>${t.descendants.length ? treeList(t.descendants, 'report') : '<p class="muted">No clones reported yet.</p>'}</section>
 </div>
 <p><a href="/search?q=${encodeURIComponent(t.name)}">Search reports for ${esc(t.name)}</a></p>`, { q });
 }
@@ -608,7 +610,7 @@ const privacyPage = () => layout('Privacy policy', `<article class="prose">
 <p>This policy covers clonereport.com and the Clone Report browser extension. We collect as little as we can, we never sell data, and we do not use advertising or analytics trackers.</p>
 
 <h2>The Clone Report browser extension</h2>
-<p>The extension checks whether the game you are looking at has been reported as a clone, or has been cloned. It runs only on game pages of these stores: Steam, PlayStation Store, Xbox and the Microsoft Store, Nintendo eShop, the App Store, Google Play and itch.io.</p>
+<p>The extension checks whether the game you are looking at has been reported as a clone, or whether other games have been reported as copies of it. It runs only on game pages of these stores: Steam, PlayStation Store, Xbox and the Microsoft Store, Nintendo eShop, the App Store, Google Play and itch.io.</p>
 <p><strong>What it sends.</strong> When you open a game page on one of those stores, the extension sends three things to clonereport.com: which store it is (for example "steam"), the game's id from the page address, and the game's name as shown on the page. Nothing else from the page is read or sent. It does not read your browsing history, your account on the store, cookies, passwords, payment details or anything you type.</p>
 <p><strong>What it stores.</strong> Lookup results are kept in your browser's session storage for five minutes so the same page is not looked up twice, and are deleted when you close the browser. If you change the site address in the extension's settings, that one setting is saved with Chrome's sync storage. Nothing is stored on our servers about you or your lookups beyond the standard web server request logs described below.</p>
 <p><strong>What it shows.</strong> If there is a report, the extension adds a banner to the store page and a badge to its toolbar icon. It does not change anything else on the page.</p>
@@ -628,12 +630,144 @@ const privacyPage = () => layout('Privacy policy', `<article class="prose">
 <p>We do not sell, rent or share personal data with third parties, except our hosting provider, which runs the site on our behalf, our email provider for alert emails, or when the law requires it.</p>
 
 <h2>Your choices</h2>
-<p>You can uninstall the extension at any time from your browser's extensions page, which removes everything it stored. To stop email alerts, use the unsubscribe link in any alert. To have a report you submitted, or your email, removed, submit a request through the <a href="/submit">report form</a> mentioning the report, or use the contact email on the extension's Chrome Web Store page.</p>
+<p>You can uninstall the extension at any time from your browser's extensions page, which removes everything it stored. To stop email alerts, use the unsubscribe link in any alert. To have a report you submitted, or your email, removed, send a request through the <a href="/contact?kind=privacy">contact page</a>.</p>
+<p><strong>Contact and takedown requests.</strong> If you send a request through the contact page we store your name, organization, email, message and links. Only moderators see them.</p>
 
 <h2>Changes</h2>
 <p>If we change what the extension or the site collects, we will update this page and the date at the top before the change takes effect.</p>
 </article>`);
 
+// ---------- Terms of Service and takedown requests ----------
+// NOTE for the site owner: these pages are a starting point written without a lawyer.
+// Have them reviewed by one before relying on them. Bump TERMS_VERSION when the terms change;
+// each new report records the version its submitter agreed to.
+const TERMS_VERSION = '2026-11-11';
+
+const termsPage = () => layout('Terms of Service', `<article class="prose">
+<h1>Terms of Service</h1>
+<p class="muted">Last updated 11 November 2026</p>
+<p>These terms apply to clonereport.com, its API and feeds, and the Clone Report browser extension. By using the site, or by submitting a report, a vote or a dispute, you agree to them. If you do not agree, please do not use the site.</p>
+
+<h2>What Clone Report is</h2>
+<p>Clone Report is a community directory where people report games they believe copy other games. Every report is a <strong>claim and an opinion</strong> by the person who submitted it. A moderator checks reports for plausibility before they appear, but we do not independently verify them, and approving a report does not mean we endorse it.</p>
+<p>When the site calls a game a "reported clone", it means that someone has reported it as copying another game. It does not mean that the game, or its developer, broke any law, infringed anyone's rights or did anything wrong. Community votes and verdicts are opinions too. Nothing on Clone Report is legal advice or a legal finding.</p>
+
+<h2>Your reports and other submissions</h2>
+<p>When you submit a report, a dispute, a vote or any other content, you promise that:</p>
+<ul>
+  <li>to the best of your knowledge, what you submit is <strong>truthful and accurate</strong>, and you do not state as fact anything you know or suspect is false;</li>
+  <li>you make clear what is your opinion, and you base your report on things others can check, such as release dates, store pages, screenshots, videos and articles;</li>
+  <li>you are not hiding a conflict of interest, for example being paid by, working for or competing with one of the developers involved;</li>
+  <li>you do not harass anyone, post anyone's private information, or include hateful, abusive or illegal content, spam or links to malware;</li>
+  <li>you have the right to share anything you submit, and it does not infringe anyone else's rights.</li>
+</ul>
+<p>You are responsible for what you submit. You keep any rights you have in it, and you give Clone Report a free, worldwide, non-exclusive license to host, show, edit for clarity or format, and distribute it on the site, in the API and feeds, and in the browser extension.</p>
+
+<h2>Moderation</h2>
+<p>We may review, edit, reject, hide or remove any report, response or other content at any time, for any reason, including while we look into a complaint. Edits we make to a report are listed in its public edit history. We may block submissions that break these terms.</p>
+
+<h2>Disputes, corrections and takedown requests</h2>
+<p>If you made a game that has been reported and you disagree, use the <strong>Dispute this report</strong> link on the report. To ask for a correction or removal, to report a copyright or trademark problem, or to send a privacy or legal request, use the <a href="/contact">contact and takedown page</a>. A moderator reads every request.</p>
+
+<h2>Game names, images and trademarks</h2>
+<p>Game names, logos, images and trademarks belong to their owners. Clone Report uses them only to identify the games being discussed, and is not affiliated with or endorsed by any developer, publisher or store. Images may be loaded from the stores' own servers. If you own material shown on the site and want it removed, use the <a href="/contact?kind=copyright">contact page</a>.</p>
+
+<h2>Links to other sites</h2>
+<p>Reports link to store pages, videos, articles and other sites we do not control. We are not responsible for their content.</p>
+
+<h2>The API, feeds and browser extension</h2>
+<p>You may use the public API and feeds within their rate limits. Please link back to the report pages you use, and keep the "reported" wording: do not present a report as an established fact.</p>
+
+<h2>No warranty</h2>
+<p>The site, the API and the extension are provided "as is", without warranties of any kind. We do not promise that reports are accurate, complete or up to date, or that the service will always be available.</p>
+
+<h2>Limitation of liability</h2>
+<p>To the extent the law allows, Clone Report and the people who run it are not liable for any indirect or consequential loss, or for any loss arising from content submitted by users or from your use of the site, the API or the extension.</p>
+
+<h2>Changes</h2>
+<p>We may update these terms. The date at the top shows when they last changed. Reports record which version of the terms their submitter agreed to.</p>
+
+<h2>Contact</h2>
+<p>Questions about these terms: use the <a href="/contact?kind=legal">contact page</a>. See also our <a href="/privacy">privacy policy</a>.</p>
+</article>`);
+
+const REQUEST_KINDS = [
+  ['removal', 'Remove a report', 'You think a report is false, unfair or harmful and should come down.'],
+  ['correction', 'Correct a report', 'Something in a report is wrong, such as a name, date, developer or link.'],
+  ['copyright', 'Copyright or trademark', 'Material you own (for example an image or text) appears on the site without permission.'],
+  ['privacy', 'Privacy or personal data', 'You want your personal information, email or a report you submitted removed.'],
+  ['legal', 'Legal notice', 'A formal legal notice or a question about our terms.'],
+  ['other', 'Something else', 'Any other question for the moderators.'],
+];
+const REQUEST_LABELS = Object.fromEntries(REQUEST_KINDS.map(([k, l]) => [k, l]));
+
+function contactPage({ token, values = {}, errors = [], report = null }) {
+  const v = values;
+  const opt = ([k, label, hint]) => `<label class="radio"><input type="radio" name="kind" value="${k}" ${v.kind === k ? 'checked' : ''} required> <span><strong>${esc(label)}</strong> <small class="muted">${esc(hint)}</small></span></label>`;
+  return layout('Contact and takedown requests', `<article class="prose">
+<h1>Contact and takedown requests</h1>
+<p>Use this page to ask for a report to be corrected or removed, to report a copyright or trademark problem, to send a privacy or legal request, or to contact the moderators about anything else.</p>
+<h2>How we handle requests</h2>
+<ol class="steps">
+  <li>A moderator reads every request. We aim to reply within 7 days, by email.</li>
+  <li>If a request gives good reason to think a report is false or unlawful, we may hide the report while we look into it.</li>
+  <li>We then correct it, remove it, publish the developer's response next to it, or explain why it stays. Changes appear in the report's public edit history.</li>
+</ol>
+<p class="muted">Are you the developer of a reported game and want your side shown publicly? Use the <strong>Dispute this report</strong> link on the report instead, so a moderator can publish your response next to it.</p>
+<p class="muted">For copyright requests, please identify the work you own, where it appears on Clone Report, and confirm that you own it or are authorized to act for the owner.</p>
+</article>
+${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+<form class="report-form" method="post" action="/contact">
+  <input type="hidden" name="token" value="${esc(token)}">
+  <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off"></label></div>
+  <fieldset><legend>What is your request about? <em>*</em></legend>
+    ${REQUEST_KINDS.map(opt).join('')}
+  </fieldset>
+  <label class="field"><span>Report link or number</span>
+    <input name="report" value="${esc(v.report)}" maxlength="200" placeholder="e.g. https://clonereport.com/report/12">
+    ${report ? `<small>About: <a href="/report/${report.id}">${esc(report.clone_name)} reported as a clone of ${esc(report.original_name)}</a></small>` : '<small>If your request is about a report, paste its link.</small>'}</label>
+  <fieldset><legend>About you</legend>
+    ${field('name', 'Your name', v, { required: true })}
+    ${field('organization', 'Company or studio (optional)', v)}
+    ${field('email', 'Email (private)', v, { type: 'email', required: true, max: 200, hint: 'Only moderators see this. We reply here.' })}
+  </fieldset>
+  <label class="field"><span>Your request <em>*</em></span>
+    <textarea name="message" rows="8" maxlength="5000" required>${esc(v.message)}</textarea>
+    <small>Say what is wrong and what you would like us to do. Moderators only: this is not published.</small></label>
+  <label class="field"><span>Supporting links (optional, one per line)</span>
+    <textarea name="links" rows="3" maxlength="2000" placeholder="e.g. proof of ownership, earlier release dates, licenses">${esc(v.links)}</textarea></label>
+  <label class="check"><input type="checkbox" name="sworn" value="yes" ${v.sworn === 'yes' ? 'checked' : ''} required>
+    <span>The information in this request is accurate to the best of my knowledge, and I am making it in good faith. If I am acting for someone else, I am authorized to do so. <em>*</em></span></label>
+  <button class="btn">Send request</button>
+</form>`);
+}
+
+const contactThanksPage = () => layout('Request received', `
+<h1>Thanks, we got your request</h1>
+<p>A moderator will review it and reply by email, usually within 7 days.</p>
+<p><a class="btn" href="/">Back to search</a></p>`);
+
+function adminRequestsPage(status, rows, counts) {
+  const tabs = ['open', 'done'].map((s) => `<a class="tab${s === status ? ' on' : ''}" href="/admin/requests?status=${s}">${s} (${counts[s] || 0})</a>`).join('');
+  const action = (q, act, label, cls = '') => `<form method="post" action="/admin/requests/${q.id}/${act}?back=${status}"><button class="btn small ${cls}">${label}</button></form>`;
+  const row = (q) => `<li class="admin-row">
+  <div>
+    <strong>${esc(REQUEST_LABELS[q.kind] || q.kind)}</strong>${q.report_id ? ` · <a href="/report/${q.report_id}">${esc(q.clone_name || 'deleted report')} → ${esc(q.original_name || '')}</a>` : ''}
+    <div class="muted">#${q.id} · ${date(q.created_at)} · ${esc(q.name)}${q.organization ? ` (${esc(q.organization)})` : ''} · <a href="mailto:${esc(q.email)}">${esc(q.email)}</a>${q.sworn ? ' · good-faith statement confirmed' : ''}</div>
+    <p class="notes">${esc(q.message)}</p>
+    ${q.links ? `<div class="muted">${q.links.split('\n').map((u) => link(u, u)).join('<br>')}</div>` : ''}
+  </div>
+  <div class="actions">
+    ${q.report_id ? `<a class="btn small ghost" href="/admin/${q.report_id}/edit">Edit report</a>` : ''}
+    ${status === 'open' ? action(q, 'done', 'Mark done') : action(q, 'reopen', 'Reopen', 'ghost')}
+  </div>
+</li>`;
+  return layout('Admin: requests', `<h1>Contact and takedown requests</h1>
+<nav class="tabs"><a class="tab" href="/admin">Reports</a><a class="tab" href="/admin/disputes">Disputes</a>${tabs}<a class="tab" href="/admin/originals">Original games</a></nav>
+<p class="muted">Reply to each request by email. The contact page promises a reply within 7 days. To take a report down while you look into it, reject it from Reports; to remove it for good, delete it.</p>
+${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p class="muted">Nothing here.</p>'}`);
+}
+
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS };

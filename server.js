@@ -10,7 +10,7 @@ const scanner = require('./scanner');
 const steam = require('./steam');
 const api = require('./api');
 const mailer = require('./mailer');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS, esc } = require('./views');
 const { familyTree } = require('./tree');
 const classic = require('./classic');
 const stores = require('./stores');
@@ -25,6 +25,7 @@ const PUBLIC_URL = (process.env.PUBLIC_URL || '').replace(/\/$/, '');      // e.
 const MAX_PER_HOUR = Number(process.env.MAX_PER_HOUR ?? 5);    // per IP
 const MAX_VOTES_PER_HOUR = Number(process.env.MAX_VOTES_PER_HOUR ?? 100); // per IP
 const STEAM_ENRICH = process.env.STEAM_ENRICH !== '0';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';               // gets an email for each contact or takedown request
 
 if (!ADMIN_PASSWORD) console.warn('ADMIN_PASSWORD is not set: the /admin page is disabled.');
 
@@ -245,6 +246,69 @@ function apiLookup(req, res, url) {
   res.end(JSON.stringify(body));
 }
 
+// ---------- contact and takedown requests ----------
+const KIND_KEYS = REQUEST_KINDS.map(([k]) => k);
+// "12", "#12" or a link to /report/12 -> 12
+const reportIdFrom = (v) => { const m = /(?:^#?|\/report\/)(\d{1,9})(?:[/?#]|$)/.exec(String(v || '').trim()); return m ? Number(m[1]) : null; };
+
+async function contactRoute(req, res, url) {
+  if (req.method === 'GET') {
+    const values = {};
+    if (KIND_KEYS.includes(url.searchParams.get('kind'))) values.kind = url.searchParams.get('kind');
+    const rid = reportIdFrom(url.searchParams.get('report'));
+    const r = rid && store.get(rid);
+    const report = r && r.status === 'approved' ? r : null;
+    if (report) { values.report = `${baseUrl(req)}/report/${report.id}`; values.kind ??= 'removal'; }
+    return send(res, 200, contactPage({ token: makeFormToken('contact'), values, report }));
+  }
+  if (req.method !== 'POST') return send(res, 404, notFound());
+  let f;
+  try { f = await readBody(req); } catch { return send(res, 413, layout('Too large', '<p>That message is too large.</p>')); }
+  if (f.get('website')) return redirect(res, '/contact/thanks');
+  const values = Object.fromEntries(f);
+  const again = (status, errors, report = null) => send(res, status, contactPage({ token: makeFormToken('contact'), values, errors, report }));
+  const tokErr = checkFormToken(f.get('token'), 'contact');
+  if (tokErr) return again(400, [tokErr === 'too-fast' ? 'That was very quick! Please check your request and send it again.' : 'The form expired. Please send it again.']);
+  const ipHash = hmac('ip:' + clientIp(req));
+  if (store.rateCheck(ipHash, 3600 * 1000) >= MAX_PER_HOUR) return again(429, ['You have sent several messages recently. Please try again in an hour.']);
+  const q = {
+    kind: KIND_KEYS.includes(f.get('kind')) ? f.get('kind') : '',
+    report_id: null,
+    name: clean(f.get('name'), 120),
+    organization: clean(f.get('organization'), 120),
+    email: clean(f.get('email'), 200),
+    message: String(f.get('message') || '').trim().slice(0, 5000),
+    links: cleanLinks(f.get('links'), 5),
+    sworn: f.get('sworn') === 'yes',
+  };
+  const errors = [];
+  const reportText = clean(f.get('report'), 200);
+  let report = null;
+  if (reportText) {
+    const rid = reportIdFrom(reportText);
+    report = rid ? store.get(rid) : null;
+    if (!report) errors.push('We could not find that report. Paste the link from the report page, or leave the field empty.');
+    else q.report_id = report.id;
+  }
+  if (!q.kind) errors.push('Please choose what your request is about.');
+  if (!q.name) errors.push('Please enter your name.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.email)) errors.push('Please enter an email address so a moderator can reply.');
+  if (q.message.length < 20) errors.push('Please describe your request (at least 20 characters).');
+  if (q.links === null) errors.push('Links must be up to 5 web addresses, one per line.');
+  if (!q.sworn) errors.push('Please confirm that your request is accurate and made in good faith.');
+  if (errors.length) return again(400, errors, report?.status === 'approved' ? report : null);
+  store.logSubmission(ipHash);
+  const id = store.createRequest(q, ipHash);
+  if (ADMIN_EMAIL && mailer.enabled) {
+    const base = baseUrl(req);
+    mailer.send({ to: ADMIN_EMAIL, subject: `Clone Report request #${id}: ${q.kind}${report ? ` (${report.clone_name})` : ''}`,
+      text: `${q.name}${q.organization ? ` (${q.organization})` : ''} <${q.email}> sent a ${q.kind} request.\n\n`
+        + (report ? `Report: ${base}/report/${report.id}\n\n` : '') + `${q.message}\n\n${q.links ? `Links:\n${q.links}\n\n` : ''}`
+        + `Review it: ${base}/admin/requests\n` }).catch((err) => console.error('request email failed:', err.message));
+  }
+  return redirect(res, '/contact/thanks');
+}
+
 // ---------- routes ----------
 async function handle(req, res) {
   const url = new URL(req.url, 'http://localhost');
@@ -262,6 +326,9 @@ async function handle(req, res) {
   if (req.method === 'GET' && p === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
 
   if (req.method === 'GET' && p === '/privacy') return send(res, 200, privacyPage());
+  if (req.method === 'GET' && p === '/terms') return send(res, 200, termsPage());
+  if (p === '/contact') return contactRoute(req, res, url);
+  if (req.method === 'GET' && p === '/contact/thanks') return send(res, 200, contactThanksPage());
   if (req.method === 'GET' && p === '/api/lookup') return apiLookup(req, res, url);
   if (api.handleApi(req, res, url, { base: baseUrl(req), ip: clientIp(req) })) return;
   if (req.method === 'GET' && p === '/api') return send(res, 200, apiDocsPage(baseUrl(req)));
@@ -438,10 +505,11 @@ async function handle(req, res) {
         return send(res, 429, submitPage({ token: makeFormToken(), values, errors: ['You have sent several reports recently. Please try again in an hour.'] }));
 
       const { r, errors } = validate(f);
+      if (f.get('agree') !== 'yes') errors.push('Please confirm that your report is truthful and that you agree to the Terms of Service.');
       if (errors.length) return send(res, 400, submitPage({ token: makeFormToken(), values, errors }));
 
       store.logSubmission(ipHash);
-      store.createReport(r, ipHash);
+      store.setTermsAccepted(store.createReport(r, ipHash), TERMS_VERSION);
       return redirect(res, '/submit/thanks');
     }
   }
@@ -452,7 +520,7 @@ async function handle(req, res) {
       return send(res, 401, layout('Admin', '<p>Sign in required.</p>'), { 'WWW-Authenticate': 'Basic realm="clonereport admin", charset="UTF-8"' });
     if (req.method === 'GET' && p === '/admin') {
       const status = ['pending', 'approved', 'rejected'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'pending';
-      return send(res, 200, adminPage(status, store.byStatus(status), store.counts(), store.disputeCounts().open), { 'Cache-Control': 'no-store' });
+      return send(res, 200, adminPage(status, store.byStatus(status), store.counts(), store.disputeCounts().open, store.requestCounts().open), { 'Cache-Control': 'no-store' });
     }
     if (req.method === 'GET' && p === '/admin/originals') {
       const q = clean(url.searchParams.get('q'), 120);
@@ -467,6 +535,15 @@ async function handle(req, res) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
       store.setDisputeStatus(Number(m[1]), { publish: 'published', dismiss: 'dismissed', reopen: 'open' }[m[2]]);
       return redirect(res, '/admin/disputes?status=' + encodeURIComponent(url.searchParams.get('back') || 'open'));
+    }
+    if (req.method === 'GET' && p === '/admin/requests') {
+      const status = url.searchParams.get('status') === 'done' ? 'done' : 'open';
+      return send(res, 200, adminRequestsPage(status, store.requestsByStatus(status), store.requestCounts()), { 'Cache-Control': 'no-store' });
+    }
+    if (req.method === 'POST' && (m = p.match(/^\/admin\/requests\/(\d+)\/(done|reopen)$/))) {
+      if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+      store.setRequestStatus(Number(m[1]), m[2] === 'done' ? 'done' : 'open');
+      return redirect(res, '/admin/requests?status=' + (url.searchParams.get('back') === 'done' ? 'done' : 'open'));
     }
     if (req.method === 'POST' && (m = p.match(/^\/admin\/originals\/(\d+)\/remove$/))) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
