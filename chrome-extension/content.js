@@ -142,6 +142,14 @@
     }
   }
 
+  // The toolbar popup asks which game this tab is on, so it never shows an
+  // older game's result after the store switched pages without reloading.
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg?.type !== 'whichGame') return;
+    const page = parseStoreUrl(location.href);
+    sendResponse(page && isGamePage(page.store) ? page : null);
+  });
+
   check();
   // Most stores change pages without a reload; look again when the address changes.
   setInterval(check, 1000);

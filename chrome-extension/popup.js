@@ -32,9 +32,17 @@ document.getElementById('options').addEventListener('click', e => {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
+  // Ask the page which game it is showing now. No answer means the extension
+  // isn't running there (not a game page, or the tab was open before install).
+  let page = null;
+  try { page = await chrome.tabs.sendMessage(tab.id, { type: 'whichGame' }); } catch {}
+  if (!page) return;
   const key = `tab:${tab.id}`;
   const r = (await chrome.storage.session.get(key))[key];
-  if (!r) return;
+  if (!r || r.game?.store !== page.store || String(r.game?.id) !== String(page.id)) {
+    statusEl.textContent = 'Checking this game… Reopen this window in a few seconds.';
+    return;
+  }
 
   const gameName = r.game?.name || 'This game';
   statusEl.textContent = '';
