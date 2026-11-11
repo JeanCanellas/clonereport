@@ -84,37 +84,176 @@ db.exec(`
     if (!cols.has(c)) db.exec(`ALTER TABLE originals ADD COLUMN ${c} ${t}`);
   db.exec('CREATE INDEX IF NOT EXISTS idx_originals_wikidata ON originals(wikidata_id)');
 }
+// Comparison details on reports (release dates, images, shared mechanics).
+{
+  const cols = new Set(db.prepare('PRAGMA table_info(reports)').all().map((c) => c.name));
+  for (const c of ['clone_released', 'original_released', 'clone_image', 'original_image', 'mechanics'])
+    if (!cols.has(c)) db.exec(`ALTER TABLE reports ADD COLUMN ${c} TEXT`);
+}
+
+const { devKey } = require('./keys');
+{
+  const cols = new Set(db.prepare('PRAGMA table_info(reports)').all().map((c) => c.name));
+  for (const c of ['clone_dev_key', 'original_dev_key']) if (!cols.has(c)) db.exec(`ALTER TABLE reports ADD COLUMN ${c} TEXT`);
+  const ocols = new Set(db.prepare('PRAGMA table_info(originals)').all().map((c) => c.name));
+  if (!ocols.has('dev_key')) db.exec('ALTER TABLE originals ADD COLUMN dev_key TEXT');
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_cdev ON reports(clone_dev_key);
+    CREATE INDEX IF NOT EXISTS idx_reports_odev ON reports(original_dev_key);
+    CREATE INDEX IF NOT EXISTS idx_originals_dev ON originals(dev_key);`);
+  // Fill keys for rows saved before this column existed (and after any edit, see syncDevKeys).
+  const fixR = db.prepare('UPDATE reports SET clone_dev_key = ?, original_dev_key = ? WHERE id = ?');
+  for (const r of db.prepare(`SELECT id, clone_developer, original_developer FROM reports
+      WHERE (clone_developer IS NOT NULL AND clone_dev_key IS NULL) OR (original_developer IS NOT NULL AND original_dev_key IS NULL)`).all())
+    fixR.run(devKey(r.clone_developer), devKey(r.original_developer), r.id);
+  const fixO = db.prepare('UPDATE originals SET dev_key = ? WHERE id = ?');
+  for (const g of db.prepare('SELECT id, developer FROM originals WHERE developer IS NOT NULL AND dev_key IS NULL').all())
+    fixO.run(devKey(g.developer), g.id);
+}
+
+// Moderation: evidence links, developer disputes, edit history.
+{
+  const cols = new Set(db.prepare('PRAGMA table_info(reports)').all().map((c) => c.name));
+  if (!cols.has('evidence')) db.exec('ALTER TABLE reports ADD COLUMN evidence TEXT'); // one https link per line
+}
+db.exec(`
+  CREATE TABLE IF NOT EXISTS disputes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id  INTEGER NOT NULL,
+    name       TEXT NOT NULL,
+    role       TEXT NOT NULL,      -- clone-developer | original-developer | other
+    contact    TEXT NOT NULL,      -- private, only shown to admins
+    message    TEXT NOT NULL,
+    links      TEXT,               -- one per line
+    status     TEXT NOT NULL DEFAULT 'open', -- open | published | dismissed
+    ip_hash    TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_disputes_report ON disputes(report_id);
+  CREATE INDEX IF NOT EXISTS idx_disputes_status ON disputes(status);
+  -- Every change to a report: who (submitter, admin, steam, developer), what, and the old and new values.
+  CREATE TABLE IF NOT EXISTS report_history (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id  INTEGER NOT NULL,
+    actor      TEXT NOT NULL,
+    action     TEXT NOT NULL,
+    changes    TEXT,               -- JSON { field: [old, new] }
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_history_report ON report_history(report_id, id);
+`);
+
+// Email alerts: follow a game, get an email when a clone of it is approved.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS follows (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    email      TEXT NOT NULL COLLATE NOCASE,
+    game       TEXT NOT NULL COLLATE NOCASE,   -- the game's name as typed on the site
+    token      TEXT NOT NULL UNIQUE,            -- secret used in confirm and unsubscribe links
+    confirmed  INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (email, game)
+  );
+  CREATE INDEX IF NOT EXISTS idx_follows_game ON follows(game, confirmed);
+`);
+
+// Community votes: one per visitor (salted IP hash) per report; voting again changes it.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS votes (
+    report_id  INTEGER NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+    voter      TEXT NOT NULL,
+    choice     TEXT NOT NULL CHECK (choice IN ('clone', 'inspired', 'original')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (report_id, voter)
+  );
+  CREATE INDEX IF NOT EXISTS idx_votes_voter ON votes(voter, updated_at);
+  -- Reports with their vote counts. Rebuilt on every start so changes to it apply.
+  DROP VIEW IF EXISTS reports_v;
+  CREATE VIEW reports_v AS SELECT r.*,
+    (SELECT COUNT(*) FROM votes v WHERE v.report_id = r.id AND v.choice = 'clone')    AS votes_clone,
+    (SELECT COUNT(*) FROM votes v WHERE v.report_id = r.id AND v.choice = 'inspired') AS votes_inspired,
+    (SELECT COUNT(*) FROM votes v WHERE v.report_id = r.id AND v.choice = 'original') AS votes_original
+    FROM reports r;
+`);
 
 const stmts = {
   insert: db.prepare(`INSERT INTO reports
     (clone_name, clone_url, clone_developer, original_name, original_url, original_developer, platform, notes, contact, ip_hash,
-     clone_steam_appid, original_steam_appid)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+     clone_steam_appid, original_steam_appid, clone_released, original_released, clone_image, original_image, mechanics, evidence)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+  follow: db.prepare(`INSERT INTO follows (email, game, token) VALUES (?, ?, ?)
+    ON CONFLICT(email, game) DO UPDATE SET token = CASE WHEN confirmed THEN token ELSE excluded.token END RETURNING *`),
+  followByToken: db.prepare(`SELECT * FROM follows WHERE token = ?`),
+  confirmFollow: db.prepare(`UPDATE follows SET confirmed = 1 WHERE token = ?`),
+  unfollow: db.prepare(`DELETE FROM follows WHERE token = ?`),
+  followersOf: db.prepare(`SELECT * FROM follows WHERE confirmed = 1 AND game = ?`),
+  apiReports: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
+    AND (? = '' OR clone_name LIKE ? ESCAPE '\\' OR original_name LIKE ? ESCAPE '\\' OR clone_developer LIKE ? ESCAPE '\\' OR original_developer LIKE ? ESCAPE '\\')
+    AND (? = '' OR clone_dev_key = ? OR original_dev_key = ?)
+    AND (? = 0 OR id > ?)
+    ORDER BY id DESC LIMIT ? OFFSET ?`),
+  feed: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
+    AND (? = '' OR lower(original_name) = lower(?) OR lower(clone_name) = lower(?))
+    AND (? = '' OR clone_dev_key = ? OR original_dev_key = ?)
+    ORDER BY reviewed_at DESC, id DESC LIMIT 50`),
+  logHistory: db.prepare(`INSERT INTO report_history (report_id, actor, action, changes) VALUES (?, ?, ?, ?)`),
+  history: db.prepare(`SELECT * FROM report_history WHERE report_id = ? ORDER BY id`),
+  delHistory: db.prepare(`DELETE FROM report_history WHERE report_id = ?`),
+  insertDispute: db.prepare(`INSERT INTO disputes (report_id, name, role, contact, message, links, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?)`),
+  getDispute: db.prepare(`SELECT * FROM disputes WHERE id = ?`),
+  disputesFor: db.prepare(`SELECT * FROM disputes WHERE report_id = ? AND status = ? ORDER BY id`),
+  disputesByStatus: db.prepare(`SELECT d.*, r.clone_name, r.original_name FROM disputes d LEFT JOIN reports r ON r.id = d.report_id
+    WHERE d.status = ? ORDER BY d.id DESC LIMIT 200`),
+  disputeCounts: db.prepare(`SELECT status, COUNT(*) AS n FROM disputes GROUP BY status`),
+  setDispute: db.prepare(`UPDATE disputes SET status = ?, resolved_at = datetime('now') WHERE id = ?`),
+  delDisputes: db.prepare(`DELETE FROM disputes WHERE report_id = ?`),
+  update: db.prepare(`UPDATE reports SET clone_name = ?, clone_url = ?, clone_developer = ?, original_name = ?, original_url = ?,
+    original_developer = ?, platform = ?, notes = ?, clone_released = ?, original_released = ?, clone_image = ?, original_image = ?,
+    mechanics = ?, evidence = ?, clone_steam_appid = ?, original_steam_appid = ? WHERE id = ?`),
+  vote: db.prepare(`INSERT INTO votes (report_id, voter, choice, updated_at) VALUES (?, ?, ?, ?)
+    ON CONFLICT(report_id, voter) DO UPDATE SET choice = excluded.choice, updated_at = excluded.updated_at`),
+  myVote: db.prepare(`SELECT choice FROM votes WHERE report_id = ? AND voter = ?`),
+  votesByVoter: db.prepare(`SELECT COUNT(*) AS n FROM votes WHERE voter = ? AND updated_at > ?`),
+  delVotes: db.prepare(`DELETE FROM votes WHERE report_id = ?`),
   // Lookup for the browser extension: match by Steam app id or exact (case-insensitive) name.
-  asClone: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+  asClone: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND clone_steam_appid = ?) OR (? <> '' AND lower(clone_name) = lower(?))) ORDER BY id DESC LIMIT 20`),
-  asOriginal: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+  asOriginal: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND original_steam_appid = ?) OR (? <> '' AND lower(original_name) = lower(?))) ORDER BY id DESC LIMIT 50`),
-  search: db.prepare(`SELECT * FROM reports
+  search: db.prepare(`SELECT * FROM reports_v
     WHERE status = 'approved'
       AND (clone_name LIKE ? ESCAPE '\\' OR original_name LIKE ? ESCAPE '\\'
            OR clone_developer LIKE ? ESCAPE '\\' OR original_developer LIKE ? ESCAPE '\\')
     ORDER BY (lower(clone_name) = lower(?) OR lower(original_name) = lower(?)) DESC, created_at DESC
     LIMIT 100`),
-  recent: db.prepare(`SELECT * FROM reports WHERE status = 'approved' ORDER BY reviewed_at DESC, id DESC LIMIT ?`),
-  get: db.prepare(`SELECT * FROM reports WHERE id = ?`),
-  byStatus: db.prepare(`SELECT * FROM reports WHERE status = ? ORDER BY created_at DESC LIMIT 200`),
+  recent: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved' ORDER BY reviewed_at DESC, id DESC LIMIT ?`),
+  get: db.prepare(`SELECT * FROM reports_v WHERE id = ?`),
+  byStatus: db.prepare(`SELECT * FROM reports_v WHERE status = ? ORDER BY created_at DESC LIMIT 200`),
   setStatus: db.prepare(`UPDATE reports SET status = ?, reviewed_at = datetime('now') WHERE id = ?`),
   del: db.prepare(`DELETE FROM reports WHERE id = ?`),
+  setComparison: db.prepare(`UPDATE reports SET
+    clone_released = coalesce(clone_released, ?), original_released = coalesce(original_released, ?),
+    clone_image = coalesce(clone_image, ?), original_image = coalesce(original_image, ?),
+    clone_developer = coalesce(clone_developer, ?), original_developer = coalesce(original_developer, ?) WHERE id = ?`),
+  syncDevKeys: db.prepare('UPDATE reports SET clone_dev_key = ?, original_dev_key = ? WHERE id = ?'),
+  byDev: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved' AND (clone_dev_key = ? OR original_dev_key = ?) ORDER BY id DESC LIMIT 500`),
+  originalsByDev: db.prepare(`SELECT * FROM originals WHERE dev_key = ? ORDER BY name LIMIT 500`),
+  topCloners: db.prepare(`SELECT clone_dev_key AS dev_key, max(clone_developer) AS name, COUNT(*) AS n FROM reports
+    WHERE status = 'approved' AND clone_dev_key IS NOT NULL GROUP BY clone_dev_key ORDER BY n DESC, name LIMIT ?`),
+  topCloned: db.prepare(`SELECT original_dev_key AS dev_key, max(original_developer) AS name, COUNT(*) AS n FROM reports
+    WHERE status = 'approved' AND original_dev_key IS NOT NULL GROUP BY original_dev_key ORDER BY n DESC, name LIMIT ?`),
+  approvedEdges: db.prepare(`SELECT id, clone_name, original_name, clone_steam_appid, original_steam_appid, clone_developer, original_developer
+    FROM reports WHERE status = 'approved'`),
   counts: db.prepare(`SELECT status, COUNT(*) AS n FROM reports GROUP BY status`),
-  upsertOriginal: db.prepare(`INSERT INTO originals (name, developer, publisher, steam_appid, eshop_url, note)
-    VALUES (?, ?, ?, ?, ?, ?)
-    ON CONFLICT(name) DO UPDATE SET developer = excluded.developer, publisher = excluded.publisher,
+  upsertOriginal: db.prepare(`INSERT INTO originals (name, developer, publisher, steam_appid, eshop_url, note, dev_key)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(name) DO UPDATE SET developer = excluded.developer, dev_key = excluded.dev_key, publisher = excluded.publisher,
       steam_appid = excluded.steam_appid, eshop_url = excluded.eshop_url, note = excluded.note, source = 'checked'`),
-  insertScanned: db.prepare(`INSERT OR IGNORE INTO originals (name, developer, publisher, steam_appid, source, positive_pct, reviews)
-    VALUES (?, ?, ?, ?, 'steam-scan', ?, ?)`),
-  insertClassic: db.prepare(`INSERT OR IGNORE INTO originals (name, developer, publisher, source, platforms, year, wiki_url, wikidata_id, wiki_langs)
-    VALUES (?, ?, ?, 'classic-scan', ?, ?, ?, ?, ?)`),
+  insertScanned: db.prepare(`INSERT OR IGNORE INTO originals (name, developer, publisher, steam_appid, source, positive_pct, reviews, dev_key)
+    VALUES (?, ?, ?, ?, 'steam-scan', ?, ?, ?)`),
+  insertClassic: db.prepare(`INSERT OR IGNORE INTO originals (name, developer, publisher, source, platforms, year, wiki_url, wikidata_id, wiki_langs, dev_key)
+    VALUES (?, ?, ?, 'classic-scan', ?, ?, ?, ?, ?, ?)`),
   originalByWikidata: db.prepare(`SELECT * FROM originals WHERE wikidata_id = ? LIMIT 1`),
   setPlatforms: db.prepare(`UPDATE originals SET platforms = ? WHERE id = ?`),
   isExcluded: db.prepare(`SELECT 1 FROM excluded_games WHERE (? IS NOT NULL AND steam_appid = ?) OR name = ? LIMIT 1`),
@@ -138,10 +277,10 @@ const stmts = {
   allOriginals: db.prepare(`SELECT * FROM originals ORDER BY name`),
   countOriginals: db.prepare(`SELECT COUNT(*) AS n FROM originals`),
   // Approved reports that name this game as the original (for its page).
-  clonesOf: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+  clonesOf: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND original_steam_appid = ?) OR lower(original_name) = lower(?)) ORDER BY id DESC LIMIT 50`),
   // Approved reports that say this game is itself a clone.
-  reportedAsClone: db.prepare(`SELECT * FROM reports WHERE status = 'approved'
+  reportedAsClone: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND clone_steam_appid = ?) OR lower(clone_name) = lower(?)) ORDER BY id DESC LIMIT 20`),
   logSubmission: db.prepare(`INSERT INTO submissions_log (ip_hash, created_at) VALUES (?, ?)`),
   countRecent: db.prepare(`SELECT COUNT(*) AS n FROM submissions_log WHERE ip_hash = ? AND created_at > ?`),
@@ -154,17 +293,33 @@ function steamAppId(url) {
   return m ? Number(m[1]) : null;
 }
 
+// Fields shown in the public edit history (never contact details or IP hashes).
+const HISTORY_FIELDS = ['clone_name', 'clone_url', 'clone_developer', 'original_name', 'original_url', 'original_developer', 'platform', 'notes',
+  'clone_released', 'original_released', 'clone_image', 'original_image', 'mechanics', 'evidence'];
+function diff(before, after) {
+  const out = {};
+  for (const k of HISTORY_FIELDS) if ((before[k] || null) !== (after[k] || null)) out[k] = [before[k] || null, after[k] || null];
+  return out;
+}
+const logHistory = (id, actor, action, changes) =>
+  stmts.logHistory.run(id, actor, action, changes && Object.keys(changes).length ? JSON.stringify(changes) : null);
+
 const likeEscape = (s) => s.replace(/[\\%_]/g, (c) => '\\' + c);
 
 module.exports = {
   db,
   createReport(input, ipHash) {
     const r = {};
-    for (const k of ['clone_name', 'clone_url', 'clone_developer', 'original_name', 'original_url', 'original_developer', 'platform', 'notes', 'contact'])
+    for (const k of ['clone_name', 'clone_url', 'clone_developer', 'original_name', 'original_url', 'original_developer', 'platform', 'notes', 'contact',
+      'clone_released', 'original_released', 'clone_image', 'original_image', 'mechanics', 'evidence'])
       r[k] = input[k] || null;
     const res = stmts.insert.run(r.clone_name, r.clone_url, r.clone_developer, r.original_name, r.original_url,
-      r.original_developer, r.platform, r.notes, r.contact, ipHash, steamAppId(r.clone_url), steamAppId(r.original_url));
-    return Number(res.lastInsertRowid);
+      r.original_developer, r.platform, r.notes, r.contact, ipHash, steamAppId(r.clone_url), steamAppId(r.original_url),
+      r.clone_released, r.original_released, r.clone_image, r.original_image, r.mechanics, r.evidence);
+    const id = Number(res.lastInsertRowid);
+    stmts.syncDevKeys.run(devKey(r.clone_developer), devKey(r.original_developer), id);
+    logHistory(id, 'reporter', 'submitted');
+    return id;
   },
   search(q) {
     const like = `%${likeEscape(q)}%`;
@@ -184,8 +339,79 @@ module.exports = {
   recent: (n = 10) => stmts.recent.all(n),
   get: (id) => stmts.get.get(id),
   byStatus: (s) => stmts.byStatus.all(s),
-  setStatus: (id, s) => stmts.setStatus.run(s, id),
-  remove: (id) => stmts.del.run(id),
+  setStatus(id, s, actor = 'admin') {
+    const before = stmts.get.get(id);
+    stmts.setStatus.run(s, id);
+    if (before && before.status !== s) logHistory(id, actor, s, { status: [before.status, s] });
+  },
+  // Admin edit of a report's public fields.
+  updateReport(id, r, actor = 'admin', note = '') {
+    const before = stmts.get.get(id);
+    const v = (k) => r[k] || null;
+    stmts.update.run(v('clone_name'), v('clone_url'), v('clone_developer'), v('original_name'), v('original_url'), v('original_developer'),
+      v('platform'), v('notes'), v('clone_released'), v('original_released'), v('clone_image'), v('original_image'), v('mechanics'), v('evidence'),
+      steamAppId(r.clone_url), steamAppId(r.original_url), id);
+    stmts.syncDevKeys.run(devKey(r.clone_developer), devKey(r.original_developer), id);
+    const changes = before ? diff(before, stmts.get.get(id)) : {};
+    if (Object.keys(changes).length || note) logHistory(id, actor, note || 'edited', changes);
+  },
+  history: (id) => stmts.history.all(id).map((h) => ({ ...h, changes: h.changes ? JSON.parse(h.changes) : null })),
+  remove(id) { stmts.delVotes.run(id); stmts.delHistory.run(id); stmts.delDisputes.run(id); stmts.del.run(id); },
+  // Follows (email alerts). Returns the row; an existing confirmed follow keeps its token.
+  follow: (email, game, token) => stmts.follow.get(email, game, token),
+  followByToken: (t) => stmts.followByToken.get(t),
+  confirmFollow: (t) => stmts.confirmFollow.run(t).changes > 0,
+  unfollow: (t) => stmts.unfollow.run(t).changes > 0,
+  followersOf: (game) => stmts.followersOf.all(game),
+  // Public API list. Filters: text query, developer key, only ids after `since`.
+  apiReports({ q = '', dev = '', since = 0, limit = 50, offset = 0 } = {}) {
+    const like = `%${likeEscape(q)}%`;
+    return stmts.apiReports.all(q, like, like, like, like, dev, dev, dev, since, since, limit, offset);
+  },
+  feed: ({ game = '', dev = '' } = {}) => stmts.feed.all(game, game, game, dev, dev, dev),
+  // Developer disputes.
+  createDispute(reportId, d, ipHash) {
+    const res = stmts.insertDispute.run(reportId, d.name, d.role, d.contact, d.message, d.links || null, ipHash);
+    logHistory(reportId, 'developer', 'dispute received');
+    return Number(res.lastInsertRowid);
+  },
+  getDispute: (id) => stmts.getDispute.get(id),
+  disputesFor: (reportId, status = 'published') => stmts.disputesFor.all(reportId, status),
+  disputesByStatus: (s) => stmts.disputesByStatus.all(s),
+  disputeCounts() {
+    const out = { open: 0, published: 0, dismissed: 0 };
+    for (const row of stmts.disputeCounts.all()) out[row.status] = row.n;
+    return out;
+  },
+  setDisputeStatus(id, s) {
+    const d = stmts.getDispute.get(id);
+    if (!d || d.status === s) return;
+    stmts.setDispute.run(s, id);
+    logHistory(d.report_id, 'admin', s === 'published' ? 'developer response published' : s === 'dismissed' ? 'dispute dismissed' : 'dispute reopened');
+  },
+  // Fill comparison details that are still empty (from Steam). Never overwrites.
+  fillComparison(id, d) {
+    const before = stmts.get.get(id);
+    stmts.setComparison.run(d.clone_released ?? null, d.original_released ?? null, d.clone_image ?? null, d.original_image ?? null,
+      d.clone_developer ?? null, d.original_developer ?? null, id);
+    const r = stmts.get.get(id);
+    if (!r) return;
+    stmts.syncDevKeys.run(devKey(r.clone_developer), devKey(r.original_developer), id);
+    const changes = diff(before, r);
+    if (Object.keys(changes).length) logHistory(id, 'steam', 'filled from Steam', changes);
+  },
+  devKey,
+  // Every approved report and original game for one developer.
+  developer(key) {
+    const reports = stmts.byDev.all(key, key);
+    return { cloned: reports.filter((r) => r.clone_dev_key === key), wasCloned: reports.filter((r) => r.original_dev_key === key),
+      originals: stmts.originalsByDev.all(key) };
+  },
+  topDevelopers: (n = 50) => ({ cloners: stmts.topCloners.all(n), cloned: stmts.topCloned.all(n) }),
+  approvedEdges: () => stmts.approvedEdges.all(),
+  vote: (id, voter, choice) => stmts.vote.run(id, voter, choice, Date.now()),
+  myVote: (id, voter) => stmts.myVote.get(id, voter)?.choice || null,
+  votesByVoter: (voter, windowMs) => stmts.votesByVoter.get(voter, Date.now() - windowMs).n,
   counts() {
     const out = { pending: 0, approved: 0, rejected: 0 };
     for (const row of stmts.counts.all()) out[row.status] = row.n;
@@ -209,7 +435,7 @@ module.exports = {
         // A scanned row for the same Steam game under another name gives way to the checked entry.
         const dup = appid && stmts.originalByAppid.get(appid);
         if (dup && dup.name.toLowerCase() !== g.name.trim().toLowerCase()) stmts.delOriginal.run(dup.id);
-        stmts.upsertOriginal.run(g.name.trim(), g.developer || null, g.publisher || null, appid, g.eshop_url || null, g.note || null);
+        stmts.upsertOriginal.run(g.name.trim(), g.developer || null, g.publisher || null, appid, g.eshop_url || null, g.note || null, devKey(g.developer));
         n++;
       }
       db.exec('COMMIT');
@@ -246,7 +472,7 @@ module.exports = {
     if (stmts.isExcluded.get(g.appid, g.appid, name)) return 'excluded by admin';
     if (stmts.isApprovedClone.get(g.appid, g.appid, name)) return 'reported as a clone';
     if (stmts.originalByAppid.get(g.appid)) return 'already listed';
-    const res = stmts.insertScanned.run(name.slice(0, 200), g.developer || null, g.publisher || null, g.appid, g.positive_pct ?? null, g.reviews ?? null);
+    const res = stmts.insertScanned.run(name.slice(0, 200), g.developer || null, g.publisher || null, g.appid, g.positive_pct ?? null, g.reviews ?? null, devKey(g.developer));
     return res.changes ? 'added' : 'name already listed';
   },
   // Used by the classic console scanner. Returns 'added', 'updated' or why it was skipped.
@@ -263,7 +489,7 @@ module.exports = {
     if (stmts.isExcluded.get(null, null, name)) return 'excluded by admin';
     if (stmts.isApprovedClone.get(null, null, name)) return 'reported as a clone';
     const res = stmts.insertClassic.run(name.slice(0, 200), g.developer || null, g.publisher || null, g.platform || null,
-      g.year ?? null, g.wiki_url || null, g.wikidata_id, g.wiki_langs ?? null);
+      g.year ?? null, g.wiki_url || null, g.wikidata_id, g.wiki_langs ?? null, devKey(g.developer));
     return res.changes ? 'added' : 'name already listed';
   },
   scanSeen: (appid) => !!stmts.scanSeen.get(appid),

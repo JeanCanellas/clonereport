@@ -81,4 +81,55 @@ legend { font-weight: 700; padding: 0 6px; }
 .solo small { color: var(--muted); }
 .links { display: flex; gap: 8px; flex-wrap: wrap; }
 .pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 18px 0; }
+
+/* Community score */
+.score { display: inline-block; font-size: .78rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; margin-top: 8px; border: 1px solid var(--line); }
+.score.shi { color: var(--clone); border-color: var(--clone); }
+.score.smid { color: var(--muted); }
+.score.slo { color: var(--orig); border-color: var(--orig); }
+.lead .score { margin-top: 0; vertical-align: middle; }
+
+/* Side-by-side comparison */
+.compare { display: grid; gap: 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 18px 0; }
+.crow { display: grid; grid-template-columns: 110px 1fr 1fr; gap: 14px; padding: 10px 16px; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.crow:first-child { border-top: 0; }
+.clabel { color: var(--muted); font-size: .9rem; }
+.shot { width: 100%; aspect-ratio: 460 / 215; object-fit: cover; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); }
+.shot.none { display: grid; place-items: center; color: var(--muted); font-size: .85rem; }
+@media (max-width: 560px) { .crow { grid-template-columns: 1fr 1fr; } .clabel { grid-column: 1 / -1; } .clabel:empty { display: none; } }
+.chips { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chips li { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: 3px 11px; font-size: .9rem; }
+
+/* Voting */
+.vote { margin: 24px 0; }
+.vote-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 560px) { .vote-form { grid-template-columns: 1fr; } }
+.vote-btn { display: grid; gap: 2px; text-align: left; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.vote-btn small { color: var(--muted); }
+.vote-btn .count { font-size: .8rem; color: var(--muted); }
+.vote-btn.on { border-width: 2px; padding: 9px 11px; }
+.vote-btn.v-clone.on { border-color: var(--clone); }
+.vote-btn.v-inspired.on { border-color: var(--focus); }
+.vote-btn.v-original.on { border-color: var(--orig); }
+.vbar { display: block; width: 100%; height: 8px; border-radius: 99px; overflow: hidden; background: var(--line); margin-bottom: 12px; }
+.vbar .v-clone { fill: var(--clone); } .vbar .v-inspired { fill: var(--focus); } .vbar .v-original { fill: var(--orig); }
+
+/* Developers and family trees */
+.rank { padding-left: 1.4em; display: grid; gap: 6px; }
+.rank .muted { display: block; }
+.tree { list-style: none; padding-left: 0; margin: 6px 0; }
+.tree .tree { padding-left: 18px; border-left: 2px solid var(--line); margin-left: 6px; }
+.tree li { margin: 6px 0; }
+.small-link { font-size: .8rem; margin-left: 6px; }
+
+/* Moderation */
+.evidence { padding-left: 1.2em; display: grid; gap: 4px; }
+.evidence small { display: block; overflow-wrap: anywhere; }
+.response { margin: 18px 0; border-left: 4px solid var(--focus); }
+.radio { display: flex; gap: 8px; align-items: center; }
+.radio input { width: auto; }
+.history { list-style: none; padding: 0; display: grid; gap: 10px; }
+.history li { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; }
+.history dl { margin: 8px 0 0; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; overflow-wrap: anywhere; }
 .prose { max-width: 720px; } .prose h2 { margin-top: 28px; font-size: 1.2rem; }

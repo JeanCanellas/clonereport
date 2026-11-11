@@ -19,6 +19,11 @@ services:
         generateValue: true
       - key: ADMIN_PASSWORD
         sync: false
+      # Optional: turn on email alerts (see README)
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ALERT_FROM
+        sync: false
     disk:
       name: data
       mountPath: /var/data
