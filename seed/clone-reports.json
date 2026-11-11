@@ -585,6 +585,697 @@
     "https://www.gamedeveloper.com/pc/konami-roxor-settle-i-in-the-groove-i-suit",
     "https://en.wikipedia.org/wiki/Konami_Corp._v._Roxor_Games_Inc."
    ]
+  },
+  {
+   "key": "megacity-cityville",
+   "clone_name": "MegaCity",
+   "clone_developer": "Vostu",
+   "clone_released": "2011",
+   "original_name": "CityVille",
+   "original_developer": "Zynga",
+   "original_released": "2010",
+   "platform": "Facebook, Web",
+   "notes": "Zynga sued Brazilian developer Vostu in June 2011, claiming MegaCity and other Vostu games copied CityVille and other Zynga games. The case settled in December 2011: Vostu paid Zynga an undisclosed sum and agreed to change four of its games.",
+   "sources": [
+    "https://www.mcvuk.com/development-news/zynga-wins-settlement-in-copyright-case/",
+    "https://www.pocketgamer.com/news/zynga-sues-social-gaming-company-vostu-for-copying-games",
+    "https://www.aol.com/2011/12/06/zynga-vostu-settlement/"
+   ]
+  },
+  {
+   "key": "crouching-dragon-legends-hearthstone",
+   "clone_name": "Crouching Dragon Legends",
+   "clone_developer": "Unico Interactive",
+   "clone_released": "2014",
+   "original_name": "Hearthstone",
+   "original_developer": "Blizzard Entertainment",
+   "original_released": "2014",
+   "platform": "PC, mobile",
+   "notes": "Blizzard and its Chinese partner NetEase sued the makers of Crouching Dragon Legends (also reported as Legend of the Hidden Dragon). In 2014 the Shanghai No. 1 Intermediate People's Court ordered the game's makers to stop operating it and to pay damages; reports differ on the amount.",
+   "sources": [
+    "https://archive.shine.cn/metro/society/Game-company-copied-Blizzards-Hearthstone/shdaily.shtml",
+    "https://www.pocketgamer.com/hearthstone/blizzard-has-successfully-sued-a-chinese-hearthstone-clone-for-1-6-million",
+    "https://www.engadget.com/2014/11/11/blizzard-wins-lawsuit-and-shuts-down-hearthstone-clone/"
+   ]
+  },
+  {
+   "key": "glorious-saga-world-of-warcraft",
+   "clone_name": "Glorious Saga",
+   "clone_developer": "Sina Games",
+   "clone_released": "2019",
+   "original_name": "World of Warcraft",
+   "original_developer": "Blizzard Entertainment",
+   "original_released": "2004",
+   "platform": "Mobile",
+   "notes": "Blizzard and NetEase filed a lawsuit in August 2019 claiming the mobile game Glorious Saga copied World of Warcraft. The game went offline at the end of that month, shortly after the suit was filed.",
+   "sources": [
+    "https://www.pcgamer.com/blatant-world-of-warcraft-ripoff-goes-offline-after-blizzard-files-a-lawsuit"
+   ]
+  },
+  {
+   "key": "last-hope-dead-zone-the-last-of-us",
+   "clone_name": "The Last Hope - Dead Zone Survival",
+   "clone_developer": "Virtual Global Games (publisher: West Connection Limited)",
+   "clone_released": "2023",
+   "original_name": "The Last of Us Part I",
+   "original_developer": "Naughty Dog",
+   "original_url": "https://store.steampowered.com/app/1888930/",
+   "original_released": "2022",
+   "platform": "Nintendo Switch",
+   "notes": "Press described this eShop game as a Last of Us rip-off. In 2023 its trailer was blocked by a copyright claim from Sony Interactive Entertainment, and the game was then no longer available on the UK and US eShops.",
+   "sources": [
+    "https://www.gamespot.com/articles/the-last-of-us-rip-off-game-on-switch-taken-down-trailers-copyright-claimed-by-sony/1100-6516451/",
+    "https://ds.nintendolife.com/news/2023/08/dodgy-last-of-us-clone-on-switch-is-no-longer-available-thank-goodness"
+   ]
+  },
+  {
+   "key": "backrooms-horror-escape-backrooms-1998",
+   "clone_name": "Backrooms Horror Escape",
+   "clone_developer": "COOL DEVS S.R.L.",
+   "clone_released": "2024",
+   "original_name": "The Backrooms 1998",
+   "original_developer": "Steelkrill Studio",
+   "original_url": "https://store.steampowered.com/app/1985930/",
+   "original_released": "2022",
+   "platform": "Nintendo Switch, PlayStation, Xbox",
+   "notes": "Steelkrill, the developer of The Backrooms 1998, said this game was \"an exact 1:1 copy\" of theirs released under another name with an AI-made cover. After Steelkrill's DMCA requests, PlayStation and Xbox removed it; it was still on the Switch eShop in February 2025.",
+   "sources": [
+    "https://www.nintendolife.com/news/2025/02/they-stole-the-whole-game-horror-indie-dev-fights-the-eshop-scam-blatantly-ripping-their-work",
+    "https://www.pcgamer.com/games/horror/a-big-scam-company-just-stole-my-whole-game-a-backrooms-indie-dev-has-been-forced-to-seek-legal-help-after-someone-took-their-game-off-steam-and-uploaded-it-to-the-nintendo-store",
+    "https://80.lv/articles/scam-publisher-stole-the-backrooms-1998-sold-under-another-name"
+   ]
+  },
+  {
+   "key": "hytale-sandbox-rpg-hytale",
+   "clone_name": "Hytale: Sandbox RPG",
+   "clone_developer": "RoVi Ninen",
+   "clone_released": "2026",
+   "original_name": "Hytale",
+   "original_developer": "Hypixel Studios",
+   "original_url": "https://hytale.com/",
+   "original_released": "2026",
+   "platform": "Nintendo Switch",
+   "notes": "This game appeared on the Switch eShop in April 2026 using the Hytale name. Hypixel Studios said it was not theirs and that its legal team was taking action against it.",
+   "sources": [
+    "https://www.nintendolife.com/news/2026/04/hytale-dev-seeks-legal-action-against-knock-off-switch-eshop-game",
+    "https://automaton-media.com/en/news/misleading-hytale-sandbox-rpg-copycat-game-launches-on-nintendo-store-original-developers-taking-legal-measures/"
+   ]
+  },
+  {
+   "key": "coin-pit-cloverpit",
+   "clone_name": "COIN PIT",
+   "clone_developer": "RoVi Ninen",
+   "clone_released": "2026",
+   "original_name": "CloverPit",
+   "original_developer": "Panik Arcade",
+   "original_url": "https://store.steampowered.com/app/3314790/",
+   "original_released": "2025",
+   "platform": "Nintendo Switch",
+   "notes": "Panik Arcade publicly warned players that COIN PIT, an eShop game from the same publisher as the Hytale knock-off, imitated CloverPit. Press reported that the listing was later removed.",
+   "sources": [
+    "https://automaton-media.com/en/news/misleading-hytale-sandbox-rpg-copycat-game-launches-on-nintendo-store-original-developers-taking-legal-measures/"
+   ]
+  },
+  {
+   "key": "cloverpit-gamble-cloverpit",
+   "clone_name": "CloverPit Gamble",
+   "clone_released": "2025",
+   "original_name": "CloverPit",
+   "original_developer": "Panik Arcade",
+   "original_url": "https://store.steampowered.com/app/3314790/",
+   "original_released": "2025",
+   "platform": "Nintendo Switch",
+   "notes": "In December 2025 Panik Arcade warned that an eShop game using the CloverPit name \"is NOT MADE BY US\". CloverPit itself was not on Switch at the time.",
+   "sources": [
+    "https://news.instant-gaming.com/en/articles/16844-beware-of-this-fraudulent-copy-of-cloverpit-on-switch",
+    "https://www.gamespark.jp/article/2025/12/25/161022.html"
+   ]
+  },
+  {
+   "key": "heli-city-gta-vice-city",
+   "clone_name": "HeliCity Demolition Man",
+   "clone_developer": "ERIK GAMES",
+   "clone_released": "2024",
+   "original_name": "Grand Theft Auto: Vice City",
+   "original_developer": "Rockstar North",
+   "original_released": "2002",
+   "platform": "PlayStation 4",
+   "notes": "Press described this PS4 game as a rip-off of Grand Theft Auto: Vice City. It was released on the PlayStation Store in August 2024 and pulled after a complaint from Take-Two, Rockstar's parent company.",
+   "sources": [
+    "https://kotaku.com/gta-vice-city-heli-city-demolition-man-rip-off-ps4-psn-1851641047"
+   ]
+  },
+  {
+   "key": "crisis-action-crossfire",
+   "clone_name": "Crisis Action",
+   "clone_developer": "Hero Entertainment",
+   "original_name": "CrossFire",
+   "original_developer": "Smilegate (published in China by Tencent)",
+   "original_released": "2007",
+   "platform": "Mobile",
+   "notes": "Tencent sued over maps in Crisis Action that it said copied CrossFire's. A Shenzhen court ruled for Tencent in 2019, and the Guangdong High People's Court upheld it in December 2021 in what was reported as China's first game-map copyright case, with damages of more than 25 million yuan.",
+   "sources": [
+    "https://www.superpixel.com/article/15997/tencent-has-won-lawsuit-against-hero-entertainment-copying-crossfires-game-maps",
+    "https://natlawreview.com/article/guangdong-higher-people-s-court-rules-tencent-china-s-first-game-map-copyright-case"
+   ]
+  },
+  {
+   "key": "mini-world-minecraft",
+   "clone_name": "Mini World",
+   "clone_developer": "Shenzhen Mini Play",
+   "original_name": "Minecraft",
+   "original_developer": "Mojang Studios",
+   "original_released": "2011",
+   "platform": "PC, mobile",
+   "notes": "NetEase, Minecraft's operator in China, sued the makers of Mini World in 2019. In November 2022 the Guangdong High People's Court found the two games nearly indistinguishable and ruled it unfair competition, ordering 50 million yuan in damages and an injunction.",
+   "sources": [
+    "https://www.legal500.com/intelligence/china/intellectual-property/netease-wins-50-million-rmb-in-minecraft-infringement-litigation",
+    "https://videogamelaw.allard.ubc.ca/?p=10885"
+   ]
+  },
+  {
+   "key": "crazy-kong-donkey-kong",
+   "clone_name": "Crazy Kong",
+   "clone_developer": "Falcon",
+   "clone_released": "1981",
+   "original_name": "Donkey Kong",
+   "original_developer": "Nintendo",
+   "original_released": "1981",
+   "platform": "Arcade",
+   "notes": "Crazy Kong kept Donkey Kong's gameplay with redrawn graphics. It was licensed for operation only in Japan; Nintendo revoked the license in 1982 after cabinets were exported. The dispute reached a US court in Nintendo v. Elcon (E.D. Mich., 1982).",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Crazy_Kong",
+    "https://www.patentarcade.com/2015/11/1982-case-nintendo-v-elcon.html",
+    "https://www.nintendolife.com/news/2020/11/feature_how_a_donkey_kong_clone_almost_scuppered_nintendos_ambitions_in_the_west"
+   ]
+  },
+  {
+   "key": "pong-odyssey-table-tennis",
+   "clone_name": "Pong",
+   "clone_developer": "Atari",
+   "clone_released": "1972",
+   "original_name": "Table Tennis (Magnavox Odyssey)",
+   "original_developer": "Ralph Baer / Magnavox",
+   "original_released": "1972",
+   "platform": "Arcade",
+   "notes": "Magnavox sued Atari, saying Pong was based on the table tennis game of the Magnavox Odyssey, which Atari founder Nolan Bushnell had played at a demonstration before Pong was made. This was a patent case; Atari settled in 1976 by taking a license from Magnavox.",
+   "sources": [
+    "https://www.britannica.com/topic/Pong",
+    "https://www.classic-consoles-center.at/stories/1976-the-lawsuits-start"
+   ]
+  },
+  {
+   "key": "mighty-mouth-pac-man",
+   "clone_name": "Mighty Mouth",
+   "clone_released": "1981",
+   "original_name": "Pac-Man",
+   "original_developer": "Namco",
+   "original_released": "1980",
+   "platform": "Arcade",
+   "notes": "Midway, which held the US rights to Pac-Man, sued sellers of conversion kits for Mighty Mouth. In Midway v. Dirkschneider (D. Neb. 1981) the court described the game as nearly identical to Pac-Man and granted Midway a preliminary injunction.",
+   "sources": [
+    "https://www.patentarcade.com/?p=1211",
+    "https://www.leagle.com/decision/19811009543fsupp4661930"
+   ]
+  },
+  {
+   "key": "galactic-invader-galaxian",
+   "clone_name": "Galactic Invader",
+   "clone_released": "1981",
+   "original_name": "Galaxian",
+   "original_developer": "Namco",
+   "original_released": "1979",
+   "platform": "Arcade",
+   "notes": "Midway, which held the US rights to Galaxian, sued sellers of Galactic Invader conversion kits. In Midway v. Dirkschneider (D. Neb. 1981) the court described the game as nearly identical to Galaxian and granted a preliminary injunction.",
+   "sources": [
+    "https://www.patentarcade.com/?p=1211",
+    "https://www.leagle.com/decision/19811009543fsupp4661930"
+   ]
+  },
+  {
+   "key": "kamikaze-iii-galaxian",
+   "clone_name": "Kamikaze III",
+   "clone_released": "1981",
+   "original_name": "Galaxian",
+   "original_developer": "Namco",
+   "original_released": "1979",
+   "platform": "Arcade",
+   "notes": "Kamikaze III was one of the conversion kits in Midway v. Dirkschneider (D. Neb. 1981). The court described it as nearly identical to Galaxian and granted Midway a preliminary injunction.",
+   "sources": [
+    "https://www.patentarcade.com/?p=1211",
+    "https://www.leagle.com/decision/19811009543fsupp4661930"
+   ]
+  },
+  {
+   "key": "repo-horror-repo",
+   "clone_name": "REPO Horror",
+   "clone_developer": "BoggySoft",
+   "clone_released": "2025",
+   "original_name": "R.E.P.O.",
+   "original_developer": "semiwork",
+   "original_url": "https://store.steampowered.com/app/3241660/",
+   "original_released": "2025",
+   "platform": "Nintendo Switch",
+   "notes": "Press flagged this eShop game in April 2025 as a scam copy riding on the viral co-op horror game R.E.P.O., which was not on Switch.",
+   "sources": [
+    "https://www.nintendolife.com/news/2025/04/viral-horror-co-op-game-is-the-latest-victim-of-shameless-eshop-scam",
+    "https://www.pcgamer.com/games/horror/theres-yet-another-pc-ripoff-floating-around-the-nintendo-eshop-but-this-time-its-repo-thats-been-robbed-even-the-eshop-has-slip-ups-when-it-comes-to-allowing-fake-games"
+   ]
+  },
+  {
+   "key": "wukong-sun-black-myth",
+   "clone_name": "Wukong Sun: Black Legend",
+   "clone_developer": "Global Game Studio",
+   "clone_released": "2024",
+   "original_name": "Black Myth: Wukong",
+   "original_developer": "Game Science",
+   "original_url": "https://store.steampowered.com/app/2358720/",
+   "original_released": "2024",
+   "platform": "Nintendo Switch",
+   "notes": "Press warned in January 2025 that this eShop game imitated the name and look of Black Myth: Wukong, which was not released on Switch.",
+   "sources": [
+    "https://www.nintendolife.com/news/2025/01/psa-dont-fall-for-this-new-wukong-game-on-the-switch-eshop"
+   ]
+  },
+  {
+   "key": "content-warning-scary-filming",
+   "clone_name": "Content Warning: Scary Filming",
+   "clone_developer": "BurleaGamesStudio",
+   "clone_released": "2025",
+   "original_name": "Content Warning",
+   "original_developer": "Landfall",
+   "original_url": "https://store.steampowered.com/app/2881650/",
+   "original_released": "2024",
+   "platform": "Nintendo Switch",
+   "notes": "Landfall said the Switch games using the Content Warning name were unofficial and that it was working to get them removed.",
+   "sources": [
+    "https://www.nintendolife.com/news/2025/03/psa-dont-be-fooled-this-blatant-rip-off-isnt-the-content-warning-you-want-on-switch"
+   ]
+  },
+  {
+   "key": "palland-palworld",
+   "clone_name": "Palland",
+   "clone_developer": "BoggySoft",
+   "clone_released": "2025",
+   "original_name": "Palworld",
+   "original_developer": "Pocketpair",
+   "original_url": "https://store.steampowered.com/app/1623730/",
+   "original_released": "2024",
+   "platform": "Nintendo Switch",
+   "notes": "Press described Palland, released on the Switch eShop in July 2025, as a rip-off of Palworld, which was not on Switch.",
+   "sources": [
+    "https://www.nintendolife.com/news/2025/08/random-oh-jeez-now-palworld-has-its-own-rip-off-on-the-switch-eshop"
+   ]
+  },
+  {
+   "key": "tcg-card-shop-master",
+   "clone_name": "TCG Card Shop Master",
+   "clone_developer": "DEMENCI Games",
+   "clone_released": "2024",
+   "original_name": "TCG Card Shop Simulator",
+   "original_developer": "OPNeon Games",
+   "original_url": "https://store.steampowered.com/app/3070070/",
+   "original_released": "2024",
+   "platform": "Nintendo Switch",
+   "notes": "Press described this eShop game, released in November 2024, as a rip-off of the Steam hit TCG Card Shop Simulator.",
+   "sources": [
+    "https://www.nintendolife.com/news/2024/11/random-now-pokemon-is-getting-its-own-tcg-rip-off-on-the-switch-eshop"
+   ]
+  },
+  {
+   "key": "dead-gears-gears-of-war",
+   "clone_name": "Dead Gears - Space of War",
+   "clone_developer": "Consann Real Estate",
+   "clone_released": "2026",
+   "original_name": "Gears of War",
+   "original_developer": "The Coalition / Epic Games",
+   "original_released": "2006",
+   "platform": "Nintendo Switch",
+   "notes": "Press described this eShop game, released in May 2026, as a knock-off borrowing the names and look of Gears of War and Dead Space.",
+   "sources": [
+    "https://www.nintendolife.com/news/2026/05/random-thats-not-gears-of-war-or-dead-space-just-another-terrible-eshop-clone"
+   ]
+  },
+  {
+   "key": "tomodachi-life-living-dream-google-play",
+   "clone_name": "Tomodachi Life Living Dream",
+   "clone_released": "2026",
+   "original_name": "Tomodachi Life: Living the Dream",
+   "original_developer": "Nintendo",
+   "original_released": "2026",
+   "platform": "Android",
+   "notes": "In May 2026 Google Play listings used the name of Nintendo's Tomodachi Life: Living the Dream, which is only on Switch. Press reported the clones, and a listing was later removed.",
+   "sources": [
+    "https://www.nintendolife.com/news/2026/05/random-dont-be-fooled-by-google-play-stores-tomodachi-life-clones",
+    "https://games.gg/news/google-play-tomodachi-life-clone-removed/"
+   ]
+  },
+  {
+   "key": "wildcard-dire-decks",
+   "clone_name": "Wildcard",
+   "clone_developer": "Terry Brash",
+   "clone_released": "2024",
+   "original_name": "Dire Decks",
+   "original_developer": "kindanice",
+   "platform": "PC",
+   "notes": "In June 2024 kindanice, the creator of Dire Decks, said Terry Brash had copied the game and was releasing it on Steam under another name. Brash called Wildcard a \"rewrite\" and \"clone\" of Dire Decks and said: \"I liked the game, so I made a clone with extra stuff.\"",
+   "sources": [
+    "https://www.pcgamer.com/games/card-games/dire-decks-wildcard-clone",
+    "https://kotaku.com/indie-dev-clone-wildcard-dire-decks-steam-card-brash-1851522061"
+   ]
+  },
+  {
+   "key": "flora-corner-makeroom",
+   "clone_name": "Flora Corner",
+   "clone_developer": "Hacktic",
+   "clone_released": "2024",
+   "original_name": "MakeRoom",
+   "original_developer": "Kenney",
+   "original_url": "https://store.steampowered.com/app/2212670/",
+   "platform": "PC",
+   "notes": "In July 2024 Kenney, the developer of MakeRoom, asked the developer of Flora Corner not to copy the game. Hacktic apologised and said it would change the game's art.",
+   "sources": [
+    "https://www.gamesradar.com/games/simulation/indie-game-dev-known-as-asset-jesus-has-their-the-sims-style-cozy-game-copied-by-another-developer-please-dont-just-copy-my-game"
+   ]
+  },
+  {
+   "key": "ghostly-whiskers-haunted-paws",
+   "clone_name": "Ghostly Whiskers",
+   "clone_developer": "Nostra Games",
+   "clone_released": "2026",
+   "original_name": "Haunted Paws",
+   "original_developer": "Lazy Flock",
+   "original_url": "https://store.steampowered.com/app/2861080/",
+   "platform": "PlayStation",
+   "notes": "In January 2026 Lazy Flock, the studio behind Haunted Paws, said Ghostly Whiskers on the PlayStation Store \"IS A DIRECT COPY\" of their unreleased game, made with AI-generated assets.",
+   "sources": [
+    "https://www.gamesradar.com/games/co-op/indie-devs-behind-adorable-co-op-horror-game-say-a-direct-copy-with-ai-generated-assets-is-launching-on-the-playstation-store-before-their-game-is-even-finished",
+    "https://www.pushsquare.com/news/2026/01/haunted-paws-dev-accuses-new-cosy-ps5-ps4-horror-of-being-a-copycat"
+   ]
+  },
+  {
+   "key": "anime-life-sim-animal-crossing",
+   "clone_name": "Anime Life Sim",
+   "clone_developer": "Maksym Vysochanskyy",
+   "clone_released": "2025",
+   "original_name": "Animal Crossing: New Horizons",
+   "original_developer": "Nintendo",
+   "original_released": "2020",
+   "platform": "PlayStation",
+   "notes": "Press described this PlayStation Store game, listed in January 2025, as a close imitation of Animal Crossing: New Horizons. The listing was later removed.",
+   "sources": [
+    "https://www.videogameschronicle.com/news/another-suspiciously-animal-crossing-like-game-has-appeared-on-the-playstation-store",
+    "https://kotaku.com/animal-crossing-ps5-ai-rip-off-psn-last-us-2000633320",
+    "https://www.nintendolife.com/news/2025/01/random-geez-ps5-game-anime-life-sim-sure-looks-familiar"
+   ]
+  },
+  {
+   "key": "peak-app-store-fake",
+   "clone_name": "Peak! (iOS app)",
+   "clone_developer": "Sarukent Demiray",
+   "clone_released": "2026",
+   "original_name": "PEAK",
+   "original_developer": "Aggro Crab and Landfall (Team PEAK)",
+   "original_url": "https://store.steampowered.com/app/3527290/",
+   "original_released": "2025",
+   "platform": "iOS",
+   "notes": "In March 2026 fans found an App Store game called Peak!. Aggro Crab said: \"It's fake, but they take FOREVER to get removed\" and that the studio has no plans for mobile; Landfall said \"It is not real.\"",
+   "sources": [
+    "https://www.gamesradar.com/games/co-op/peak-devs-say-we-have-no-plans-to-go-to-mobile-as-fans-spot-another-fake-version-this-time-on-the-app-store-they-take-forever-to-get-removed"
+   ]
+  },
+  {
+   "key": "peaked-climbing-peak",
+   "clone_name": "Peaked Climbing",
+   "clone_released": "2025",
+   "original_name": "PEAK",
+   "original_developer": "Aggro Crab and Landfall (Team PEAK)",
+   "original_url": "https://store.steampowered.com/app/3527290/",
+   "original_released": "2025",
+   "platform": "PlayStation",
+   "notes": "In August 2025 a PlayStation Store listing called Peaked Climbing, with mostly AI-made screenshots, was flagged to Landfall. Landfall said it had been reporting \"a bunch of these AI slop things for the past year\".",
+   "sources": [
+    "https://www.gamesradar.com/games/co-op/viral-co-op-climbing-game-peak-gets-hit-with-a-wave-of-rip-offs-on-ps5-but-this-isnt-the-devs-first-rodeo-as-theyve-been-reporting-a-bunch-of-ai-slop-things-for-the-past-year"
+   ]
+  },
+  {
+   "key": "cliff-roblox-peak",
+   "clone_name": "Cliff",
+   "clone_released": "2025",
+   "original_name": "PEAK",
+   "original_developer": "Aggro Crab and Landfall (Team PEAK)",
+   "original_url": "https://store.steampowered.com/app/3527290/",
+   "original_released": "2025",
+   "platform": "Roblox",
+   "notes": "Aggro Crab, co-developer of PEAK, called Cliff a \"microtransaction-riddled Roblox slop ripoff\" and said it would rather players pirate PEAK than play it.",
+   "sources": [
+    "https://insider-gaming.com/peak-publishers-prefer-piracy-to-roblox-slop-ripoff/",
+    "https://80.lv/articles/peak-devs-pirate-our-game-don-t-play-the-roblox-ripoff",
+    "https://tribune.com.pk/story/2559796/peak-studio-tells-fans-to-pirate-game-instead-of-playing-roblox-ripoff-copy-called-cliff"
+   ]
+  },
+  {
+   "key": "gray-zone-attack-gray-zone-warfare",
+   "clone_name": "Gray Zone Attack",
+   "clone_developer": "Esail",
+   "clone_released": "2025",
+   "original_name": "Gray Zone Warfare",
+   "original_developer": "MADFINGER Games",
+   "original_url": "https://store.steampowered.com/app/2479810/",
+   "original_released": "2024",
+   "platform": "PlayStation",
+   "notes": "Press described this PlayStation Store listing as a near-copy of Gray Zone Warfare, with AI-made cover art, similar icons and a near-identical tagline.",
+   "sources": [
+    "https://insider-gaming.com/gray-zone-warfare-copy-playstation/",
+    "https://consolepcgaming.com/shameless-copycat-gray-zone-warfare-rip-off-hits-playstation-store"
+   ]
+  },
+  {
+   "key": "qijishenhua-mu-online",
+   "clone_name": "Qijishenhua",
+   "clone_developer": "Guangzhou Hugenstar Information Technology",
+   "original_name": "MU Online",
+   "original_developer": "Webzen",
+   "original_released": "2001",
+   "platform": "Web",
+   "notes": "Webzen sued the developer and operator of Qijishenhua in China over copying MU Online. The Pudong New Area People's Court in Shanghai ruled for Webzen and awarded more than 5 million yuan, reported at the time as the highest award in an online game case in China.",
+   "sources": [
+    "https://archive.shine.cn/metro/SK-game-developer-wins-game-infringement-case-with-5-million-yuan-compensation-from-Chinese-companies/shdaily.shtml"
+   ]
+  },
+  {
+   "key": "legend-of-blue-moon-mir-2",
+   "clone_name": "Legend of Blue Moon (web and 3D mobile versions)",
+   "clone_developer": "Kingnet",
+   "original_name": "The Legend of Mir 2",
+   "original_developer": "Wemade",
+   "original_released": "2001",
+   "platform": "Web, mobile",
+   "notes": "Wemade sued Kingnet in China in 2019 over unlicensed games based on The Legend of Mir 2. In 2021 the Hangzhou Intermediate People's Court ordered both versions of the game to stop service and awarded Wemade 9.2 million yuan in total.",
+   "sources": [
+    "https://www.asiae.co.kr/en/article/2021060710574950643",
+    "https://www.dailyherald.com/20190629/business/this-cult-video-game-is-facing-down-copycats-in-china"
+   ]
+  },
+  {
+   "key": "hyper-front-valorant",
+   "clone_name": "Hyper Front",
+   "clone_developer": "NetEase",
+   "clone_released": "2022",
+   "original_name": "VALORANT",
+   "original_developer": "Riot Games",
+   "original_released": "2020",
+   "platform": "Mobile",
+   "notes": "In December 2022 Riot Games sued NetEase in several countries, saying Hyper Front copied VALORANT's maps, characters and weapons. NetEase shut Hyper Front down in April 2023.",
+   "sources": [
+    "https://www.pcgamer.com/riot-is-suing-netease-over-an-alleged-valorant-clone",
+    "https://www.engadget.com/riot-games-lawsuit-netease-copy-valorant-105847270.html",
+    "https://www.pocketgamer.biz/neteases-hyper-front-to-shut-down-following-riot-lawsuit"
+   ]
+  },
+  {
+   "key": "lethal-company-ios-fake",
+   "clone_name": "Lethal Company (unofficial mobile app)",
+   "clone_developer": "Aytac Kahveci",
+   "clone_released": "2024",
+   "original_name": "Lethal Company",
+   "original_developer": "Zeekerss",
+   "original_url": "https://store.steampowered.com/app/1966720/",
+   "original_released": "2023",
+   "platform": "iOS, Android",
+   "notes": "An unofficial Lethal Company app was one of the top games on the iOS App Store in February 2024. Zeekerss said the mobile version was \"likely a scam of some sort\" and not made by them.",
+   "sources": [
+    "https://www.pcgamer.com/lethal-company-is-one-of-the-top-games-on-the-ios-app-store-but-theres-just-one-problem-its-not-real-developer-says",
+    "https://www.pocketgamer.biz/lethal-company-developer-deems-mobile-app-a-scam",
+    "https://mobilegamer.biz/lethal-company-clones-are-live-on-both-apple-and-googles-app-stores/"
+   ]
+  },
+  {
+   "key": "schedule-1-syndicate",
+   "clone_name": "Schedule 1 Syndicate",
+   "clone_released": "2025",
+   "original_name": "Schedule I",
+   "original_developer": "TVGS",
+   "original_url": "https://store.steampowered.com/app/3164500/",
+   "original_released": "2025",
+   "platform": "PlayStation",
+   "notes": "In April 2025 PlayStation Store listings used the Schedule I name while the game was PC-only. TVGS said: \"these are not affiliated with me in any way.\" PlayStation removed Schedule 1 Syndicate.",
+   "sources": [
+    "https://mein-mmo.de/en/developers-exploit-popular-steam-game-for-quick-cash-deceive-gamers-release-blatant-copy-on-ps5,1248064",
+    "https://insider-gaming.com/schedule-1-creator-gives-console-port-update-after-imitations-appear-on-playstation/",
+    "https://www.gamesradar.com/games/open-world/schedule-1-dev-says-phony-playstation-listings-are-not-affiliated-with-me-in-any-way-but-would-love-to-port-the-open-world-crime-game-to-console-when-its-at-the-right-stage"
+   ]
+  },
+  {
+   "key": "schedule-1-dope-empire",
+   "clone_name": "Schedule 1: Dope Empire",
+   "clone_released": "2025",
+   "original_name": "Schedule I",
+   "original_developer": "TVGS",
+   "original_url": "https://store.steampowered.com/app/3164500/",
+   "original_released": "2025",
+   "platform": "PlayStation",
+   "notes": "Another PlayStation Store listing that used the Schedule I name in April 2025. TVGS said the listings were \"not affiliated with me in any way.\"",
+   "sources": [
+    "https://mein-mmo.de/en/developers-exploit-popular-steam-game-for-quick-cash-deceive-gamers-release-blatant-copy-on-ps5,1248064",
+    "https://www.gamesradar.com/games/open-world/schedule-1-dev-says-phony-playstation-listings-are-not-affiliated-with-me-in-any-way-but-would-love-to-port-the-open-world-crime-game-to-console-when-its-at-the-right-stage"
+   ]
+  },
+  {
+   "key": "unpacking-universe-dreams",
+   "clone_name": "Unpacking Universe Dreams",
+   "clone_developer": "CGI LAB",
+   "clone_released": "2024",
+   "original_name": "Unpacking",
+   "original_developer": "Witch Beam",
+   "original_url": "https://store.steampowered.com/app/1135690/",
+   "original_released": "2021",
+   "platform": "Nintendo Switch",
+   "notes": "CGI LAB released several eShop games using the Unpacking name in 2024 (also listed as Unpacking: Deluxe Edition). Witch Beam reported them to Nintendo, and creative director Wren Brier called them \"egregious scams\" that were \"purposely tricking Nintendo customers into buying cheap fakes.\"",
+   "sources": [
+    "https://www.videogameschronicle.com/news/unpacking-dev-challenges-nintendo-to-crack-down-on-cheap-fakes-on-eshop",
+    "https://www.nintendolife.com/news/2024/11/no-indie-hit-unpacking-hasnt-unboxed-new-dlc-its-just-another-naff-eshop-clone"
+   ]
+  },
+  {
+   "key": "temple-jump-temple-run",
+   "clone_name": "Temple Jump",
+   "clone_developer": "Anton Sinelnikov",
+   "clone_released": "2012",
+   "original_name": "Temple Run",
+   "original_developer": "Imangi Studios",
+   "original_released": "2011",
+   "platform": "iOS",
+   "notes": "Apple removed Temple Jump in February 2012 in a sweep of copycat apps from the same developer. Imangi co-founder Natalia Luckyanova said it \"was clearly a scam that traded entirely on the popularity of Temple Run.\"",
+   "sources": [
+    "https://www.pocketgamer.com/temple-run/apple-removes-temple-jump-and-other-clones-from-app-store",
+    "https://techcrunch.com/2012/02/03/app-store-fakes/",
+    "https://www.engadget.com/2012/02/06/apple-removes-dozens-of-clone-games-from-app-store/"
+   ]
+  },
+  {
+   "key": "angry-ninja-birds-angry-birds",
+   "clone_name": "Angry Ninja Birds",
+   "clone_developer": "Anton Sinelnikov",
+   "clone_released": "2012",
+   "original_name": "Angry Birds",
+   "original_developer": "Rovio",
+   "original_released": "2009",
+   "platform": "iOS",
+   "notes": "One of the lookalike apps Apple removed in February 2012 from the developer behind Temple Jump.",
+   "sources": [
+    "https://www.phonearena.com/news/Apple-fights-game-clones-pulls-Angry-Ninja-Birds-Plants-vs-Zombie-others_id26623",
+    "https://www.engadget.com/2012/02/06/apple-removes-dozens-of-clone-games-from-app-store/"
+   ]
+  },
+  {
+   "key": "plants-vs-zombie-pvz",
+   "clone_name": "Plants vs Zombie",
+   "clone_developer": "Anton Sinelnikov",
+   "clone_released": "2012",
+   "original_name": "Plants vs. Zombies",
+   "original_developer": "PopCap Games",
+   "original_released": "2009",
+   "platform": "iOS",
+   "notes": "One of the lookalike apps Apple removed in February 2012 from the developer behind Temple Jump.",
+   "sources": [
+    "https://www.phonearena.com/news/Apple-fights-game-clones-pulls-Angry-Ninja-Birds-Plants-vs-Zombie-others_id26623",
+    "https://www.engadget.com/2012/02/06/apple-removes-dozens-of-clone-games-from-app-store/"
+   ]
+  },
+  {
+   "key": "tiny-birds-tiny-wings",
+   "clone_name": "Tiny Birds",
+   "clone_developer": "Anton Sinelnikov",
+   "clone_released": "2012",
+   "original_name": "Tiny Wings",
+   "original_developer": "Andreas Illiger",
+   "original_released": "2011",
+   "platform": "iOS",
+   "notes": "One of the lookalike apps from the developer behind Temple Jump that Apple removed in February 2012.",
+   "sources": [
+    "https://techcrunch.com/2012/02/03/app-store-fakes/",
+    "https://www.pocketgamer.com/temple-run/apple-removes-temple-jump-and-other-clones-from-app-store"
+   ]
+  },
+  {
+   "key": "fake-pokemon-yellow-ios",
+   "clone_name": "Pokemon Yellow (unofficial iOS app)",
+   "clone_developer": "Home of Anime",
+   "clone_released": "2012",
+   "original_name": "Pokémon Yellow",
+   "original_developer": "Game Freak / Nintendo",
+   "original_released": "1998",
+   "platform": "iOS",
+   "notes": "An app called Pokemon Yellow, not made by Nintendo or The Pokémon Company, reached No. 2 on the App Store in February 2012 and reportedly crashed on launch. Apple removed it within days, and The Pokémon Company said it would act against unauthorised games.",
+   "sources": [
+    "https://money.cnn.com/2012/02/21/technology/pokemon_yellow/index.htm",
+    "https://www.pocketgamer.com/articles/038087/r/",
+    "https://animenewsnetwork.com/interest/2012-02-21/apple-removes-counterfeit-pokemon-iphone/ipad-app"
+   ]
+  },
+  {
+   "key": "pokemon-pocket-edition-ios",
+   "clone_name": "Pokemon - Pocket Edition (unofficial iOS app)",
+   "clone_released": "2012",
+   "original_name": "Pokémon",
+   "original_developer": "Game Freak / Nintendo",
+   "original_released": "1996",
+   "platform": "iOS",
+   "notes": "A second unofficial Pokémon app removed from the App Store in February 2012, alongside the fake Pokemon Yellow. The Pokémon Company said it works against \"the unauthorised release of games\" that mislead fans.",
+   "sources": [
+    "https://www.pocketgamer.com/articles/038087/r/"
+   ]
+  },
+  {
+   "key": "skyfar-luftrausers",
+   "clone_name": "SkyFar",
+   "clone_developer": "Rubiq Lab",
+   "clone_released": "2013",
+   "original_name": "LUFTRAUSERS",
+   "original_developer": "Vlambeer",
+   "original_url": "https://store.steampowered.com/app/233150/",
+   "original_released": "2014",
+   "platform": "iOS",
+   "notes": "Vlambeer said SkyFar copied LUFTRAUSERS and got it removed from the App Store in 2013. It was later relisted; Vlambeer's Rami Ismail said of it: \"It's not about the game, it's about the money.\"",
+   "sources": [
+    "https://www.gameinformer.com/b/news/archive/2014/03/25/vlambeer-resurfaced-luftrausers-clone-%27just-trying-to-steal-money%27",
+    "https://www.engadget.com/2013/04/22/vlambeer-fully-intends-to-fight-luftrausers-clone/"
+   ]
+  },
+  {
+   "key": "tetrada-tetris",
+   "clone_name": "Tetrada",
+   "clone_developer": "Mario Karagiannis (Karios)",
+   "clone_released": "2010",
+   "original_name": "Tetris",
+   "original_developer": "Alexey Pajitnov / The Tetris Company",
+   "original_released": "1984",
+   "platform": "Windows Phone",
+   "notes": "The Tetris Company, through its lawyers, sent a takedown request for the falling-block game Tetrada, and in February 2011 it was set to be removed from the Windows Phone Marketplace.",
+   "sources": [
+    "https://www.pocketgamer.com/tetris/tetris-clone-tetrada-removed-from-windows-phone-7-marketplace-after-takedown-req"
+   ]
   }
  ]
 }
