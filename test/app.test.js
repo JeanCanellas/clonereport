@@ -209,3 +209,12 @@ test('the site recommends the Chrome extension and serves it', async () => {
   const img = await fetch(base + '/extension-screenshot.png');
   assert.equal(img.headers.get('content-type'), 'image/png');
 });
+
+test('privacy policy page is linked from every page', async () => {
+  const res = await fetch(base + '/privacy');
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /<h1>Privacy policy<\/h1>/);
+  assert.match(html, /Limited Use/);
+  assert.match(await (await fetch(base + '/')).text(), /href="\/privacy"/);
+});
