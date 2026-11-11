@@ -381,6 +381,210 @@
     "https://en.wikipedia.org/wiki/The_Great_Giana_Sisters",
     "https://kotaku.com/the-greatest-mario-rip-off-of-them-all-5822474"
    ]
+  },
+  {
+   "key": "hole-io-donut-county",
+   "clone_name": "Hole.io",
+   "clone_developer": "Voodoo",
+   "clone_released": "2018",
+   "original_name": "Donut County",
+   "original_developer": "Ben Esposito",
+   "original_url": "https://store.steampowered.com/app/702670/",
+   "original_released": "2018",
+   "platform": "iOS, Android",
+   "notes": "Hole.io topped the App Store in June 2018, months before Donut County, a game about a hole that swallows a town, came out. Donut County's developer Ben Esposito publicly called it out as a clone of his unreleased game, while noting there were differences, and the case was widely covered as an example of mobile publishers copying indie games.",
+   "sources": [
+    "https://www.pocketgamer.com/donut-county/donut-county-developer-calls-out-clone-of-his-unreleased-game-on-twitter/",
+    "https://gamedeveloper.com/business/-i-donut-county-dev-i-speaks-out-about-f2p-clone-on-app-store",
+    "https://www.engadget.com/2018-07-11-mobile-clones-app-store-google-play-indie-voodoo.html"
+   ]
+  },
+  {
+   "key": "scrabulous-scrabble",
+   "clone_name": "Scrabulous",
+   "clone_developer": "RJ Softwares (Rajat and Jayant Agarwalla)",
+   "clone_released": "2006",
+   "original_name": "Scrabble",
+   "original_developer": "Hasbro / Mattel",
+   "original_released": "1948",
+   "platform": "Facebook, Web",
+   "notes": "Hasbro sued the makers of Scrabulous in July 2008, claiming the Facebook game infringed its Scrabble copyrights and trademarks. Scrabulous was disabled for US and Canadian Facebook users days later. A Delhi court then ruled that the game's name infringed the Scrabble trademark but the gameplay itself could not be protected, and the game came back as Lexulous. Hasbro withdrew its US suit in December 2008.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Lexulous",
+    "https://www.mediapost.com/publications/article/87322/hasbro-sues-scrabulous-makers.html",
+    "https://www.upi.com/Top_News/2008/07/29/Scrabble-knock-off-removed-from-Facebook/41661217385118/"
+   ]
+  },
+  {
+   "key": "defense-command-defender",
+   "clone_name": "Defense Command",
+   "clone_developer": "Artic International",
+   "clone_released": "1981",
+   "original_name": "Defender",
+   "original_developer": "Williams Electronics",
+   "original_released": "1981",
+   "platform": "Arcade",
+   "notes": "Artic International sold circuit-board kits that turned arcade cabinets into Defense Command, a game virtually identical to Williams' Defender. In 1982 the US Court of Appeals for the Third Circuit upheld an injunction against Artic, a ruling that confirmed arcade game programs and their screens are protected by copyright.",
+   "sources": [
+    "https://copyrightalliance.org/copyright-cases/williams-electronics-v-artic-intl",
+    "https://www.patentarcade.com/?p=1217"
+   ]
+  },
+  {
+   "key": "scramble-2-scramble",
+   "clone_name": "Scramble 2",
+   "clone_developer": "Omni Video Games",
+   "clone_released": "1981",
+   "original_name": "Scramble",
+   "original_developer": "Konami (distributed by Stern Electronics)",
+   "original_released": "1981",
+   "platform": "Arcade",
+   "notes": "Omni Video Games sold arcade machines called Scramble 2 that copied Konami's Scramble. In Stern Electronics v. Kaufman (1982) the US Court of Appeals for the Second Circuit held that a game's sounds and images are protected as an audiovisual work and that Omni's game infringed.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Stern_Electronics,_Inc._v._Kaufman",
+    "https://www.patentarcade.com/?p=1192"
+   ]
+  },
+  {
+   "key": "r2m-lineage-m",
+   "clone_name": "R2M",
+   "clone_developer": "Webzen",
+   "clone_released": "2020",
+   "original_name": "Lineage M",
+   "original_developer": "NCSoft",
+   "original_released": "2017",
+   "platform": "iOS, Android",
+   "notes": "NCSoft sued Webzen in 2021, saying R2M copied Lineage M. A Seoul court ruled for NCSoft in August 2023, and in 2025 the Seoul High Court ordered Webzen to pay about 16.9 billion won (roughly $12 million) and to stop offering R2M, finding the similarities amounted to unfair competition. Webzen said it would appeal.",
+   "sources": [
+    "https://www.asiae.co.kr/en/article/2025033111124932991",
+    "https://www.koreajoongangdaily.com/business/claws-out-for-koreas-copycat-game-industry-after-lineage-m-ruling/11883574"
+   ]
+  },
+  {
+   "key": "myth-of-empires-ark",
+   "clone_name": "Myth of Empires",
+   "clone_developer": "Angela Game",
+   "clone_url": "https://store.steampowered.com/app/1371580/",
+   "clone_released": "2021",
+   "original_name": "ARK: Survival Evolved",
+   "original_developer": "Studio Wildcard",
+   "original_url": "https://store.steampowered.com/app/346110/",
+   "original_released": "2017",
+   "platform": "PC",
+   "notes": "Steam removed Myth of Empires in December 2021 after Studio Wildcard and its parent company Snail Games claimed it was built on stolen ARK: Survival Evolved source code, pointing to hundreds of matching code names and near-identical mechanics. Angela Game denied it. The companies settled in October 2023: Angela Game acknowledged harming Snail's business, and Snail agreed to help re-release the game as a partner.",
+   "sources": [
+    "https://pcgamer.com/steam-removes-popular-chinese-strategy-game-after-ark-survival-evolved-studio-claims-it-stole-their-source-code",
+    "https://www.pcgamer.com/ark-survival-evolved-studio-settles-legal-dispute-over-alleged-code-theft-and-in-a-surprise-twist-theyre-now-helping-to-re-release-the-game-they-said-ripped-them-off"
+   ]
+  },
+  {
+   "key": "pickmos-palworld",
+   "clone_name": "Pickmos",
+   "clone_developer": "PocketGame",
+   "clone_url": "https://store.steampowered.com/app/4358270/",
+   "clone_released": "2026",
+   "original_name": "Palworld",
+   "original_developer": "Pocketpair",
+   "original_url": "https://store.steampowered.com/app/1623730/",
+   "original_released": "2024",
+   "platform": "PC",
+   "notes": "Pickmos was widely criticized in April 2026 for looking like Palworld and Pokémon, with creatures resembling Pikachu and Lucario and models compared to Zelda and Overwatch. Its publisher Networkgo pulled the Steam page, saying it had stepped in to supervise development and revise the game. The page returned in May 2026 with replaced art.",
+   "sources": [
+    "https://www.gamesradar.com/games/survival/pokemon-and-palworld-clone-pickmos-removed-from-steam-we-are-revising-the-game-to-ensure-a-controversy-free-experience/",
+    "https://automaton-media.com/en/news/pokemon-and-palworld-clone-pickmos-returns-to-steam-with-updated-assets-after-plagiarism-controversy/"
+   ]
+  },
+  {
+   "key": "the-suika-game-suika-game",
+   "clone_name": "The Suika Game",
+   "clone_developer": "Gogame Console Publisher",
+   "clone_released": "2024",
+   "original_name": "Suika Game",
+   "original_developer": "Aladdin X",
+   "original_url": "https://www.nintendo.com/en-gb/Games/Nintendo-Switch-download-software/Suika-Game-2468543.html",
+   "original_released": "2021",
+   "platform": "PlayStation",
+   "notes": "In January 2024 a game called The Suika Game appeared on the PlayStation Store. Aladdin X, the maker of Suika Game, said it had absolutely nothing to do with it. Aladdin X had already warned players about lookalike Suika Game apps on mobile stores in 2023.",
+   "sources": [
+    "https://gonintendo.com/contents/30223-blatant-suika-game-knockoff-spotted-on-the-playstation-store",
+    "https://www.gamespark.jp/article/2024/01/09/137343.html",
+    "https://automaton-media.com/en/news/20231101-22756/"
+   ]
+  },
+  {
+   "key": "light-of-motiram-horizon",
+   "clone_name": "Light of Motiram",
+   "clone_developer": "Tencent (Polaris Quest)",
+   "original_name": "Horizon Zero Dawn",
+   "original_developer": "Guerrilla",
+   "original_url": "https://store.steampowered.com/app/1151640/",
+   "original_released": "2017",
+   "platform": "PC, PlayStation, mobile",
+   "notes": "Sony sued Tencent in July 2025, calling Light of Motiram a slavish clone of its Horizon games and pointing to the setting, a red-haired heroine, robot animals and the marketing. The case was settled confidentially in December 2025 and dismissed, and Light of Motiram was taken off Steam and the Epic Games Store.",
+   "sources": [
+    "https://hypebeast.com/2025/12/sony-x-tencent-settle-horizon-clone-lawsuit-as-game-vanishes",
+    "https://www.kitguru.net/gaming/matthew-wilson/tencent-delists-light-of-motiram-as-sony-horizon-lawsuit-settled/",
+    "https://www.techspot.com/news/110647-tencent-horizon-clone-light-motiram-pulled-steam-epic.html"
+   ]
+  },
+  {
+   "key": "mini-subway-mini-metro",
+   "clone_name": "Mini Subway: Logic on the Metro Line",
+   "clone_released": "2022",
+   "original_name": "Mini Metro",
+   "original_developer": "Dinosaur Polo Club",
+   "original_url": "https://store.steampowered.com/app/287980/",
+   "original_released": "2015",
+   "platform": "Nintendo Switch",
+   "notes": "Mini Subway: Logic on the Metro Line launched on the Switch eShop in July 2022 and was widely reported as a copy of Mini Metro. Dinosaur Polo Club said it would take legal action if needed, and the game was removed from the eShop in early August 2022.",
+   "sources": [
+    "https://nintendolife.com/news/2022/07/mini-metro-developer-responds-to-knock-off-release-on-switch-eshop",
+    "https://www.nintendolife.com/news/2022/08/mini-metro-copycat-game-has-been-removed-from-switch-eshop"
+   ]
+  },
+  {
+   "key": "lost-kitty-little-kitty-big-city",
+   "clone_name": "My Lost Kitty in Big City Town",
+   "clone_released": "2024",
+   "original_name": "Little Kitty, Big City",
+   "original_developer": "Double Dagger Studio",
+   "original_url": "https://store.steampowered.com/app/1177980/",
+   "original_released": "2024",
+   "platform": "Mobile",
+   "notes": "In July 2024 Double Dagger Studio publicly pointed out mobile copies of Little Kitty, Big City, including My Lost Kitty in Big City Town and My Little Cat Lost in Big City, as part of a wider complaint by indie developers about app stores not removing knockoffs.",
+   "sources": [
+    "https://gamesradar.com/games/action-rpg/indie-devs-tired-of-cloning-resort-to-just-making-fun-of-the-guy-who-flipped-their-crab-tivating-soulslike-game-onto-the-app-store"
+   ]
+  },
+  {
+   "key": "heroes-charge-soul-clash",
+   "clone_name": "Heroes Charge",
+   "clone_developer": "uCool",
+   "clone_released": "2014",
+   "original_name": "Soul Clash (DotA Legends)",
+   "original_developer": "Lilith Games",
+   "original_released": "2014",
+   "platform": "iOS, Android",
+   "notes": "Lilith Games sued uCool in 2015, claiming Heroes Charge cloned its Chinese mobile game Soul Clash, released in February 2014, six months before Heroes Charge. Blizzard and Valve later sued both companies over characters they said came from their games (see the Heroes Charge vs Dota 2 report).",
+   "sources": [
+    "https://www.mcvuk.com/development-news/shanghai-developer-suing-heroes-charge/",
+    "https://mcvuk.com/development-news/blizzard-suing-lilith-games-which-is-suing-heroes-charge/"
+   ]
+  },
+  {
+   "key": "in-the-groove-ddr",
+   "clone_name": "In the Groove",
+   "clone_developer": "Roxor Games",
+   "clone_released": "2004",
+   "original_name": "Dance Dance Revolution",
+   "original_developer": "Konami",
+   "original_released": "1998",
+   "platform": "Arcade, PlayStation 2",
+   "notes": "Konami sued Roxor Games in 2005 over In the Groove, a dance game that could be installed into Dance Dance Revolution arcade cabinets, claiming patent and trademark infringement. The case settled in 2006: Konami took over the In the Groove intellectual property and Roxor agreed to respect Konami's rights.",
+   "sources": [
+    "https://www.gamedeveloper.com/pc/konami-roxor-settle-i-in-the-groove-i-suit",
+    "https://en.wikipedia.org/wiki/Konami_Corp._v._Roxor_Games_Inc."
+   ]
   }
  ]
 }
