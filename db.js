@@ -583,4 +583,9 @@ module.exports = {
     return out;
   },
   setRequestStatus: (id, s) => stmts.setRequest.run(s, s, id).changes > 0,
+  // Close the database cleanly (on shutdown): folds the WAL back into the main file.
+  close() {
+    try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); } catch { /* best effort */ }
+    try { db.close(); } catch { /* already closed */ }
+  },
 };
