@@ -32,6 +32,7 @@ npm test
 | `ALERT_FROM` | *(none)* | Sender for alert emails, e.g. `Clone Report <alerts@clonereport.com>` (the domain must be verified in Resend) |
 | `STEAM_ENRICH` | on | Set to `0` to stop filling release dates, images and developers from Steam when a report is approved |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
+| `CHROME_STORE_URL` | *(none)* | Chrome Web Store listing for the extension; until set, `/extension` offers the zip and install steps |
 | `STEAM_SCAN` | on | Set to `0` to turn off both daily scans |
 | `CLASSIC_SCAN` | on | Set to `0` to turn off only the classic console scan |
 | `STEAM_SCAN_TARGET` | `25000` | The scanners stop adding once the list has this many games |
@@ -91,8 +92,22 @@ The older `/api/lookup` used by the browser extension is unchanged.
 
 ## Pages
 
-- `/` search + recently added, `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/follow?game=`, `/feed.xml`, `/api`, `/api/v1/…`, `/report/:id/history`, `/report/:id/dispute`, `/admin/disputes`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
-- `GET /api/lookup?appid=<steam app id>&name=<game name>` JSON lookup (used by the browser extension). Steam app ids are taken automatically from `store.steampowered.com/app/<id>` links in reports.
+- `/` search + recently added, `/extension` (Chrome extension download), `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/follow?game=`, `/feed.xml`, `/api`, `/api/v1/…`, `/report/:id/history`, `/report/:id/dispute`, `/admin/disputes`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
+- `GET /api/lookup?appid=<steam app id>&name=<game name>` or `GET /api/lookup?store=<store>&id=<store id>&name=<game name>` JSON lookup (used by the browser extension).
+
+## Supported stores
+
+`stores.js` recognises store page links for **Steam, PlayStation Store, Xbox / Microsoft Store, Nintendo eShop, App Store, Google Play and itch.io**. When a report links to one of them, the store and the game's id there are saved with the report, so:
+
+- `/api/lookup?store=xbox&id=9PP5G1F153J1` (or `playstation` + `concept/10000176`, `appstore` + `642848232`, `googleplay` + `com.example.game`, `itch` + `user/game`, `nintendo` + `hollow-knight-switch`) matches it exactly. Entries in the answer carry `store`, `storeName` and `storeId`.
+- Pasting a store link into search lists the reports about that page.
+- The report page names the store, and the platform is filled in from the clone's link when the reporter leaves it empty.
+
+Reports saved before this change get their store ids filled in from their links on the next start.
+
+## Chrome extension
+
+`chrome-extension/` is the Clone Report browser extension. It shows a banner on game pages of every store above. The site recommends it on the home, report and game pages and has an install page at `/extension`, which serves `/extension/clone-report-extension.zip` (zipped from `chrome-extension/` when the server starts, so it always matches the code). Once the extension is on the Chrome Web Store, set `CHROME_STORE_URL` to its listing and the page shows an "Add to Chrome" button instead of the install steps. Its `stores.js` must stay identical to the site's (a test checks this). See `chrome-extension/README.md`.
 
 ## Deploy
 

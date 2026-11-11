@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Clone Report",
+  "short_name": "Clone Report",
+  "version": "0.2.1",
+  "description": "See if a game is reported as a clone, or has been cloned, on Steam, PlayStation, Xbox, Nintendo, App Store, Google Play and itch.io.",
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "action": { "default_title": "Clone Report", "default_popup": "popup.html" },
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://store.steampowered.com/*",
+        "https://store.playstation.com/*",
+        "https://www.xbox.com/*",
+        "https://www.microsoft.com/*/p/*",
+        "https://apps.microsoft.com/*",
+        "https://www.nintendo.com/*",
+        "https://apps.apple.com/*",
+        "https://play.google.com/*",
+        "https://*.itch.io/*"
+      ],
+      "js": ["stores.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["storage"],
+  "host_permissions": ["https://clonereport.com/*"],
+  "optional_host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
+  "options_page": "options.html"
+}

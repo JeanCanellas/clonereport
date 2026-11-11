@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Clone Report settings</title>
+<style>
+  body { font: 14px/1.5 system-ui, Arial, sans-serif; max-width: 520px; margin: 32px auto; padding: 0 16px; }
+  input { width: 100%; padding: 6px 8px; font: inherit; box-sizing: border-box; }
+  button { margin-top: 10px; padding: 6px 14px; font: inherit; }
+  .hint { color: #666; font-size: 12px; }
+  #msg { margin-left: 8px; }
+</style>
+</head>
+<body>
+  <h1>Clone Report settings</h1>
+  <label for="apiBase">Site address</label>
+  <input id="apiBase" type="url" placeholder="https://clonereport.com">
+  <p class="hint">Leave as https://clonereport.com. Developers can point this at a local server such as http://localhost:3000.</p>
+  <button id="save">Save</button> <button id="reset">Reset</button><span id="msg"></span>
+  <script src="options.js"></script>
+</body>
+</html>

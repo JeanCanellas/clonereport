@@ -1,5 +1,6 @@
 'use strict';
 // HTML templates. Every user-supplied value goes through esc().
+const storeInfo = require('./stores');
 
 const { devKey } = require('./keys');
 const { MIN_VOTES, tally, verdict } = require('./scoring');
@@ -26,6 +27,7 @@ function layout(title, body, { q = '' } = {}) {
     <form class="mini-search" action="/search" method="get" role="search">
       <input name="q" value="${esc(q)}" placeholder="Search a game…" aria-label="Search a game">
     </form>
+    <a class="nav-link" href="/extension">Chrome extension</a>
     <a class="btn small" href="/submit">Report a clone</a>
   </div>
 </header>
@@ -81,7 +83,7 @@ function home(recent, total, originals = 0) {
   return layout('Find the original game', `
 <section class="hero">
   <h1>Is this game a clone?</h1>
-  <p>Search any game to see whether it has been reported as a copy, and find the original it was based on.</p>
+  <p>Search any game, or paste its store link, to see whether it has been reported as a copy and find the original it was based on.</p>
   <form class="big-search" action="/search" method="get" role="search">
     <input name="q" placeholder="Type a game name" aria-label="Game name" autofocus required>
     <button class="btn">Search</button>
@@ -89,10 +91,19 @@ function home(recent, total, originals = 0) {
   <p class="muted">${total} approved report${total === 1 ? '' : 's'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
   ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam, the Nintendo eShop and classic consoles that are not clones.</p>` : ''}
 </section>
+${extPromo()}
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
 }
 
-function searchPage(q, results, originals = []) {
+function searchPage(q, results, originals = [], { storeName = '' } = {}) {
+  if (storeName) {
+    const body = results.length
+      ? `<h1>Reports about this ${esc(storeName)} page</h1><p class="muted">${link(q, q)}</p><ul class="cards">${results.map(card).join('')}</ul>
+         <p class="muted">Know about another clone? <a href="/submit">Report it</a>.</p>`
+      : `<h1>No reports for this ${esc(storeName)} page</h1><p class="muted">${link(q, q)}</p>
+         <p>Nobody has reported this game yet. If it is a clone, or if someone cloned it, you can <a href="/submit">submit a report</a>.</p>`;
+    return layout('Search', body, { q });
+  }
   const origList = originals.length
     ? `<h2>Original games</h2><p class="muted">Listed on Clone Report as originals, not clones.</p>
        <ul class="cards">${originals.map(originalCard).join('')}</ul>` : '';
@@ -170,11 +181,12 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
     ${row('Game', `<strong>${link(r.original_url, r.original_name)}</strong>`, `<strong>${link(r.clone_url, r.clone_name)}</strong>`)}
     ${row('Developer', devLink(r.original_developer), devLink(r.clone_developer))}
     ${row('Released', date(r.original_released), date(r.clone_released))}
+    ${row('Store', storeCell(r.original_store, r.original_url), storeCell(r.clone_store, r.clone_url))}
     ${row('Platform', r.platform ? '<span class="muted">Not listed</span>' : '', esc(r.platform))}
     ${row('Steam', r.original_steam_appid ? link(steamUrl(r.original_steam_appid), 'Store page') : '', r.clone_steam_appid ? link(steamUrl(r.clone_steam_appid), 'Store page') : '')}
   </section>
   ${releaseNote(r)}
-  <p class="links">${r.original_url ? `<a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">Go to the original</a>` : ''}
+  <p class="links">${r.original_url ? `<a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">${r.original_store ? `View the original on ${esc(storeInfo.storeName(r.original_store))}` : 'Go to the original'}</a>` : ''}
     <a class="btn ghost" href="${treeUrl(r.original_name)}">Family tree of ${esc(r.original_name)}</a>
     <a class="btn ghost" href="/follow?game=${encodeURIComponent(r.original_name)}">Follow ${esc(r.original_name)}</a></p>
   ${mech.length ? `<section><h2>What they share</h2><ul class="chips">${mech.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
@@ -185,6 +197,7 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
   ${r.status === 'approved' ? voteBox(r, opts) : ''}
   <p class="muted">Reported ${date(r.created_at)}. This is a community claim reviewed by a moderator, not a legal finding.
     <a href="/report/${r.id}/history">Edit history</a>${r.status === 'approved' ? ` · <a href="/report/${r.id}/dispute">Are you the developer? Dispute this report</a>` : ''}</p>
+  ${extPromo({ compact: true })}
 </article>`);
 }
 
@@ -219,6 +232,7 @@ function gamePage(g, { clones, asClone }) {
   <p class="links"><a href="/submit?original_name=${encodeURIComponent(g.name)}">Report a clone of ${esc(g.name)}</a>
     ${clones.length || asClone.length ? `· <a href="${treeUrl(g.name)}">See the family tree</a>` : ''}
     · <a href="/follow?game=${encodeURIComponent(g.name)}">Get alerts for new clones</a></p>
+  ${extPromo({ compact: true })}
 </article>`);
 }
 
@@ -267,6 +281,11 @@ const field = (name, label, v, { type = 'text', required = false, hint = '', pla
   ${hint ? `<small>${esc(hint)}</small>` : ''}
 </label>`;
 
+// Store name, linked to the store page, for the comparison table.
+const storeCell = (key, url) => (key ? link(url, storeInfo.storeName(key)) : '');
+
+const STORE_HINT = `Store pages are matched exactly: ${storeInfo.storeKeys().map(storeInfo.storeName).join(', ')}.`;
+
 function submitPage({ token, values = {}, errors = [] }) {
   const v = values;
   return layout('Report a clone', `
@@ -280,7 +299,7 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
     <legend>The original game</legend>
     ${field('original_name', 'Game name', v, { required: true, placeholder: 'e.g. Flappy Bird' })}
     ${field('original_developer', 'Developer or studio', v)}
-    ${field('original_url', 'Link to the original (store page or website)', v, { type: 'url', placeholder: 'https://' })}
+    ${field('original_url', 'Link to the original (store page or website)', v, { type: 'url', placeholder: 'https://', hint: STORE_HINT })}
     ${field('original_released', 'Release date', v, { placeholder: 'e.g. 2013 or 2013-05-24', max: 10 })}
     ${field('original_image', 'Screenshot link (optional)', v, { type: 'url', placeholder: 'https://' })}
   </fieldset>
@@ -288,8 +307,8 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
     <legend>The clone</legend>
     ${field('clone_name', 'Clone name', v, { required: true })}
     ${field('clone_developer', 'Clone developer or studio', v)}
-    ${field('clone_url', 'Link to the clone', v, { type: 'url', placeholder: 'https://' })}
-    ${field('platform', 'Platform', v, { placeholder: 'e.g. iOS, Android, Steam, web', max: 60 })}
+    ${field('clone_url', 'Link to the clone', v, { type: 'url', placeholder: 'https://', hint: STORE_HINT })}
+    ${field('platform', 'Platform', v, { placeholder: 'e.g. iOS, Android, Steam, web', max: 60, hint: 'Filled in from the store link if you leave it empty.' })}
     ${field('clone_released', 'Release date', v, { placeholder: 'e.g. 2014 or 2014-01-30', max: 10 })}
     ${field('clone_image', 'Screenshot link (optional)', v, { type: 'url', placeholder: 'https://' })}
   </fieldset>
@@ -338,6 +357,49 @@ function adminPage(status, rows, counts, openDisputes = 0) {
 </li>`;
   return layout('Admin', `<h1>Moderation</h1><nav class="tabs">${tabs}<a class="tab" href="/admin/disputes">Disputes (${openDisputes} open)</a><a class="tab" href="/admin/originals">Original games</a></nav>
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p class="muted">Nothing here.</p>`}`);
+}
+
+const STORE_LIST = 'Steam, PlayStation Store, Xbox, Nintendo eShop, the App Store, Google Play and itch.io';
+
+// Box that recommends the Chrome extension, shown on the home, report and game pages.
+function extPromo({ compact = false } = {}) {
+  return `<aside class="ext-promo${compact ? ' compact' : ''}">
+  ${compact ? '' : `<img src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235" loading="lazy">`}
+  <div>
+    <h2>Get warned before you buy a clone</h2>
+    <p>Install the free Clone Report extension for Google Chrome. When you open a game's page on ${STORE_LIST}, it tells you right away if the game has been reported as a clone, and points you to the original.</p>
+    <a class="btn" href="/extension">Get the Chrome extension</a>
+  </div>
+</aside>`;
+}
+
+function extensionPage({ version, storeUrl, zipUrl }) {
+  const install = storeUrl
+    ? `<p><a class="btn" href="${esc(storeUrl)}" rel="noopener" target="_blank">Add to Chrome</a></p>
+       <p class="muted">Opens the Chrome Web Store. Click <strong>Add to Chrome</strong>, and you're done.</p>`
+    : `<p><a class="btn" href="${esc(zipUrl)}" download>Download the extension</a> <span class="muted">${version ? `Version ${esc(version)} · ` : ''}free, about 15 KB</span></p>
+       <h2>How to install it</h2>
+       <ol class="steps">
+         <li>Download the file above and unzip it. You'll get a folder called <em>clone-report-extension</em>.</li>
+         <li>In Chrome, open <code>chrome://extensions</code> (type it into the address bar).</li>
+         <li>Turn on <strong>Developer mode</strong> in the top right corner.</li>
+         <li>Click <strong>Load unpacked</strong> and choose the unzipped folder.</li>
+         <li>Pin Clone Report from the puzzle-piece menu so its icon is always visible.</li>
+       </ol>
+       <p class="muted">The extension will be on the Chrome Web Store soon, which will make this a single click.</p>`;
+  return layout('Chrome extension', `
+<h1>Know a game is a clone before you buy it</h1>
+<p class="lead">The free Clone Report extension for Google Chrome checks every game page you open on ${STORE_LIST}. If people have reported the game as a clone, a red warning appears at once with a link to the original. If the game has been cloned, an orange note lists the copies.</p>
+<img class="ext-shot" src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235">
+${install}
+<h2>What it does</h2>
+<ul>
+  <li><strong>Red warning:</strong> the game you're looking at was reported as a copy, with a link to the original and the report.</li>
+  <li><strong>Orange note:</strong> the game is an original that others have cloned.</li>
+  <li><strong>Nothing</strong> when there are no reports, so it stays out of your way. The toolbar icon still shows the result.</li>
+</ul>
+<h2>Privacy</h2>
+<p>The extension only sends the store, game id and game name of the page you're viewing to clonereport.com to look it up. It does not track you, read other sites, or store your browsing. Read the full <a href="/privacy">privacy policy</a>.</p>`);
 }
 
 function adminEditPage(r, { values, errors = [] }) {
@@ -574,4 +636,4 @@ const privacyPage = () => layout('Privacy policy', `<article class="prose">
 
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage };
