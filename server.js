@@ -601,5 +601,24 @@ if (require.main === module) {
   server.listen(PORT, () => console.log(`clonereport listening on http://localhost:${PORT}`));
   // Daily scans (classic consoles, then Steam) that grow the originals list. Set STEAM_SCAN=0 to turn both off.
   if (process.env.STEAM_SCAN !== '0') scanner.startSchedule();
+
+  // Shut down cleanly when Render (or Ctrl+C) stops this copy, e.g. while a new deploy
+  // takes over. Without this, Node is torn down mid-scan with the database still open,
+  // and the old copy can die with an error status instead of exiting normally.
+  let stopping = false;
+  const shutdown = (signal) => {
+    if (stopping) return;
+    stopping = true;
+    console.log(`${signal} received, shutting down`);
+    const finish = () => {
+      try { store.close(); } catch (err) { console.error('closing the database:', err.message); }
+      process.exit(0);
+    };
+    server.close(finish);
+    server.closeIdleConnections();
+    setTimeout(finish, 5_000).unref(); // don't wait forever on open connections
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 module.exports = { server, esc };
