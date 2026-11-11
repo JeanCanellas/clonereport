@@ -121,7 +121,7 @@ test('original games are seeded, searchable and exposed in the api', async () =>
   const list = await (await fetch(base + '/originals?store=nintendo')).text();
   assert.match(list, /Super Mario Odyssey/);
   assert.match(list, /Hollow Knight/, 'games on both stores show in each');
-  assert.ok(!list.includes('Celeste'), 'steam-only games are filtered out');
+  assert.ok(!list.includes('Factorio'), 'steam-only games are filtered out');
 
   let j = await (await fetch(base + '/api/lookup?appid=367520')).json();
   assert.equal(j.found, false);
@@ -153,4 +153,13 @@ test('admin can remove an original for good; approving a clone report removes it
 
   const list = await (await fetch(base + '/originals?page=2')).text();
   assert.match(list, /Page 2 of \d+/);
+});
+
+test('privacy policy page is linked from every page', async () => {
+  const res = await fetch(base + '/privacy');
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /<h1>Privacy policy<\/h1>/);
+  assert.match(html, /Limited Use/);
+  assert.match(await (await fetch(base + '/')).text(), /href="\/privacy"/);
 });

@@ -35,6 +35,7 @@ ${body}
 <footer class="wrap site-foot">
   <nav class="foot-nav"><a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/feed.xml">RSS</a> · <a href="/api">API</a> · <a href="/submit">Report a clone</a></nav>
   <p>Reports are submitted by the community and reviewed before they appear. They are claims, not legal findings.</p>
+  <p><a href="/privacy">Privacy policy</a></p>
 </footer>
 </body>
 </html>`;
@@ -63,7 +64,7 @@ function card(r) {
 }
 
 const steamLink = (g) => (g.steam_appid ? `https://store.steampowered.com/app/${g.steam_appid}/` : null);
-const stores = (g) => [g.steam_appid && 'Steam', g.eshop_url && 'Nintendo eShop'].filter(Boolean).join(' · ');
+const stores = (g) => [g.steam_appid && 'Steam', g.eshop_url && 'Nintendo eShop', g.platforms].filter(Boolean).join(' · ');
 
 function originalCard(g) {
   return `<li class="card">
@@ -86,7 +87,7 @@ function home(recent, total, originals = 0) {
     <button class="btn">Search</button>
   </form>
   <p class="muted">${total} approved report${total === 1 ? '' : 's'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
-  ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam and the Nintendo eShop that are not clones.</p>` : ''}
+  ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam, the Nintendo eShop and classic consoles that are not clones.</p>` : ''}
 </section>
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
 }
@@ -195,18 +196,22 @@ function gamePage(g, { clones, asClone }) {
   <p class="lead">${esc(g.name)} is an original game${g.developer ? ` made by <strong>${esc(g.developer)}</strong>` : ''}. It is not a copy of another game.</p>
   <p class="muted">${g.source === 'steam-scan'
     ? `Listed automatically: one of Steam's most-owned games${g.positive_pct ? `, with ${esc(g.positive_pct)}% positive reviews out of ${esc(Number(g.reviews || 0).toLocaleString('en-US'))}` : ''}, and no approved clone reports.`
-    : 'Checked by Clone Report.'} If you think this game copies another, <a href="/submit?clone_name=${encodeURIComponent(g.name)}">report it</a>.</p>
+    : g.source === 'classic-scan'
+      ? `Listed automatically: a well-known console game${g.wiki_langs ? ` with Wikipedia articles in ${esc(g.wiki_langs)} languages` : ''}, not marked as based on or inspired by another game, and with no approved clone reports.`
+      : 'Checked by Clone Report.'} If you think this game copies another, <a href="/submit?clone_name=${encodeURIComponent(g.name)}">report it</a>.</p>
   ${asClone.length ? `<p class="notice">Note: ${asClone.length} community report${asClone.length === 1 ? '' : 's'} claim${asClone.length === 1 ? 's' : ''} this game copies another: ${asClone.map((r) => `<a href="/report/${r.id}">${esc(r.original_name)}</a>`).join(', ')}.</p>` : ''}
   <section class="box">
     <dl>
       <dt>Game</dt><dd>${esc(g.name)}</dd>
       ${g.developer ? `<dt>Developer</dt><dd>${devLink(g.developer)}</dd>` : ''}
       ${g.publisher ? `<dt>Publisher</dt><dd>${esc(g.publisher)}</dd>` : ''}
-      <dt>Available on</dt><dd>${esc(stores(g))}</dd>
+      <dt>${g.platforms && !g.steam_appid && !g.eshop_url ? 'Platforms' : 'Available on'}</dt><dd>${esc(stores(g))}</dd>
+      ${g.year ? `<dt>Released</dt><dd>${esc(g.year)}</dd>` : ''}
     </dl>
     <p class="links">
       ${steam ? `<a class="btn" href="${esc(steam)}" rel="noopener" target="_blank">View on Steam</a>` : ''}
       ${g.eshop_url ? `<a class="btn" href="${esc(g.eshop_url)}" rel="noopener" target="_blank">View on Nintendo eShop</a>` : ''}
+      ${g.wiki_url ? `<a class="btn ghost" href="${esc(g.wiki_url)}" rel="noopener" target="_blank">Read about it on Wikipedia</a>` : ''}
     </p>
   </section>
   <h2>Clones of ${esc(g.name)}</h2>
@@ -227,18 +232,19 @@ function originalsPage(games, { storeFilter = '', page = 1, pages = 1, total = g
   </nav>` : '';
   return layout('Original games', `
 <h1>Original games</h1>
-<p>Games from Steam and the Nintendo eShop that are originals, not clones. Search any of them to see whether someone has copied it.</p>
-<nav class="tabs">${tab('', 'All')}${tab('steam', 'Steam')}${tab('nintendo', 'Nintendo eShop')}</nav>
+<p>Games from Steam, the Nintendo eShop and classic consoles that are originals, not clones. Search any of them to see whether someone has copied it.</p>
+<nav class="tabs">${tab('', 'All')}${tab('steam', 'Steam')}${tab('nintendo', 'Nintendo eShop')}${tab('classic', 'Classic consoles')}</nav>
 <p class="muted">${total.toLocaleString('en-US')} game${total === 1 ? '' : 's'}</p>
 <ul class="cards">${games.map(originalCard).join('')}</ul>
 ${nav}`);
 }
 
-function adminOriginalsPage(q, rows, total, scan) {
+function adminOriginalsPage(q, rows, total, scan, classicScan = {}) {
   const row = (g) => `<li class="admin-row">
   <div>
     <a href="/game/${g.id}"><strong>${esc(g.name)}</strong></a>${g.developer ? ` <span class="muted">by ${esc(g.developer)}</span>` : ''}
-    <div class="muted">#${g.id} · ${g.source === 'steam-scan' ? `auto from Steam${g.positive_pct ? ` (${esc(g.positive_pct)}% positive, ${esc(g.reviews)} reviews)` : ''}` : 'hand-checked'} · ${esc(stores(g))}</div>
+    <div class="muted">#${g.id} · ${g.source === 'steam-scan' ? `auto from Steam${g.positive_pct ? ` (${esc(g.positive_pct)}% positive, ${esc(g.reviews)} reviews)` : ''}`
+      : g.source === 'classic-scan' ? `auto from Wikidata (${esc(g.wiki_langs)} languages)` : 'hand-checked'} · ${esc(stores(g))}${g.year ? ' · ' + esc(g.year) : ''}</div>
   </div>
   <div class="actions">
     <form method="post" action="/admin/originals/${g.id}/remove?q=${encodeURIComponent(q)}"><button class="btn small danger">Remove</button></form>
@@ -249,7 +255,7 @@ function adminOriginalsPage(q, rows, total, scan) {
     : 'The Steam scan has not run since the server started.';
   return layout('Admin: original games', `<h1>Original games</h1>
 <nav class="tabs"><a class="tab" href="/admin">Reports</a><a class="tab on" href="/admin/originals">Original games (${total})</a></nav>
-<p class="muted">${scanLine} Removing a game keeps it off the list for good: the scanner and the seed file will not add it back.</p>
+<p class="muted">${scanLine} ${classicScan.running ? 'Classic console scan running now.' : classicScan.lastEnd ? `Last classic console scan finished ${esc(classicScan.lastEnd)}, added ${esc(classicScan.lastAdded)}.` : ''} Removing a game keeps it off the list for good: the scanner and the seed file will not add it back.</p>
 <form class="big-search" action="/admin/originals" method="get"><input name="q" value="${esc(q)}" placeholder="Find a game to remove" aria-label="Find a game"><button class="btn">Find</button></form>
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p class="muted">No games found.</p>'}`);
 }
@@ -403,7 +409,7 @@ const FIELD_LABELS = { clone_name: 'Clone name', clone_url: 'Clone link', clone_
   original_url: 'Original link', original_developer: 'Original developer', platform: 'Platform', notes: 'Details', clone_released: 'Clone release date',
   original_released: 'Original release date', clone_image: 'Clone image', original_image: 'Original image', mechanics: 'Shared mechanics',
   evidence: 'Evidence', status: 'Status' };
-const ACTORS = { reporter: 'Reporter', admin: 'Moderator', steam: 'Steam', developer: 'Developer' };
+const ACTORS = { reporter: 'Reporter', admin: 'Moderator', steam: 'Steam', developer: 'Developer', seed: 'Clone Report' };
 function historyPage(r, rows) {
   const val = (x) => (x == null || x === '' ? '<span class="muted">empty</span>' : `<span class="notes">${esc(x)}</span>`);
   return layout(`Edit history: ${r.clone_name}`, `
@@ -531,6 +537,41 @@ ${q ? `<p>No approved reports mention “${esc(q)}”. <a href="/search?q=${enco
 <p><a href="/search?q=${encodeURIComponent(t.name)}">Search reports for ${esc(t.name)}</a></p>`, { q });
 }
 
+// Privacy policy for the site and the Clone Report browser extension. The
+// Chrome Web Store listing links here, so keep it in step with what the
+// extension actually sends (chrome-extension/background.js).
+const privacyPage = () => layout('Privacy policy', `<article class="prose">
+<h1>Privacy policy</h1>
+<p class="muted">Last updated 11 November 2026</p>
+<p>This policy covers clonereport.com and the Clone Report browser extension. We collect as little as we can, we never sell data, and we do not use advertising or analytics trackers.</p>
+
+<h2>The Clone Report browser extension</h2>
+<p>The extension checks whether the game you are looking at has been reported as a clone, or has been cloned. It runs only on game pages of these stores: Steam, PlayStation Store, Xbox and the Microsoft Store, Nintendo eShop, the App Store, Google Play and itch.io.</p>
+<p><strong>What it sends.</strong> When you open a game page on one of those stores, the extension sends three things to clonereport.com: which store it is (for example "steam"), the game's id from the page address, and the game's name as shown on the page. Nothing else from the page is read or sent. It does not read your browsing history, your account on the store, cookies, passwords, payment details or anything you type.</p>
+<p><strong>What it stores.</strong> Lookup results are kept in your browser's session storage for five minutes so the same page is not looked up twice, and are deleted when you close the browser. If you change the site address in the extension's settings, that one setting is saved with Chrome's sync storage. Nothing is stored on our servers about you or your lookups beyond the standard web server request logs described below.</p>
+<p><strong>What it shows.</strong> If there is a report, the extension adds a banner to the store page and a badge to its toolbar icon. It does not change anything else on the page.</p>
+<p>The extension contains no remote code, no ads and no trackers. Its use of data complies with the Chrome Web Store User Data Policy, including the Limited Use requirements.</p>
+
+<h2>The website</h2>
+<p><strong>Reports you submit.</strong> When you report a clone we store what you enter in the form: game names, links, developers, platform and notes. These appear publicly once a moderator approves the report. The optional email field is private: only moderators see it, and only to ask you about your report.</p>
+<p><strong>Spam protection.</strong> To limit spam we store a one-way keyed hash of your IP address with each submission and use it to count submissions per hour. We do not store the IP address itself.</p>
+<p><strong>Votes.</strong> When you vote on a report we store your choice with a one-way keyed hash of your IP address, so each visitor has one vote per report and the number of votes per hour can be limited. Only vote totals are shown.</p>
+<p><strong>Disputes.</strong> If you dispute a report, we store your name, role, email and message. Moderators see all of it; if they publish your response, your name, role and message appear on the report page. Your email is never shown.</p>
+<p><strong>Email alerts.</strong> If you follow a game, we store your email address and the game's name, and send a confirmation email first. Nothing else is sent until you confirm. Every alert has a link that deletes your follow at once. Alert emails are delivered by our email provider, Resend, which receives your address and the message only to deliver it.</p>
+<p><strong>Images from other sites.</strong> Report pages can show game images hosted elsewhere, such as Steam's image servers. Your browser loads them directly from those sites, which can see your IP address, as with any image on the web.</p>
+<p><strong>Request logs.</strong> Like any website, our hosting provider keeps short-lived server logs (IP address, time, page requested, browser type) for security and debugging.</p>
+<p><strong>Cookies.</strong> The site does not set cookies for visitors.</p>
+
+<h2>Sharing</h2>
+<p>We do not sell, rent or share personal data with third parties, except our hosting provider, which runs the site on our behalf, our email provider for alert emails, or when the law requires it.</p>
+
+<h2>Your choices</h2>
+<p>You can uninstall the extension at any time from your browser's extensions page, which removes everything it stored. To stop email alerts, use the unsubscribe link in any alert. To have a report you submitted, or your email, removed, submit a request through the <a href="/submit">report form</a> mentioning the report, or use the contact email on the extension's Chrome Web Store page.</p>
+
+<h2>Changes</h2>
+<p>If we change what the extension or the site collects, we will update this page and the date at the top before the change takes effect.</p>
+</article>`);
+
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage };

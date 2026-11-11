@@ -10,8 +10,9 @@ const scanner = require('./scanner');
 const steam = require('./steam');
 const api = require('./api');
 const mailer = require('./mailer');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, esc } = require('./views');
 const { familyTree } = require('./tree');
+const classic = require('./classic');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -32,6 +33,15 @@ if (process.env.SEED_ORIGINALS !== '0') {
     const { games } = JSON.parse(fs.readFileSync(path.join(__dirname, 'seed', 'originals.json'), 'utf8'));
     console.log(`Loaded ${store.seedOriginals(games)} original games from seed/originals.json`);
   } catch (err) { console.error('Could not load seed/originals.json:', err.message); }
+}
+// Load publicly documented clone cases (seed/clone-reports.json) as approved reports.
+// Each entry is added once, so admin edits and deletions stick. Set SEED_REPORTS=0 to skip.
+// Skipped under `node --test` (so tests start from an empty reports table) unless SEED_REPORTS=1.
+if (process.env.SEED_REPORTS === '1' || (process.env.SEED_REPORTS !== '0' && !process.env.NODE_TEST_CONTEXT)) {
+  try {
+    const { added, moved } = require('./seed-reports').loadSeedReports(store);
+    if (added || moved) console.log(`Seeded ${added} clone reports from seed/clone-reports.json` + (moved ? ` (${moved} moved sources to evidence)` : ''));
+  } catch (err) { console.error('Could not load seed/clone-reports.json:', err.message); }
 }
 
 const CSS = fs.readFileSync(path.join(__dirname, 'public', 'style.css'));
@@ -221,6 +231,7 @@ async function handle(req, res) {
     return send(res, 200, 'User-agent: *\nDisallow: /admin\n', { 'Content-Type': 'text/plain' });
   if (req.method === 'GET' && p === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
 
+  if (req.method === 'GET' && p === '/privacy') return send(res, 200, privacyPage());
   if (req.method === 'GET' && p === '/api/lookup') return apiLookup(req, res, url);
   if (api.handleApi(req, res, url, { base: baseUrl(req), ip: clientIp(req) })) return;
   if (req.method === 'GET' && p === '/api') return send(res, 200, apiDocsPage(baseUrl(req)));
@@ -266,7 +277,7 @@ async function handle(req, res) {
   if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved, store.countOriginals()));
   if (req.method === 'GET' && p === '/originals') {
     const s = url.searchParams.get('store');
-    const storeFilter = ['steam', 'nintendo'].includes(s) ? s : '';
+    const storeFilter = ['steam', 'nintendo', 'classic'].includes(s) ? s : '';
     const per = 100;
     const page = Math.max(1, Math.min(10_000, Number.parseInt(url.searchParams.get('page'), 10) || 1));
     const { rows, total } = store.pageOriginals(storeFilter, per, (page - 1) * per);
@@ -410,7 +421,7 @@ async function handle(req, res) {
     if (req.method === 'GET' && p === '/admin/originals') {
       const q = clean(url.searchParams.get('q'), 120);
       const rows = q ? store.searchOriginals(q) : store.pageOriginals('', 50, 0).rows;
-      return send(res, 200, adminOriginalsPage(q, rows, store.countOriginals(), scanner.state), { 'Cache-Control': 'no-store' });
+      return send(res, 200, adminOriginalsPage(q, rows, store.countOriginals(), scanner.state, classic.state), { 'Cache-Control': 'no-store' });
     }
     if (req.method === 'GET' && p === '/admin/disputes') {
       const status = ['open', 'published', 'dismissed'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'open';
@@ -475,7 +486,7 @@ const server = http.createServer((req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, () => console.log(`clonereport listening on http://localhost:${PORT}`));
-  // Daily Steam scan that grows the originals list. Set STEAM_SCAN=0 to turn it off.
+  // Daily scans (classic consoles, then Steam) that grow the originals list. Set STEAM_SCAN=0 to turn both off.
   if (process.env.STEAM_SCAN !== '0') scanner.startSchedule();
 }
 module.exports = { server, esc };
