@@ -214,6 +214,17 @@ test('the site recommends the Chrome extension and serves it', async () => {
   assert.equal(img.headers.get('content-type'), 'image/png');
 });
 
+test('home page shows the Needle In A Haystack clone warning as an example', async () => {
+  const html = await (await fetch(base + '/')).text();
+  assert.match(html, /<img src="\/home-clone-example\.png" alt="Example in Chrome: the Steam page for Needle In A Haystack[^"]+"/);
+  const img = await fetch(base + '/home-clone-example.png');
+  assert.equal(img.status, 200);
+  assert.equal(img.headers.get('content-type'), 'image/png');
+  // Other pages keep the compact promo without the example image.
+  const ext = await (await fetch(base + '/extension')).text();
+  assert.doesNotMatch(ext, /home-clone-example/);
+});
+
 test('privacy policy page is linked from every page', async () => {
   const res = await fetch(base + '/privacy');
   assert.equal(res.status, 200);

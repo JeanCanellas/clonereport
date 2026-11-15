@@ -49,6 +49,7 @@ if (process.env.SEED_REPORTS === '1' || (process.env.SEED_REPORTS !== '0' && !pr
 
 const CSS = fs.readFileSync(path.join(__dirname, 'public', 'style.css'));
 const EXT_SHOT = fs.readFileSync(path.join(__dirname, 'public', 'extension-screenshot.png'));
+const HOME_EXAMPLE = fs.readFileSync(path.join(__dirname, 'public', 'home-clone-example.png'));
 // The site sends people to the Chrome Web Store listing. The zip, built from
 // chrome-extension/ at start, is still served for developers who load it unpacked.
 const EXT_ZIP = extension.buildZip();
@@ -323,6 +324,8 @@ async function handle(req, res) {
     return send(res, 200, EXT_ZIP, { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="clone-report-extension.zip"', 'Cache-Control': 'public, max-age=3600' });
   if (req.method === 'GET' && p === '/extension-screenshot.png')
     return send(res, 200, EXT_SHOT, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
+  if (req.method === 'GET' && p === '/home-clone-example.png')
+    return send(res, 200, HOME_EXAMPLE, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
   if (req.method === 'GET' && p === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
 
   if (req.method === 'GET' && p === '/privacy') return send(res, 200, privacyPage());
