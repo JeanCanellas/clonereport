@@ -83,6 +83,9 @@ legend { font-weight: 700; padding: 0 6px; }
 .pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 18px 0; }
 
 .nav-link { font-size: .92rem; text-decoration: none; color: var(--muted); white-space: nowrap; }
+.top-nav { display: flex; gap: 14px; }
+.top-nav .nav-link { color: var(--fg); font-weight: 600; }
+@media (max-width: 560px) { .top-nav { order: 10; width: 100%; } }
 .nav-link:hover { color: var(--fg); text-decoration: underline; }
 .ext-promo { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 28px 0; }
 .ext-promo img { width: 100%; height: auto; border-radius: 8px; display: block; }
