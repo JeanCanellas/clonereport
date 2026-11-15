@@ -199,10 +199,12 @@ test('reports work for PlayStation, Xbox, mobile and itch.io store pages', async
 
 test('the site recommends the Chrome extension and serves it', async () => {
   const home = await (await fetch(base + '/')).text();
-  assert.match(home, /href="\/extension">Get the Chrome extension/);
+  const storeLink = /href="https:\/\/chromewebstore\.google\.com\/detail\/ijagfhebglljkibhfdmedhgkdbicibgk"[^>]*>Add to Chrome/;
+  assert.match(home, storeLink);
   const page = await (await fetch(base + '/extension')).text();
-  assert.match(page, /Load unpacked/);
-  assert.match(page, /href="\/extension\/clone-report-extension.zip"/);
+  assert.match(page, storeLink);
+  assert.doesNotMatch(page, /Load unpacked|clone-report-extension\.zip/);
+  // The zip is still served for developers.
   const zip = await fetch(base + '/extension/clone-report-extension.zip');
   assert.equal(zip.headers.get('content-type'), 'application/zip');
   const buf = Buffer.from(await zip.arrayBuffer());

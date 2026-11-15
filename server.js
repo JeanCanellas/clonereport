@@ -49,10 +49,10 @@ if (process.env.SEED_REPORTS === '1' || (process.env.SEED_REPORTS !== '0' && !pr
 
 const CSS = fs.readFileSync(path.join(__dirname, 'public', 'style.css'));
 const EXT_SHOT = fs.readFileSync(path.join(__dirname, 'public', 'extension-screenshot.png'));
-// Chrome extension download, built from chrome-extension/ at start. Once the extension
-// is on the Chrome Web Store, set CHROME_STORE_URL and the site links there instead.
+// The site sends people to the Chrome Web Store listing. The zip, built from
+// chrome-extension/ at start, is still served for developers who load it unpacked.
 const EXT_ZIP = extension.buildZip();
-const EXT_INFO = { version: extension.version(), storeUrl: process.env.CHROME_STORE_URL || '', zipUrl: '/extension/clone-report-extension.zip' };
+const EXT_INFO = { version: extension.version(), storeUrl: extension.STORE_URL, zipUrl: '/extension/clone-report-extension.zip' };
 
 // ---------- helpers ----------
 const hmac = (s) => crypto.createHmac('sha256', SECRET).update(s).digest('hex');

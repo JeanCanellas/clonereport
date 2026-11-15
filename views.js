@@ -1,6 +1,7 @@
 'use strict';
 // HTML templates. Every user-supplied value goes through esc().
 const storeInfo = require('./stores');
+const { STORE_URL: CHROME_STORE_URL } = require('./extension');
 
 const { devKey } = require('./keys');
 const { MIN_VOTES, tally, verdict } = require('./scoring');
@@ -370,25 +371,14 @@ function extPromo({ compact = false } = {}) {
   <div>
     <h2>Get warned before you buy a clone</h2>
     <p>Install the free Clone Report extension for Google Chrome. When you open a game's page on ${STORE_LIST}, it tells you right away if the game has been reported as a clone, and points you to the original.</p>
-    <a class="btn" href="/extension">Get the Chrome extension</a>
+    <a class="btn" href="${esc(CHROME_STORE_URL)}" rel="noopener" target="_blank">Add to Chrome</a> <a class="muted" href="/extension">Learn more</a>
   </div>
 </aside>`;
 }
 
-function extensionPage({ version, storeUrl, zipUrl }) {
-  const install = storeUrl
-    ? `<p><a class="btn" href="${esc(storeUrl)}" rel="noopener" target="_blank">Add to Chrome</a></p>
-       <p class="muted">Opens the Chrome Web Store. Click <strong>Add to Chrome</strong>, and you're done.</p>`
-    : `<p><a class="btn" href="${esc(zipUrl)}" download>Download the extension</a> <span class="muted">${version ? `Version ${esc(version)} · ` : ''}free, about 15 KB</span></p>
-       <h2>How to install it</h2>
-       <ol class="steps">
-         <li>Download the file above and unzip it. You'll get a folder called <em>clone-report-extension</em>.</li>
-         <li>In Chrome, open <code>chrome://extensions</code> (type it into the address bar).</li>
-         <li>Turn on <strong>Developer mode</strong> in the top right corner.</li>
-         <li>Click <strong>Load unpacked</strong> and choose the unzipped folder.</li>
-         <li>Pin Clone Report from the puzzle-piece menu so its icon is always visible.</li>
-       </ol>
-       <p class="muted">The extension will be on the Chrome Web Store soon, which will make this a single click.</p>`;
+function extensionPage({ version, storeUrl }) {
+  const install = `<p><a class="btn" href="${esc(storeUrl)}" rel="noopener" target="_blank">Add to Chrome</a> <span class="muted">${version ? `Version ${esc(version)} · ` : ''}free</span></p>
+       <p class="muted">Opens the extension on the Chrome Web Store. Click <strong>Add to Chrome</strong> there, and you're done. Chrome keeps it up to date for you.</p>`;
   return layout('Chrome extension', `
 <h1>Know a game is a clone before you buy it</h1>
 <p class="lead">The free Clone Report extension for Google Chrome checks every game page you open on ${STORE_LIST}. If people have reported the game as a clone, a red warning appears at once with a link to the original. If other games have been reported as copies of it, an orange note lists them.</p>
