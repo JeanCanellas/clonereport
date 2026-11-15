@@ -1555,6 +1555,711 @@
    "sources": [
     "https://automaton-media.com/en/news/20231109-22912/"
    ]
+  },
+  {
+   "key": "family-time-hilly-games",
+   "clone_name": "Family Time",
+   "clone_developer": "Hilly Games",
+   "clone_released": "2026",
+   "original_name": "Family Time",
+   "original_developer": "sgthale",
+   "original_released": "2026",
+   "platform": "Steam (PC)",
+   "notes": "In October 2026, days after sgthale's wolf-girl colony sim Family Time entered Steam's top 50 most-wishlisted games, a game with the same name appeared on Steam. sgthale said it copied the original's banner, description and layout, and filed a DMCA notice with Valve.",
+   "sources": [
+    "https://www.gamesradar.com/games/simulation/blatant-plagiarism-viral-wolf-girl-colony-sim-family-time-enters-steams-top-50-most-wishlisted-games-immediately-gets-ripped-off-by-copycat-with-the-same-name/",
+    "https://www.invenglobal.com/articles/27321/fearing-ai-copycats-indie-developers-pull-public-demos"
+   ]
+  },
+  {
+   "key": "fart-together-official-google-play",
+   "clone_name": "Fart Together: Official",
+   "clone_developer": "Advanced Finance Consulting",
+   "clone_released": "2026",
+   "original_name": "Fart Together",
+   "original_developer": "GamesMrkt",
+   "original_released": "2026",
+   "platform": "Android",
+   "notes": "In November 2026, before Fart Together was even released on Steam, GamesMrkt's CEO Emrah İşlek shared a grid of about 15 lookalike Google Play listings, most using the game's name. Mobilegamer.biz named Fart Together: Official as one of them; the original is a PC-only game.",
+   "sources": [
+    "https://mobilegamer.biz/googles-play-store-is-already-hosting-multiple-clones-of-unreleased-steam-game-fart-together/"
+   ]
+  },
+  {
+   "key": "liars-pub-liars-bar",
+   "clone_name": "Liar's Pub",
+   "clone_developer": "Testagamecreations",
+   "clone_released": "2026",
+   "original_name": "Liar's Bar",
+   "original_developer": "Curve Animation",
+   "original_url": "https://store.steampowered.com/app/3097560/",
+   "original_released": "2024",
+   "platform": "PlayStation",
+   "notes": "PlayStation LifeStyle reported in June 2026 that Sony banned the publisher Testagamecreations and removed all of its games from the PlayStation Store, including Liar's Pub, which imitated the Steam hit Liar's Bar.",
+   "sources": [
+    "https://www.playstationlifestyle.net/2026/06/01/ps-store-scam-dev-games-removed-may-2026/"
+   ]
+  },
+  {
+   "key": "backrooms-together-escape-escape-the-backrooms",
+   "clone_name": "Backrooms: Together Escape",
+   "clone_developer": "Testagamecreations",
+   "clone_released": "2026",
+   "original_name": "Escape the Backrooms",
+   "original_developer": "Fancy Games",
+   "original_released": "2022",
+   "platform": "PlayStation",
+   "notes": "PlayStation LifeStyle reported in June 2026 that Sony banned the publisher Testagamecreations and removed all of its games from the PlayStation Store, including Backrooms: Together Escape, which imitated Escape the Backrooms.",
+   "sources": [
+    "https://www.playstationlifestyle.net/2026/06/01/ps-store-scam-dev-games-removed-may-2026/"
+   ]
+  },
+  {
+   "key": "schedule-drug-empire-ps5",
+   "clone_name": "Schedule - Drug Empire",
+   "clone_developer": "PublishMe Agency Limited",
+   "clone_released": "2025",
+   "original_name": "Schedule I",
+   "original_developer": "TVGS",
+   "original_url": "https://store.steampowered.com/app/3164500/",
+   "original_released": "2025",
+   "platform": "PlayStation 5",
+   "notes": "In April 2025 this $14.99 PlayStation Store game appeared while Schedule I was PC-only. TheGamer reported that it copied the original's cover art, including the missing \"1\" in the title. Schedule I's creator said PlayStation listings using the name were not affiliated with him.",
+   "sources": [
+    "https://www.thegamer.com/schedule-1-drug-empire-scam-shovelware-game-appears-on-playstation-store-bootleg-poor-reviews/",
+    "https://www.gamesradar.com/games/open-world/schedule-1-dev-says-phony-playstation-listings-are-not-affiliated-with-me-in-any-way-but-would-love-to-port-the-open-world-crime-game-to-console-when-its-at-the-right-stage"
+   ]
+  },
+  {
+   "key": "schedule-1-mafia-empire-eshop",
+   "clone_name": "Schedule 1 - Mafia Empire",
+   "clone_developer": "UIGAMES",
+   "clone_released": "2025",
+   "original_name": "Schedule I",
+   "original_developer": "TVGS",
+   "original_url": "https://store.steampowered.com/app/3164500/",
+   "original_released": "2025",
+   "platform": "Nintendo Switch",
+   "notes": "Listed on the Nintendo eShop a day after the Switch 2 launched in June 2025, published by UIGAMES rather than TVGS, the studio behind Schedule I. GamesRadar called it a Schedule 1 ripoff whose key art is \"a dead remake of the actual art.\"",
+   "sources": [
+    "https://www.gamesradar.com/games/simulation/nintendo-switch-2-has-been-out-for-a-single-day-and-theres-already-a-schedule-1-ripoff-on-the-eshop/"
+   ]
+  },
+  {
+   "key": "wukong-legacy-reborn-ps-store",
+   "clone_name": "Wukong: Legacy Reborn",
+   "clone_released": "2025",
+   "original_name": "Black Myth: Wukong",
+   "original_developer": "Game Science",
+   "original_url": "https://store.steampowered.com/app/2358720/",
+   "original_released": "2024",
+   "platform": "PlayStation",
+   "notes": "TheGamer warned in October 2025 that this PlayStation Store listing was a fake imitating Black Myth: Wukong.",
+   "sources": [
+    "https://www.thegamer.com/black-myth-wukong-no-im-not-a-human-fake-games-playstation-store/"
+   ]
+  },
+  {
+   "key": "im-not-a-human-horror-simulator",
+   "clone_name": "I'm Not A Human: Horror Simulator",
+   "clone_released": "2025",
+   "original_name": "No, I'm Not a Human",
+   "original_developer": "Trioskaz",
+   "original_released": "2025",
+   "platform": "PlayStation",
+   "notes": "In October 2025, before No, I'm Not a Human was out on PlayStation, this $11 listing appeared on the PlayStation Store. TheGamer and iXBT.games reported it as a fake that some players bought thinking it was the real game.",
+   "sources": [
+    "https://www.thegamer.com/black-myth-wukong-no-im-not-a-human-fake-games-playstation-store/",
+    "https://ixbt.games/en/news/2025/10/13/mosenniki-pytaiutsia-zarabotat-na-populiarnosti-rossiiskogo-xita-no-im-not-a-human-fanaty-playstat.html"
+   ]
+  },
+  {
+   "key": "animal-village-online-animal-crossing",
+   "clone_name": "Animal Village Online",
+   "clone_developer": "Wisnu Sudirman",
+   "clone_released": "2025",
+   "original_name": "Animal Crossing: New Horizons",
+   "original_developer": "Nintendo",
+   "original_released": "2020",
+   "platform": "PlayStation",
+   "notes": "Listed on the PlayStation Store in October 2025 with a planned 2027 release. TheGamer called it \"clearly an Animal Crossing clone\" and GFinity described it as a blatant Animal Crossing copycat.",
+   "sources": [
+    "https://www.gfinityesports.com/article/whoever-made-this-blatant-animal-crossing-copycat-clearly-has-no-fear-of-nintendos-lawyers",
+    "https://www.thegamer.com/black-myth-wukong-no-im-not-a-human-fake-games-playstation-store/"
+   ]
+  },
+  {
+   "key": "rewire-chill-electronics-repairs-restory",
+   "clone_name": "RE:WIRE Chill Electronics Repairs",
+   "clone_released": "2026",
+   "original_name": "ReStory: Chill Electronics Repairs",
+   "original_developer": "Published by Mandragora and tinyBuild",
+   "original_released": "2026",
+   "platform": "Xbox",
+   "notes": "Appeared on the Xbox Store three weeks after ReStory's August 2026 release, under a similar name and with similar gameplay. iXBT.games reported it as a dubious clone.",
+   "sources": [
+    "https://ixbt.games/en/news/2026/09/16/436086-restory-ot-rossiiskoi-studii-nacali-kopirovat-v-xbox-store-prodaiut-somnitelnyi-klon.html"
+   ]
+  },
+  {
+   "key": "anti-gravity-racing-wipeout-xbox",
+   "clone_name": "Anti-Gravity Racing WipEout",
+   "clone_released": "2025",
+   "original_name": "WipEout",
+   "original_developer": "Psygnosis / Sony",
+   "original_released": "1995",
+   "platform": "Xbox",
+   "notes": "Sold on the Xbox Store for $14.99 from April 2025. TheGamer reported it was largely an emulated copy of PlayStation WipEout games with textures altered to hide its origin; Microsoft removed it about three months later.",
+   "sources": [
+    "https://www.thegamer.com/microsoft-xbox-store-wipeout-emulated-title-playstation-gaming-storefronts/"
+   ]
+  },
+  {
+   "key": "megabonk-smash-ps-store",
+   "clone_name": "Megabonk Smash",
+   "clone_developer": "GamesMM Studios (PlayStation Store listing)",
+   "clone_released": "2025",
+   "original_name": "Megabonk",
+   "original_developer": "vedinad",
+   "original_url": "https://store.steampowered.com/app/3405340/",
+   "original_released": "2025",
+   "platform": "PlayStation",
+   "notes": "Appeared on the PlayStation Store in November 2025 while Megabonk was PC-only. Push Square and Kotaku reported it as a copycat; the indie developer whose name was on the listing said he had nothing to do with it.",
+   "sources": [
+    "https://www.pushsquare.com/news/2025/11/shameless-clones-of-viral-hit-games-like-megabonk-continue-to-plague-ps-store",
+    "https://kotaku.com/onlyfans-psn-playstation-store-megabonk-peak-2000641642"
+   ]
+  },
+  {
+   "key": "ultra-bonk-survivors-ps-store",
+   "clone_name": "Ultra Bonk Survivors",
+   "clone_released": "2025",
+   "original_name": "Megabonk",
+   "original_developer": "vedinad",
+   "original_url": "https://store.steampowered.com/app/3405340/",
+   "original_released": "2025",
+   "platform": "PlayStation",
+   "notes": "Push Square reported this PlayStation Store listing in November 2025 as another Megabonk copycat.",
+   "sources": [
+    "https://www.pushsquare.com/news/2025/11/shameless-clones-of-viral-hit-games-like-megabonk-continue-to-plague-ps-store"
+   ]
+  },
+  {
+   "key": "cozy-climbing-game-peak",
+   "clone_name": "Cozy Climbing Game",
+   "clone_released": "2025",
+   "original_name": "PEAK",
+   "original_developer": "Aggro Crab and Landfall (Team PEAK)",
+   "original_url": "https://store.steampowered.com/app/3527290/",
+   "original_released": "2025",
+   "platform": "PlayStation",
+   "notes": "Kotaku reported this PlayStation Store listing in November 2025 as an obvious rip-off of the PC co-op climbing game PEAK.",
+   "sources": [
+    "https://kotaku.com/onlyfans-psn-playstation-store-megabonk-peak-2000641642"
+   ]
+  },
+  {
+   "key": "scribble-hunt-meccha-chameleon",
+   "clone_name": "Scribble Hunt",
+   "clone_developer": "Scribble Bunny",
+   "clone_released": "2026",
+   "original_name": "Meccha Chameleon",
+   "original_developer": "lemorion_1224",
+   "original_released": "2026",
+   "platform": "Steam (PC)",
+   "notes": "Announced on Steam in July 2026 while Meccha Chameleon was selling millions. GamesRadar and Automaton reported that its screenshots and concept closely follow the original and that its Korean store title translates to \"Meccha Chameleon.\"",
+   "sources": [
+    "https://www.gamesradar.com/games/co-op/meccha-chameleon-awarded-steams-highest-honor-a-fast-follow-ai-ripoff-that-even-uses-the-same-name-in-some-regions/",
+    "https://automaton-media.com/en/news/meccha-chameleon-copycat-game-on-steam-blatantly-calls-itself-meccha-chameleon-in-korean-version/"
+   ]
+  },
+  {
+   "key": "my-little-cat-lost-big-city",
+   "clone_name": "My Little Cat Lost in Big City",
+   "clone_released": "2024",
+   "original_name": "Little Kitty, Big City",
+   "original_developer": "Double Dagger Studio",
+   "original_url": "https://store.steampowered.com/app/1177980/",
+   "original_released": "2024",
+   "platform": "Mobile",
+   "notes": "In July 2024 Double Dagger Studio publicly mocked mobile copies of Little Kitty, Big City, including this one, as part of an indie developer pile-on against app store clones.",
+   "sources": [
+    "https://www.gamesradar.com/games/action-rpg/indie-devs-tired-of-cloning-resort-to-just-making-fun-of-the-guy-who-flipped-their-crab-tivating-soulslike-game-onto-the-app-store"
+   ]
+  },
+  {
+   "key": "hardcop-2-stolen-steam",
+   "clone_name": "HardCop 2",
+   "clone_developer": "\"me\" (Steam publisher)",
+   "clone_released": "2021",
+   "original_name": "HardCop 2 (itch.io original)",
+   "original_developer": "Tokagrien",
+   "platform": "Steam (PC)",
+   "notes": "One of several itch.io games re-uploaded to Steam without permission by a publisher calling itself \"me\" or \"myself.\" GamePressure and Game Rant reported in June 2025 that most of these games were removed after the original developers complained.",
+   "sources": [
+    "https://www.gamepressure.com/newsroom/steam-is-dealing-with-spam-valves-platform-has-been-flooded-with/zb811a",
+    "https://gamerant.com/steam-spam-problem-itch-io-stolen-games-shovelware/"
+   ]
+  },
+  {
+   "key": "dungeon-minesweeper-chronicles-stolen-steam",
+   "clone_name": "Dungeon Minesweeper Chronicles",
+   "clone_developer": "\"me\" (Steam publisher)",
+   "clone_released": "2025",
+   "original_name": "Dungeon Minesweeper Chronicles (itch.io original)",
+   "original_developer": "Aftertea_time",
+   "platform": "Steam (PC)",
+   "notes": "An itch.io game re-uploaded to Steam without permission by a publisher calling itself \"me.\" Game Rant reported in June 2025 that it was removed after the original developer complained.",
+   "sources": [
+    "https://gamerant.com/steam-spam-problem-itch-io-stolen-games-shovelware/",
+    "https://www.gamepressure.com/newsroom/steam-is-dealing-with-spam-valves-platform-has-been-flooded-with/zb811a"
+   ]
+  },
+  {
+   "key": "open-star-fighter-stolen-steam",
+   "clone_name": "Open Star Fighter",
+   "clone_developer": "\"me\" (Steam publisher)",
+   "clone_released": "2025",
+   "original_name": "Open Star Fighter (itch.io original)",
+   "original_developer": "thelastflapjack",
+   "platform": "Steam (PC)",
+   "notes": "An itch.io game re-uploaded to Steam without permission by a publisher calling itself \"me.\" Game Rant reported in June 2025 that it was removed after the original developer complained.",
+   "sources": [
+    "https://gamerant.com/steam-spam-problem-itch-io-stolen-games-shovelware/",
+    "https://www.notebookcheck.net/Series-of-Steam-games-stolen-from-indie-developers-highlights-Valve-s-moderation-struggles.1046760.0.html"
+   ]
+  },
+  {
+   "key": "figularity-fake-helldivers-2",
+   "clone_name": "Figularity (renamed \"Helldivers 2\")",
+   "clone_developer": "Whitehole Games / Fest Studios",
+   "clone_released": "2024",
+   "original_name": "HELLDIVERS 2",
+   "original_developer": "Arrowhead Game Studios",
+   "original_url": "https://store.steampowered.com/app/553850/",
+   "original_released": "2024",
+   "platform": "Steam (PC)",
+   "notes": "In February 2024 this Steam game was renamed \"Helldivers 2\", given Helldivers 2 screenshots, and listed Arrowhead and PlayStation as developer and publisher. Arrowhead said \"THESE ARE FAKE\"; the listing was taken off sale.",
+   "sources": [
+    "https://gamesradar.com/helldivers-2-and-palworld-teams-call-out-sad-and-frustrating-steam-copycats-after-fakes-hit-valves-storefront-overnight",
+    "https://www.pcgamer.com/games/third-person-shooter/several-steam-games-changed-names-to-helldivers-2-and-palworld-to-scam-players",
+    "https://www.videogameschronicle.com/news/two-indie-steam-games-were-disguised-as-helldivers-2-to-scam-players/"
+   ]
+  },
+  {
+   "key": "do-not-smile-fake-helldivers-2",
+   "clone_name": "Do Not Smile (renamed \"Helldivers 2\")",
+   "clone_developer": "Whitehole Games / Fest Studios",
+   "clone_released": "2024",
+   "original_name": "HELLDIVERS 2",
+   "original_developer": "Arrowhead Game Studios",
+   "original_url": "https://store.steampowered.com/app/553850/",
+   "original_released": "2024",
+   "platform": "Steam (PC)",
+   "notes": "In February 2024 this Steam game was renamed \"Helldivers 2\" with the real game's screenshots and Arrowhead listed as developer. Arrowhead warned players it was fake, and the listing was taken off sale.",
+   "sources": [
+    "https://gamesradar.com/helldivers-2-and-palworld-teams-call-out-sad-and-frustrating-steam-copycats-after-fakes-hit-valves-storefront-overnight",
+    "https://www.pcgamer.com/games/third-person-shooter/several-steam-games-changed-names-to-helldivers-2-and-palworld-to-scam-players"
+   ]
+  },
+  {
+   "key": "fake-palworld-steam-soleonboard",
+   "clone_name": "Palworld (fake Steam listing)",
+   "clone_developer": "SoleOnBoard Studio",
+   "clone_released": "2024",
+   "original_name": "Palworld",
+   "original_developer": "Pocketpair",
+   "original_url": "https://store.steampowered.com/app/1623730/",
+   "original_released": "2024",
+   "platform": "Steam (PC)",
+   "notes": "In early 2024 a Steam game from SoleOnBoard Studio was renamed \"Palworld\" to pose as Pocketpair's hit. Palworld's community manager said Steam removed it immediately after being contacted.",
+   "sources": [
+    "https://www.pcgamer.com/games/third-person-shooter/several-steam-games-changed-names-to-helldivers-2-and-palworld-to-scam-players",
+    "https://gamesradar.com/helldivers-2-and-palworld-teams-call-out-sad-and-frustrating-steam-copycats-after-fakes-hit-valves-storefront-overnight"
+   ]
+  },
+  {
+   "key": "god-simulator-worldbox",
+   "clone_name": "God Simulator - Sandbox Mod & Open World",
+   "clone_developer": "Stavrio LTD",
+   "clone_released": "2020",
+   "original_name": "WorldBox",
+   "original_developer": "Maxim Karpenko",
+   "original_url": "https://store.steampowered.com/app/1206560/",
+   "platform": "Android",
+   "notes": "WorldBox developer Maxim Karpenko said in November 2020 that this Google Play game, whose app ID included the WorldBox name, was a clone by a company whose owner had repeatedly tried to buy WorldBox, and which had also filed WorldBox trademarks.",
+   "sources": [
+    "https://www.androidpolice.com/2020/11/04/indie-developer-uncovers-nefarious-plot-to-steal-his-game-right-out-from-under-his-nose/"
+   ]
+  },
+  {
+   "key": "tcg-empire-cool-devs",
+   "clone_name": "TCG Empire: Card Shop Simulator",
+   "clone_developer": "COOL DEVS",
+   "clone_released": "2024",
+   "original_name": "TCG Card Shop Simulator",
+   "original_developer": "OPNeon Games",
+   "original_url": "https://store.steampowered.com/app/3070070/",
+   "original_released": "2024",
+   "platform": "Nintendo Switch",
+   "notes": "PC Gamer listed this eShop game, published a few months after TCG Card Shop Simulator, among COOL DEVS releases that resemble other hits; the same publisher sold a copy of The Backrooms 1998.",
+   "sources": [
+    "https://www.pcgamer.com/games/horror/a-big-scam-company-just-stole-my-whole-game-a-backrooms-indie-dev-has-been-forced-to-seek-legal-help-after-someone-took-their-game-off-steam-and-uploaded-it-to-the-nintendo-store"
+   ]
+  },
+  {
+   "key": "chained-towards-heaven-chained-together",
+   "clone_name": "Chained Towards Heaven",
+   "clone_developer": "COOL DEVS",
+   "clone_released": "2024",
+   "original_name": "Chained Together",
+   "original_developer": "Anegar Games",
+   "original_released": "2024",
+   "platform": "Nintendo Switch",
+   "notes": "PC Gamer listed this eShop game among COOL DEVS releases that resemble other hits, noting it resembles Chained Together; the same publisher sold a copy of The Backrooms 1998.",
+   "sources": [
+    "https://www.pcgamer.com/games/horror/a-big-scam-company-just-stole-my-whole-game-a-backrooms-indie-dev-has-been-forced-to-seek-legal-help-after-someone-took-their-game-off-steam-and-uploaded-it-to-the-nintendo-store"
+   ]
+  },
+  {
+   "key": "puckman-artic-pac-man",
+   "clone_name": "Puckman (Artic International)",
+   "clone_developer": "Artic International",
+   "clone_released": "1982",
+   "original_name": "Pac-Man",
+   "original_developer": "Namco / Midway",
+   "original_released": "1980",
+   "platform": "Arcade",
+   "notes": "Midway, which held the US rights to Pac-Man, sued Artic International over its Puckman version. US courts sided with Midway and barred the clone.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Video_game_clone"
+   ]
+  },
+  {
+   "key": "packri-monster-pac-man",
+   "clone_name": "Packri-Monster",
+   "clone_developer": "Bandai",
+   "clone_released": "1981",
+   "original_name": "Pac-Man",
+   "original_developer": "Namco",
+   "original_released": "1980",
+   "platform": "Handheld",
+   "notes": "Wikipedia's history of video game clones lists Bandai's Packri-Monster among the Pac-Man clones that courts barred in the early 1980s.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Video_game_clone"
+   ]
+  },
+  {
+   "key": "simpsons-road-rage-crazy-taxi",
+   "clone_name": "The Simpsons: Road Rage",
+   "clone_developer": "Radical Entertainment / Fox Interactive",
+   "clone_released": "2001",
+   "original_name": "Crazy Taxi",
+   "original_developer": "Sega",
+   "original_released": "1999",
+   "platform": "PlayStation 2, Xbox, GameCube",
+   "notes": "Sega sued over The Simpsons: Road Rage, claiming it infringed Sega's patent on Crazy Taxi's gameplay and navigation arrow. The case settled out of court. This was a patent case, not a copyright ruling.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Video_game_clone",
+    "https://en.wikipedia.org/wiki/The_Simpsons:_Road_Rage"
+   ]
+  },
+  {
+   "key": "commander-rise-of-kingdoms",
+   "clone_name": "Commander",
+   "clone_developer": "Jiujiu Company",
+   "original_name": "Rise of Kingdoms",
+   "original_developer": "Lilith Games",
+   "original_released": "2018",
+   "platform": "iOS, Android",
+   "notes": "Lilith Games sued over Commander in 2021. In a December 2024 judgment, the Guangdong High People's Court found the game was an unfair-competition reskin of Rise of Kingdoms and ordered it to stop and pay RMB 10 million in damages.",
+   "sources": [
+    "https://www.wanhuida.com/Content/2025/04-12/1932364255.html",
+    "https://www.worldtrademarkreview.com/article/chinese-courts-are-imposing-high-damages-against-game-reskinning-unfair-competition-grounds"
+   ]
+  },
+  {
+   "key": "lotzo-ray-of-light-zera",
+   "clone_name": "Lotzo and The Ray of Light",
+   "clone_developer": "Spacefarer Games",
+   "clone_released": "2026",
+   "original_name": "Zera: Myths Awaken",
+   "original_developer": "Cyreides",
+   "platform": "Nintendo Switch",
+   "notes": "Sold for $15 on the Nintendo eShop in February 2026. Cyreides, the solo developer of the unreleased Spyro-inspired platformer Zera: Myths Awaken, said its story, characters, level models and code were \"all stolen from zera\" and recolored, with AI-generated art.",
+   "sources": [
+    "https://www.gamesradar.com/games/platformer/dev-accused-of-stealing-spyro-the-dragon-inspired-platformer-recoloring-it-and-selling-it-on-the-nintendo-eshop-for-usd15-with-ai-generated-art-wonder-if-theyd-give-me-a-free-key"
+   ]
+  },
+  {
+   "key": "elderwood-old-school-runescape",
+   "clone_name": "Elderwood",
+   "clone_developer": "Rohan Varma",
+   "clone_released": "2026",
+   "original_name": "Old School RuneScape",
+   "original_developer": "Jagex",
+   "original_url": "https://store.steampowered.com/app/1343370/",
+   "original_released": "2013",
+   "platform": "Web browser",
+   "notes": "A browser game built with an AI coding tool and shared in September 2026, with graphics, interface and place names such as Lumbridge closely matching Old School RuneScape. It was taken down within days after Jagex sent a notice.",
+   "sources": [
+    "https://www.pcgamer.com/software/ai/openai-employee-takes-down-chatgpt-coded-runescape-clone-following-jagex-cease-and-desist/",
+    "https://www.gamesradar.com/games/mmo/chatgpt-employee-makes-a-runescape-clone-immediately-gets-slapped-by-jagex-lawyers-then-acts-like-hes-leaving-some-great-legacy-behind-in-a-goodbye-post-surely-written-by-ai/",
+    "https://www.dexerto.com/gaming/viral-ai-made-runescape-clone-shut-down-after-jagex-demands-takedown-3408509/"
+   ]
+  },
+  {
+   "key": "mariostro-strikers-xbox",
+   "clone_name": "Mariostro Strikers: Soccer League",
+   "clone_developer": "LightGamess",
+   "clone_released": "2025",
+   "original_name": "Mario Strikers: Battle League",
+   "original_developer": "Next Level Games / Nintendo",
+   "original_released": "2022",
+   "platform": "Xbox",
+   "notes": "Released on the Xbox Store in January 2025 with AI-generated key art. Nintendo Life, Pure Xbox and TheGamer reported it as a blatant Mario Strikers knock-off.",
+   "sources": [
+    "https://www.nintendolife.com/news/2025/01/random-xbox-gets-its-own-shameful-mario-strikers-knock-off",
+    "https://www.purexbox.com/news/2025/01/mariostro-strikers-goes-viral-as-ridiculous-rip-off-appears-on-xbox",
+    "https://www.thegamer.com/mario-strikers-battle-league-clone-xbox-games-store/"
+   ]
+  },
+  {
+   "key": "marcus-kart-world-xbox",
+   "clone_name": "Marcus Kart World",
+   "clone_released": "2025",
+   "original_name": "Mario Kart World",
+   "original_developer": "Nintendo",
+   "original_released": "2025",
+   "platform": "Xbox",
+   "notes": "Pure Xbox reported in September 2025 that this Xbox Store racer, whose artwork reads \"Maria Kart World\", was a rip-off of the Switch 2's Mario Kart World.",
+   "sources": [
+    "https://www.purexbox.com/news/2025/09/mario-kart-world-has-a-ridiculous-new-rip-off-on-the-xbox-store"
+   ]
+  },
+  {
+   "key": "supertan-marioner-xbox",
+   "clone_name": "Supertan Marioner 3D Infinity World Adventures",
+   "clone_released": "2022",
+   "original_name": "Super Mario",
+   "original_developer": "Nintendo",
+   "original_released": "1985",
+   "platform": "Xbox",
+   "notes": "This Xbox Store game used a 3D character model resembling Mario from New Super Mario Bros. U Deluxe. It was removed from the store in April 2022 after it drew attention.",
+   "sources": [
+    "https://comicbook.com/gaming/news/super-mario-knock-off-discovered-removed-xbox-store/"
+   ]
+  },
+  {
+   "key": "diapers-please-app-store-copies",
+   "clone_name": "Diapers, Please! (unofficial App Store copies)",
+   "clone_released": "2025",
+   "original_name": "Diapers, Please!",
+   "original_developer": "VoltekPlay",
+   "platform": "iOS",
+   "notes": "VoltekPlay said stolen copies of its game were sold on the App Store under at least four developer accounts, one reaching #1 in Paid Games in several countries. The developer said the copies were later removed after reports to Apple.",
+   "sources": [
+    "https://voltekplay.itch.io/diapers-please/devlog/900694/our-game-was-stolen-and-the-fight-continues",
+    "https://voltekplay.itch.io/diapers-please/devlog/915268/one-video-with-full-story-of-our-game-theft"
+   ]
+  },
+  {
+   "key": "survivor-royale-pubg",
+   "clone_name": "Survivor Royale",
+   "clone_developer": "NetEase",
+   "clone_released": "2017",
+   "original_name": "PUBG: BATTLEGROUNDS",
+   "original_developer": "Krafton (PUBG Corporation)",
+   "original_url": "https://store.steampowered.com/app/578080/",
+   "original_released": "2017",
+   "platform": "iOS, Android",
+   "notes": "Krafton (then PUBG Corp.) sued NetEase in 2018 over Knives Out, Rules of Survival and Survivor Royale. The case settled in 2019; in 2023 a US court found NetEase had breached that settlement.",
+   "sources": [
+    "https://asianews.network/pubg-developer-wins-lawsuit-against-chinese-copycat-in-us/",
+    "https://www.gamedeveloper.com/business/krafton-and-netease-settle-over-i-pubg-i-i-knives-out-i-copyright-quarrel"
+   ]
+  },
+  {
+   "key": "free-fire-max-pubg",
+   "clone_name": "Free Fire MAX",
+   "clone_developer": "Garena",
+   "clone_released": "2021",
+   "original_name": "PUBG: BATTLEGROUNDS",
+   "original_developer": "Krafton (PUBG Corporation)",
+   "original_url": "https://store.steampowered.com/app/578080/",
+   "original_released": "2017",
+   "platform": "iOS, Android",
+   "notes": "In January 2022 Krafton sued Garena, Apple and Google in the US, claiming Free Fire and Free Fire MAX copied PUBG.",
+   "sources": [
+    "https://www.pcgamer.com/krafton-sues-google-youtube-and-apple-over-alleged-pubg-clones",
+    "https://techcrunch.com/2022/01/13/pubg-mobile-maker-krafton-sues-apple-google-and-rival-game-developer-garena-over-clones/",
+    "https://www.pocketgamer.biz/krafton-sues-garena-apple-google-over-free-fire-copyright-infringement/"
+   ]
+  },
+  {
+   "key": "miraibo-go-palworld",
+   "clone_name": "Miraibo Go",
+   "clone_released": "2024",
+   "original_name": "Palworld",
+   "original_developer": "Pocketpair",
+   "original_url": "https://store.steampowered.com/app/1623730/",
+   "original_released": "2024",
+   "platform": "Android",
+   "notes": "GamesRadar reported in October 2024 that this Google Play game closely resembles Palworld's concept, animations and monster designs, including monsters that build bases and fight with guns.",
+   "sources": [
+    "https://www.gamesradar.com/games/simulation/palworld-gets-a-taste-of-its-own-medicine-in-new-mobile-pal-like-blatantly-inspired-by-pocketpairs-survival-game"
+   ]
+  },
+  {
+   "key": "the-exit-9-exit-8",
+   "clone_name": "The Exit 9",
+   "clone_developer": "Game Dev SRL",
+   "clone_released": "2024",
+   "original_name": "The Exit 8",
+   "original_developer": "KOTAKE CREATE",
+   "original_url": "https://store.steampowered.com/app/2653790/",
+   "original_released": "2023",
+   "platform": "PlayStation",
+   "notes": "Released on the US PlayStation Store in January 2024 while The Exit 8 was PC-only, with a store description that closely matches The Exit 8's. KOTAKE CREATE said: \"It has nothing to do with 'The Exit 8.'\"",
+   "sources": [
+    "https://automaton-media.com/en/news/20240129-26283/"
+   ]
+  },
+  {
+   "key": "typing-magician-unityroom-copy",
+   "clone_name": "Typing Magician (Unityroom copy)",
+   "clone_developer": "Kamaboko Kōsatsu Kōsatsu",
+   "clone_released": "2026",
+   "original_name": "Typing Magician",
+   "original_developer": "Kamaboko",
+   "platform": "Web browser (Unityroom)",
+   "notes": "In March 2026 a copy of Kamaboko's unreleased typing tower-defense game was published on Unityroom under the same name and reached its popular new releases. Its creator admitted feeding Kamaboko's development videos to a generative AI to build it.",
+   "sources": [
+    "https://automaton-media.com/en/news/ai-generated-rip-off-of-unfinished-japanese-indie-game-beats-original-to-release-sparking-concerns-about-safety-of-sharing-dev-progress/"
+   ]
+  },
+  {
+   "key": "army-annihilation-war-slotbound",
+   "clone_name": "Army Annihilation War",
+   "clone_released": "2026",
+   "original_name": "Slotbound",
+   "original_developer": "Optima Arch",
+   "platform": "Douyin mini-games",
+   "notes": "South Korean solo developer Optima Arch said this Douyin mini-game copied Slotbound. It was taken down after a Chinese fan reported it.",
+   "sources": [
+    "https://www.gamemeca.com/en/view.php?gid=1782926"
+   ]
+  },
+  {
+   "key": "seolaktak-chronicles-slotbound",
+   "clone_name": "Seolaktak Chronicles",
+   "clone_released": "2026",
+   "original_name": "Slotbound",
+   "original_developer": "Optima Arch",
+   "platform": "WeChat mini-games",
+   "notes": "Optima Arch reported this WeChat mini-game for copyright infringement in October 2026, saying it copied Slotbound.",
+   "sources": [
+    "https://www.gamemeca.com/en/view.php?gid=1782926"
+   ]
+  },
+  {
+   "key": "lethal-company-mobile-horror",
+   "clone_name": "Lethal Company: Mobile Horror",
+   "clone_developer": "AlexKos Dev",
+   "clone_released": "2024",
+   "original_name": "Lethal Company",
+   "original_developer": "Zeekerss",
+   "original_url": "https://store.steampowered.com/app/1966720/",
+   "original_released": "2023",
+   "platform": "Android",
+   "notes": "One of several unofficial Google Play games using the Lethal Company name in February 2024, with over 100,000 downloads. Zeekerss had warned that mobile versions were not his and likely a scam.",
+   "sources": [
+    "https://mobilegamer.biz/lethal-company-clones-are-live-on-both-apple-and-googles-app-stores/",
+    "https://www.gamedeveloper.com/business/zeekerss-warns-lethal-company-s-mobile-game-is-likely-a-scam-"
+   ]
+  },
+  {
+   "key": "lethal-company-horror-mobile",
+   "clone_name": "Lethal Company: Horror Mobile",
+   "clone_released": "2024",
+   "original_name": "Lethal Company",
+   "original_developer": "Zeekerss",
+   "original_url": "https://store.steampowered.com/app/1966720/",
+   "original_released": "2023",
+   "platform": "Android",
+   "notes": "Mobilegamer.biz listed this among the unofficial Lethal Company games on Google Play in February 2024, after Zeekerss warned that mobile versions were not his.",
+   "sources": [
+    "https://mobilegamer.biz/lethal-company-clones-are-live-on-both-apple-and-googles-app-stores/"
+   ]
+  },
+  {
+   "key": "lethal-corp-company-mobile",
+   "clone_name": "Lethal Corp Company: Mobile",
+   "clone_released": "2024",
+   "original_name": "Lethal Company",
+   "original_developer": "Zeekerss",
+   "original_url": "https://store.steampowered.com/app/1966720/",
+   "original_released": "2023",
+   "platform": "Android",
+   "notes": "Mobilegamer.biz listed this among the unofficial Lethal Company games on Google Play in February 2024, after Zeekerss warned that mobile versions were not his.",
+   "sources": [
+    "https://mobilegamer.biz/lethal-company-clones-are-live-on-both-apple-and-googles-app-stores/"
+   ]
+  },
+  {
+   "key": "repo-lost-signals-ps5",
+   "clone_name": "REPO Lost Signals",
+   "clone_released": "2025",
+   "original_name": "R.E.P.O.",
+   "original_developer": "semiwork",
+   "original_url": "https://store.steampowered.com/app/3241660/",
+   "original_released": "2025",
+   "platform": "PlayStation 5",
+   "notes": "GamePressure reported in April 2025 that this PlayStation Store game was another knockoff trying to pass as the Steam hit R.E.P.O., alongside R.E.P.O. Horror and R.E.P.O. Ghost Haul.",
+   "sources": [
+    "https://www.gamepressure.com/newsroom/repo-lost-signals-is-yet-another-knockoff-trying-to-pass-as-the-h/z17ca6"
+   ]
+  },
+  {
+   "key": "repo-ghost-haul-ps5",
+   "clone_name": "R.E.P.O.: Ghost Haul",
+   "clone_released": "2025",
+   "original_name": "R.E.P.O.",
+   "original_developer": "semiwork",
+   "original_url": "https://store.steampowered.com/app/3241660/",
+   "original_released": "2025",
+   "platform": "PlayStation 5",
+   "notes": "Reported in April 2025 as a PlayStation Store clone of the PC-only R.E.P.O. that fooled some buyers, who then asked for refunds.",
+   "sources": [
+    "https://opencritic.com/news/14901/clone-game-on-psn-fooling-gamers-and-victims-are-demanding-refunds",
+    "https://www.gamepressure.com/newsroom/repo-lost-signals-is-yet-another-knockoff-trying-to-pass-as-the-h/z17ca6"
+   ]
+  },
+  {
+   "key": "wood-shop-woodturning",
+   "clone_name": "Wood Shop",
+   "clone_developer": "Rollic Games / Hero Games",
+   "original_name": "Woodturning",
+   "original_developer": "Voodoo",
+   "platform": "iOS, Android",
+   "notes": "Voodoo sued over Wood Shop for unfair competition. A Paris court ruled for Voodoo, ordering €125,000 in damages and the removal of Wood Shop from Google Play and the App Store.",
+   "sources": [
+    "https://www.pocketgamer.biz/clones-and-how-to-combat-them-examples-from-the-games-industry/"
+   ]
+  },
+  {
+   "key": "qblock-block-blast",
+   "clone_name": "QBlock (Wood Block Puzzle Games)",
+   "clone_developer": "Oakever Games",
+   "clone_released": "2025",
+   "original_name": "Block Blast",
+   "original_developer": "Hungry Studio",
+   "original_released": "2022",
+   "platform": "iOS, Android",
+   "notes": "Hungry Studio's company Aretis Limited sued Oakever Games in the US, claiming QBlock copied Block Blast. On 15 April 2026 the judge ruled for Hungry Studio.",
+   "sources": [
+    "https://mobilegamer.biz/vita-mahjong-amaze-go-and-meowdoku-maker-oakever-games-fights-cloning-accusations/"
+   ]
   }
  ]
 }
