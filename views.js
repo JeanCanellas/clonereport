@@ -96,7 +96,7 @@ function home(recent, total, originals = 0) {
   <p class="muted">${total ? `<a href="/clones">Browse ${total.toLocaleString('en-US')} reported clone${total === 1 ? '' : 's'}</a>` : 'No approved reports'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
   ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam, the Nintendo eShop and classic consoles that are not clones.</p>` : ''}
 </section>
-${extPromo()}
+${extPromo({ example: true })}
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
 }
 
@@ -385,9 +385,15 @@ ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p cl
 const STORE_LIST = 'Steam, PlayStation Store, Xbox, Nintendo eShop, the App Store, Google Play and itch.io';
 
 // Box that recommends the Chrome extension, shown on the home, report and game pages.
-function extPromo({ compact = false } = {}) {
+// On the home page it shows a real example: the warning on Needle In A Haystack's Steam page.
+const HOME_EXAMPLE = `<figure class="ext-example">
+    <img src="/home-clone-example.png" alt="Example in Chrome: the Steam page for Needle In A Haystack with the Clone Report extension's red “Reported as a clone” banner, saying users reported it as a clone of Needle In A Haystack Simulator by Studio Bitdot, with a View report link" width="1273" height="467" loading="lazy">
+    <figcaption class="muted">Example: what the extension shows in Chrome on the Steam page of a reported clone.</figcaption>
+  </figure>`;
+
+function extPromo({ compact = false, example = false } = {}) {
   return `<aside class="ext-promo${compact ? ' compact' : ''}">
-  ${compact ? '' : `<img src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235" loading="lazy">`}
+  ${compact ? '' : example ? HOME_EXAMPLE : `<img src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235" loading="lazy">`}
   <div>
     <h2>Get warned before you buy a clone</h2>
     <p>Install the free Clone Report extension for Google Chrome. When you open a game's page on ${STORE_LIST}, it tells you right away if the game has been reported as a clone, and points you to the original.</p>
