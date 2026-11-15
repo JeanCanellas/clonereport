@@ -20,12 +20,16 @@ On Steam the banner sits under the game title. The other stores redraw their pag
 
 Manifest V3. `stores.js` (shared with the site) turns the page address into a store and game id. Lookups go through `GET /api/lookup?store=&id=&name=` on the site (Steam still uses `?appid=`), matched by store id first, then exact name, and are cached for 5 minutes. All text from the API is inserted as plain text and only http(s) links are used.
 
-## Try it
+## Install
+
+Users install it from the Chrome Web Store: https://chromewebstore.google.com/detail/ijagfhebglljkibhfdmedhgkdbicibgk
+
+## Try it locally
 
 1. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick this folder.
-2. Until clonereport.com is live, open the extension's **Settings** (right-click the icon > Options) and set the site address to `http://localhost:3000` while running the site with `npm run dev`. Chrome will ask to allow access to localhost.
+2. To test against a local site, open the extension's **Settings** (right-click the icon > Options) and set the site address to `http://localhost:3000` while running the site with `npm run dev`. Chrome will ask to allow access to localhost.
 3. Approve a report in `/admin` whose clone or original link is a store page from the list above, then open that page.
 
-## Publish to the Chrome Web Store
+## Publish an update to the Chrome Web Store
 
-Zip this folder's contents, then upload it at https://chrome.google.com/webstore/devconsole (one-time $5 developer fee). You'll need a privacy policy URL; the extension sends only the store, the game id and the game name of the page you're viewing to clonereport.com and stores nothing else. The store listing will say it can "read and change your data" on the store sites above, because it adds the banner to their pages.
+The extension is published (item ID `ijagfhebglljkibhfdmedhgkdbicibgk`). To release a new version, bump `version` in `manifest.json`, zip this folder's contents and upload it as a new package at https://chrome.google.com/webstore/devconsole; it goes through review again. You'll need a privacy policy URL; the extension sends only the store, the game id and the game name of the page you're viewing to clonereport.com and stores nothing else. The store listing will say it can "read and change your data" on the store sites above, because it adds the banner to their pages.

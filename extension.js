@@ -54,4 +54,7 @@ function version() {
   try { return JSON.parse(fs.readFileSync(path.join(DIR, 'manifest.json'), 'utf8')).version; } catch { return null; }
 }
 
-module.exports = { buildZip, version };
+// The published Chrome Web Store listing. CHROME_STORE_URL overrides it (for a test listing).
+const STORE_URL = process.env.CHROME_STORE_URL || 'https://chromewebstore.google.com/detail/ijagfhebglljkibhfdmedhgkdbicibgk';
+
+module.exports = { buildZip, version, STORE_URL };
