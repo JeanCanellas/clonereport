@@ -192,6 +192,7 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
   </section>
   ${releaseNote(r)}
   <p class="links">${r.original_url ? `<a class="btn" href="${esc(r.original_url)}" rel="nofollow ugc noopener" target="_blank">${r.original_store ? `View the original on ${esc(storeInfo.storeName(r.original_store))}` : 'Go to the original'}</a>` : ''}
+    ${r.clone_url ? `<a class="btn blue" href="${esc(r.clone_url)}" rel="nofollow ugc noopener" target="_blank">${r.clone_store ? `View the clone on ${esc(storeInfo.storeName(r.clone_store))}` : 'Go to the clone'}</a>` : ''}
     <a class="btn ghost" href="${treeUrl(r.original_name)}">Family tree of ${esc(r.original_name)}</a>
     <a class="btn ghost" href="/follow?game=${encodeURIComponent(r.original_name)}">Follow ${esc(r.original_name)}</a></p>
   ${mech.length ? `<section><h2>What they share</h2><ul class="chips">${mech.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
