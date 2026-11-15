@@ -28,6 +28,10 @@ function layout(title, body, { q = '' } = {}) {
     <form class="mini-search" action="/search" method="get" role="search">
       <input name="q" value="${esc(q)}" placeholder="Search a game…" aria-label="Search a game">
     </form>
+    <nav class="top-nav" aria-label="Browse">
+      <a class="nav-link" href="/clones">Browse clones</a>
+      <a class="nav-link" href="/originals">Original games</a>
+    </nav>
     <a class="nav-link" href="/extension">Chrome extension</a>
     <a class="btn small" href="/submit">Report a clone</a>
   </div>
@@ -36,7 +40,7 @@ function layout(title, body, { q = '' } = {}) {
 ${body}
 </main>
 <footer class="wrap site-foot">
-  <nav class="foot-nav"><a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/feed.xml">RSS</a> · <a href="/api">API</a> · <a href="/submit">Report a clone</a></nav>
+  <nav class="foot-nav"><a href="/clones">Reported clones</a> · <a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/feed.xml">RSS</a> · <a href="/api">API</a> · <a href="/submit">Report a clone</a></nav>
   <p>Reports are claims and opinions submitted by the community and reviewed before they appear. They are not verified facts or legal findings.</p>
   <p><a href="/terms">Terms of Service</a> · <a href="/privacy">Privacy policy</a> · <a href="/contact">Contact and takedown requests</a></p>
 </footer>
@@ -89,7 +93,7 @@ function home(recent, total, originals = 0) {
     <input name="q" placeholder="Type a game name" aria-label="Game name" autofocus required>
     <button class="btn">Search</button>
   </form>
-  <p class="muted">${total} approved report${total === 1 ? '' : 's'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
+  <p class="muted">${total ? `<a href="/clones">Browse ${total.toLocaleString('en-US')} reported clone${total === 1 ? '' : 's'}</a>` : 'No approved reports'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
   ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam, the Nintendo eShop and classic consoles that are not clones.</p>` : ''}
 </section>
 ${extPromo()}
@@ -235,6 +239,21 @@ function gamePage(g, { clones, asClone }) {
     · <a href="/follow?game=${encodeURIComponent(g.name)}">Get alerts for new clones</a></p>
   ${extPromo({ compact: true })}
 </article>`);
+}
+
+function clonesPage(reports, { page = 1, pages = 1, total = reports.length } = {}) {
+  const qs = (n) => '/clones' + (n > 1 ? `?page=${n}` : '');
+  const nav = pages > 1 ? `<nav class="pager">
+    ${page > 1 ? `<a class="btn small ghost" href="${qs(page - 1)}">Previous</a>` : ''}
+    <span class="muted">Page ${page} of ${pages}</span>
+    ${page < pages ? `<a class="btn small ghost" href="${qs(page + 1)}">Next</a>` : ''}
+  </nav>` : '';
+  return layout('Reported clones', `
+<h1>Reported clones</h1>
+<p>Every game the community has reported as a copy of another game, newest first. Each report links to the original it is said to copy.</p>
+<p class="muted">${total.toLocaleString('en-US')} report${total === 1 ? '' : 's'}</p>
+${reports.length ? `<ul class="cards">${reports.map(card).join('')}</ul>` : '<p>No reports yet. <a href="/submit">Report a clone</a>.</p>'}
+${nav}`);
 }
 
 function originalsPage(games, { storeFilter = '', page = 1, pages = 1, total = games.length } = {}) {
@@ -760,4 +779,4 @@ ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p cl
 
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, clonesPage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS };

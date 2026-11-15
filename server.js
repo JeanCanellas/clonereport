@@ -10,7 +10,7 @@ const scanner = require('./scanner');
 const steam = require('./steam');
 const api = require('./api');
 const mailer = require('./mailer');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, clonesPage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS, esc } = require('./views');
 const { familyTree } = require('./tree');
 const classic = require('./classic');
 const stores = require('./stores');
@@ -372,6 +372,13 @@ async function handle(req, res) {
   }
 
   if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved, store.countOriginals()));
+  if (req.method === 'GET' && p === '/clones') {
+    const per = 50;
+    const total = store.counts().approved;
+    const pages = Math.max(1, Math.ceil(total / per));
+    const page = Math.max(1, Math.min(pages, Number.parseInt(url.searchParams.get('page'), 10) || 1));
+    return send(res, 200, clonesPage(store.apiReports({ limit: per, offset: (page - 1) * per }), { page, pages, total }));
+  }
   if (req.method === 'GET' && p === '/originals') {
     const s = url.searchParams.get('store');
     const storeFilter = ['steam', 'nintendo', 'classic'].includes(s) ? s : '';

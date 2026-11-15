@@ -222,3 +222,14 @@ test('privacy policy page is linked from every page', async () => {
   assert.match(html, /Limited Use/);
   assert.match(await (await fetch(base + '/')).text(), /href="\/privacy"/);
 });
+
+test('header links to the reported clones list, which shows only approved reports', async () => {
+  const home = await (await fetch(base + '/')).text();
+  assert.match(home, /<nav class="top-nav"[^>]*>[\s\S]*href="\/clones">Browse clones<[\s\S]*href="\/originals">Original games</);
+  const res = await fetch(base + '/clones');
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /<h1>Reported clones<\/h1>/);
+  assert.match(html, /Flappy Pigeon/, 'approved report from the first test is listed');
+  assert.equal((await fetch(base + '/clones?page=999')).status, 200, 'out-of-range page is clamped');
+});
