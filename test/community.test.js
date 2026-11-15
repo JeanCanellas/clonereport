@@ -169,3 +169,13 @@ test('family trees follow reports both ways', async () => {
   assert.match(await (await fetch(`${base}/tree?game=nope`)).text(), /No approved reports mention/);
   assert.ok(pending);
 });
+
+test('report page links to the clone store page when there is a clone URL', async () => {
+  const a = approved({ clone_name: 'Blue Copy', original_name: 'Blue Orig', original_url: 'https://store.steampowered.com/app/21/', clone_url: 'https://store.steampowered.com/app/22/' });
+  const page = await (await fetch(`${base}/report/${a}`)).text();
+  assert.match(page, /<a class="btn blue" href="https:\/\/store.steampowered.com\/app\/22\/" rel="nofollow ugc noopener" target="_blank">View the clone on Steam<\/a>/);
+  const b = approved({ clone_name: 'Other Copy', original_name: 'Other Orig', clone_url: 'https://example.com/copy' });
+  assert.match(await (await fetch(`${base}/report/${b}`)).text(), /class="btn blue" href="https:\/\/example.com\/copy"[^>]*>Go to the clone</);
+  const c = approved({ clone_name: 'No Link Copy', original_name: 'No Link Orig' });
+  assert.ok(!(await (await fetch(`${base}/report/${c}`)).text()).includes('btn blue'), 'no button without a clone URL');
+});
