@@ -53,7 +53,7 @@ const HOME_EXAMPLE = fs.readFileSync(path.join(__dirname, 'public', 'home-clone-
 // The site sends people to the Chrome Web Store listing. The zip, built from
 // chrome-extension/ at start, is still served for developers who load it unpacked.
 const EXT_ZIP = extension.buildZip();
-const EXT_INFO = { version: extension.version(), storeUrl: extension.STORE_URL, zipUrl: '/extension/clone-report-extension.zip' };
+const EXT_INFO = { version: extension.version(), storeUrl: extension.STORE_URL, firefoxUrl: extension.FIREFOX_URL, zipUrl: '/extension/clone-report-extension.zip' };
 
 // ---------- helpers ----------
 const hmac = (s) => crypto.createHmac('sha256', SECRET).update(s).digest('hex');

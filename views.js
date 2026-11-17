@@ -1,7 +1,7 @@
 'use strict';
 // HTML templates. Every user-supplied value goes through esc().
 const storeInfo = require('./stores');
-const { STORE_URL: CHROME_STORE_URL } = require('./extension');
+const { STORE_URL: CHROME_STORE_URL, FIREFOX_URL: FIREFOX_ADDON_URL } = require('./extension');
 
 const { devKey } = require('./keys');
 const { MIN_VOTES, tally, verdict } = require('./scoring');
@@ -32,7 +32,7 @@ function layout(title, body, { q = '' } = {}) {
       <a class="nav-link" href="/clones">Browse clones</a>
       <a class="nav-link" href="/originals">Original games</a>
     </nav>
-    <a class="nav-link" href="/extension">Chrome extension</a>
+    <a class="nav-link" href="/extension">Browser extension</a>
     <a class="btn small" href="/submit">Report a clone</a>
   </div>
 </header>
@@ -384,7 +384,17 @@ ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p cl
 
 const STORE_LIST = 'Steam, PlayStation Store, Xbox, Nintendo eShop, the App Store, Google Play and itch.io';
 
-// Box that recommends the Chrome extension, shown on the home, report and game pages.
+// Install buttons for Chrome and Firefox. Until the Firefox listing is live
+// (FIREFOX_ADDON_URL in extension.js) the Firefox spot says it is coming soon.
+function installButtons(firefoxUrl = FIREFOX_ADDON_URL) {
+  const chrome = `<a class="btn" href="${esc(CHROME_STORE_URL)}" rel="noopener" target="_blank">Add to Chrome</a>`;
+  const firefox = firefoxUrl
+    ? `<a class="btn" href="${esc(firefoxUrl)}" rel="noopener" target="_blank">Add to Firefox</a>`
+    : `<span class="muted">Firefox version coming soon</span>`;
+  return `${chrome} ${firefox}`;
+}
+
+// Box that recommends the browser extension, shown on the home, report and game pages.
 // On the home page it shows a real example: the warning on Needle In A Haystack's Steam page.
 const HOME_EXAMPLE = `<figure class="ext-example">
     <img src="/home-clone-example.png" alt="Example in Chrome: the Steam page for Needle In A Haystack with the Clone Report extension's red “Reported as a clone” banner, saying users reported it as a clone of Needle In A Haystack Simulator by Studio Bitdot, with a View report link" width="1273" height="467" loading="lazy">
@@ -396,18 +406,18 @@ function extPromo({ compact = false, example = false } = {}) {
   ${compact ? '' : example ? HOME_EXAMPLE : `<img src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235" loading="lazy">`}
   <div>
     <h2>Get warned before you buy a clone</h2>
-    <p>Install the free Clone Report extension for Google Chrome. When you open a game's page on ${STORE_LIST}, it tells you right away if the game has been reported as a clone, and points you to the original.</p>
-    <a class="btn" href="${esc(CHROME_STORE_URL)}" rel="noopener" target="_blank">Add to Chrome</a> <a class="muted" href="/extension">Learn more</a>
+    <p>Install the free Clone Report extension for Google Chrome or Firefox. When you open a game's page on ${STORE_LIST}, it tells you right away if the game has been reported as a clone, and points you to the original.</p>
+    <p class="install">${installButtons()} <a class="muted" href="/extension">Learn more</a></p>
   </div>
 </aside>`;
 }
 
-function extensionPage({ version, storeUrl }) {
-  const install = `<p><a class="btn" href="${esc(storeUrl)}" rel="noopener" target="_blank">Add to Chrome</a> <span class="muted">${version ? `Version ${esc(version)} · ` : ''}free</span></p>
-       <p class="muted">Opens the extension on the Chrome Web Store. Click <strong>Add to Chrome</strong> there, and you're done. Chrome keeps it up to date for you.</p>`;
-  return layout('Chrome extension', `
+function extensionPage({ version, firefoxUrl }) {
+  const install = `<p class="install">${installButtons(firefoxUrl)} <span class="muted">${version ? `Version ${esc(version)} · ` : ''}free</span></p>
+       <p class="muted">Each button opens the extension in your browser's add-on store (the Chrome Web Store or Firefox Add-ons). Click <strong>Add</strong> there, and you're done. Your browser keeps it up to date for you. On Firefox it also works in Firefox for Android.</p>`;
+  return layout('Browser extension', `
 <h1>Know a game is a clone before you buy it</h1>
-<p class="lead">The free Clone Report extension for Google Chrome checks every game page you open on ${STORE_LIST}. If people have reported the game as a clone, a red warning appears at once with a link to the original. If other games have been reported as copies of it, an orange note lists them.</p>
+<p class="lead">The free Clone Report extension for Google Chrome and Firefox checks every game page you open on ${STORE_LIST}. If people have reported the game as a clone, a red warning appears at once with a link to the original. If other games have been reported as copies of it, an orange note lists them.</p>
 <img class="ext-shot" src="/extension-screenshot.png" alt="The Clone Report extension showing a red “Reported as a clone” warning on a game's store page" width="1020" height="235">
 ${install}
 <h2>What it does</h2>
@@ -618,19 +628,19 @@ ${q ? `<p>No approved reports mention “${esc(q)}”. <a href="/search?q=${enco
 }
 
 // Privacy policy for the site and the Clone Report browser extension. The
-// Chrome Web Store listing links here, so keep it in step with what the
+// Chrome Web Store and Firefox Add-ons listings link here, so keep it in step with what the
 // extension actually sends (chrome-extension/background.js).
 const privacyPage = () => layout('Privacy policy', `<article class="prose">
 <h1>Privacy policy</h1>
-<p class="muted">Last updated 11 November 2026</p>
+<p class="muted">Last updated 17 November 2026</p>
 <p>This policy covers clonereport.com and the Clone Report browser extension. We collect as little as we can, we never sell data, and we do not use advertising or analytics trackers.</p>
 
 <h2>The Clone Report browser extension</h2>
 <p>The extension checks whether the game you are looking at has been reported as a clone, or whether other games have been reported as copies of it. It runs only on game pages of these stores: Steam, PlayStation Store, Xbox and the Microsoft Store, Nintendo eShop, the App Store, Google Play and itch.io.</p>
 <p><strong>What it sends.</strong> When you open a game page on one of those stores, the extension sends three things to clonereport.com: which store it is (for example "steam"), the game's id from the page address, and the game's name as shown on the page. Nothing else from the page is read or sent. It does not read your browsing history, your account on the store, cookies, passwords, payment details or anything you type.</p>
-<p><strong>What it stores.</strong> Lookup results are kept in your browser's session storage for five minutes so the same page is not looked up twice, and are deleted when you close the browser. If you change the site address in the extension's settings, that one setting is saved with Chrome's sync storage. Nothing is stored on our servers about you or your lookups beyond the standard web server request logs described below.</p>
+<p><strong>What it stores.</strong> Lookup results are kept in your browser's session storage for five minutes so the same page is not looked up twice, and are deleted when you close the browser. If you change the site address in the extension's settings, that one setting is saved with your browser's sync storage. Nothing is stored on our servers about you or your lookups beyond the standard web server request logs described below.</p>
 <p><strong>What it shows.</strong> If there is a report, the extension adds a banner to the store page and a badge to its toolbar icon. It does not change anything else on the page.</p>
-<p>The extension contains no remote code, no ads and no trackers. Its use of data complies with the Chrome Web Store User Data Policy, including the Limited Use requirements.</p>
+<p>The extension contains no remote code, no ads and no trackers. Its use of data complies with the Chrome Web Store User Data Policy, including the Limited Use requirements. In Firefox, the add-on asks for your consent to this lookup when you install it, as Mozilla requires.</p>
 
 <h2>The website</h2>
 <p><strong>Reports you submit.</strong> When you report a clone we store what you enter in the form: game names, links, developers, platform and notes. These appear publicly once a moderator approves the report. The optional email field is private: only moderators see it, and only to ask you about your report.</p>
