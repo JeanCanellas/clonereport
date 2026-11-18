@@ -2260,6 +2260,577 @@
    "sources": [
     "https://mobilegamer.biz/vita-mahjong-amaze-go-and-meowdoku-maker-oakever-games-fights-cloning-accusations/"
    ]
+  },
+  {
+   "key": "fortnite-battle-royale-pubg",
+   "clone_name": "Fortnite Battle Royale",
+   "clone_developer": "Epic Games",
+   "clone_released": "2017",
+   "original_name": "PUBG: BATTLEGROUNDS",
+   "original_developer": "PUBG Corporation",
+   "original_url": "https://store.steampowered.com/app/578080/",
+   "original_released": "2017",
+   "platform": "PC, consoles, mobile",
+   "notes": "In 2018 PUBG Corp. filed a copyright lawsuit against Epic Games Korea in Seoul, claiming Fortnite's battle royale mode copied PUBG. PUBG Corp. withdrew the lawsuit in June 2018 without a ruling.",
+   "sources": [
+    "https://www.gameinformer.com/2018/06/27/pubg-corp-withdraws-lawsuit-against-epic-over-fortnite",
+    "https://www.pushsquare.com/news/2018/06/pubg_corp_withdraws_copyright_lawsuit_against_epic_games_and_fortnite",
+    "https://www.pcgamesn.com/playerunknowns-battlegrounds/pubg-fortnite-lawsuit"
+   ]
+  },
+  {
+   "key": "pac-avoid-scamperghost",
+   "clone_name": "Pac-Avoid",
+   "clone_developer": "King",
+   "original_name": "Scamperghost",
+   "original_developer": "Stolen Goose",
+   "original_released": "2009",
+   "platform": "Web (Flash)",
+   "notes": "In January 2014 Scamperghost's developer said King had walked away from a deal to license the game and then released the similar Pac-Avoid. King took Pac-Avoid down and later said it should never have published it.",
+   "sources": [
+    "https://www.engadget.com/2014-01-27-candy-crush-dev-king-pulls-pac-avoid-following-copycat-accusatio.html",
+    "https://kotaku.com/candy-crush-makers-take-down-a-game-accused-of-being-a-1508917924",
+    "https://mcvuk.com/business-news/publishing/king-we-should-never-have-published-pac-avoid/"
+   ]
+  },
+  {
+   "key": "candy-crush-saga-candyswipe",
+   "clone_name": "Candy Crush Saga",
+   "clone_developer": "King",
+   "clone_released": "2012",
+   "original_name": "CandySwipe",
+   "original_developer": "Runsome Apps (Albert Ransom)",
+   "original_released": "2010",
+   "platform": "iOS, Android",
+   "notes": "In February 2014, during a trademark dispute with King, CandySwipe's developer Albert Ransom published an open letter accusing King of copying CandySwipe, which came out two years before Candy Crush Saga.",
+   "sources": [
+    "https://gamedeveloper.com/design/-i-candyswipe-i-maker-admonishes-king-over-trademark",
+    "https://www.gamespot.com/articles/candy-crush-developer-king-gets-angry-open-letter-from-rival-over-trademark-dispute/1100-6417704/",
+    "https://gameinformer.com/b/news/archive/2014/02/12/candyswipe-dev-cries-foul-on-candy-crush-saga.aspx"
+   ]
+  },
+  {
+   "key": "bodycam-shooter-ps-store",
+   "clone_name": "Bodycam Shooter",
+   "clone_developer": "RandomSpin",
+   "original_name": "Bodycam",
+   "original_developer": "Reissad Studio",
+   "original_url": "https://store.steampowered.com/app/2406770/",
+   "original_released": "2024",
+   "platform": "PlayStation",
+   "notes": "Bodycam Shooter was one of several PlayStation Store games, flagged by players as copies of popular titles, that were removed in February 2025.",
+   "sources": [
+    "https://www.techradar.com/gaming/supermarket-simulator-pro-is-no-more-as-a-number-of-spam-games-are-removed-from-the-ps-store"
+   ]
+  },
+  {
+   "key": "supermarket-simulator-pro-ps-store",
+   "clone_name": "Supermarket Simulator Pro",
+   "clone_developer": "RandomSpin",
+   "original_name": "Supermarket Simulator",
+   "original_developer": "Nokta Games",
+   "original_url": "https://store.steampowered.com/app/2670630/",
+   "original_released": "2024",
+   "platform": "PlayStation",
+   "notes": "Supermarket Simulator Pro was removed from the PlayStation Store in February 2025 along with other listings that players had flagged as copies of popular games.",
+   "sources": [
+    "https://www.techradar.com/gaming/supermarket-simulator-pro-is-no-more-as-a-number-of-spam-games-are-removed-from-the-ps-store"
+   ]
+  },
+  {
+   "key": "hooole-all-in-hole",
+   "clone_name": "Hooole!",
+   "clone_developer": "Century Games / Talefun (Tap Color Studio)",
+   "original_name": "All in Hole",
+   "original_developer": "Homa Games",
+   "original_released": "2023",
+   "platform": "iOS, Android",
+   "notes": "In January 2025 Homa Games sued Century Games and Talefun in a US federal court in California, claiming Hooole! copied All in Hole's level layouts, interface and booster progression. Hooole! was later removed from the App Store and Google Play.",
+   "sources": [
+    "https://esportslegal.news/2025/05/21/homa-games-century-games-litigation/"
+   ]
+  },
+  {
+   "key": "stealing-brainrots-steal-a-brainrot",
+   "clone_name": "Stealing Brainrots (Fortnite map)",
+   "clone_developer": "Thomas Van Der Voort",
+   "clone_released": "2025",
+   "original_name": "Steal a Brainrot",
+   "original_developer": "Spyder Games (DoBig Studios)",
+   "original_released": "2025",
+   "platform": "Roblox / Fortnite",
+   "notes": "In October 2025 the makers of the Roblox game Steal a Brainrot sued the creator of a Fortnite Creative map in a California court, calling it a wholesale copy of their game's art and gameplay.",
+   "sources": [
+    "https://www.pcgamer.com/games/a-brainrot-themed-roblox-game-is-taking-a-brainrot-themed-fortnite-game-to-court-for-being-a-copy/",
+    "https://insider-gaming.com/steal-a-brainrot-developers-sue-fortnite-copycat/",
+    "https://respawn.outlookindia.com/gaming/gaming-news/roblox-brainrot-dev-sues-fortnite-creator-over-alleged-clone"
+   ]
+  },
+  {
+   "key": "war-gods-zeus-of-child-god-of-war",
+   "clone_name": "War Gods: Zeus of Child",
+   "clone_developer": "Dolaka LTD",
+   "clone_released": "2022",
+   "original_name": "God of War",
+   "original_developer": "Santa Monica Studio",
+   "platform": "Xbox",
+   "notes": "In August 2022 press widely reported this Xbox Store game as a God of War knock-off with a Kratos-like hero. Microsoft removed it from the Xbox Store days later.",
+   "sources": [
+    "https://www.gamesradar.com/xbox-quietly-deletes-the-terrible-god-of-war-ripoff",
+    "https://kotaku.com/god-of-war-war-gods-xbox-indie-knock-off-kratos-1849361788",
+    "https://www.pushsquare.com/news/2022/08/random-this-crappy-god-of-war-knock-off-for-xbox-does-not-look-legal"
+   ]
+  },
+  {
+   "key": "gran-carismo-gran-turismo",
+   "clone_name": "Gran Carismo (renamed Grand Car Racing on PlayStation)",
+   "clone_developer": "Appwill Company",
+   "clone_released": "2026",
+   "original_name": "Gran Turismo",
+   "original_developer": "Polyphony Digital",
+   "platform": "PlayStation, Nintendo Switch, PC",
+   "notes": "Push Square flagged Gran Carismo as a likely Gran Turismo copycat in March 2026. After its April 2026 release its PlayStation Store title was changed to Grand Car Racing, which Push Square said followed pressure from Sony's legal team.",
+   "sources": [
+    "https://www.pushsquare.com/news/2026/04/gran-turismo-copycat-forced-to-change-its-name-for-release-on-ps5-ps4"
+   ]
+  },
+  {
+   "key": "peachy-derby-umamusume",
+   "clone_name": "Peachy Derby",
+   "clone_released": "2025",
+   "original_name": "Umamusume: Pretty Derby",
+   "original_developer": "Cygames",
+   "platform": "PlayStation",
+   "notes": "Push Square listed Peachy Derby among shameless PlayStation Store clones in November 2025, saying it was almost certainly trying to cash in on Umamusume: Pretty Derby.",
+   "sources": [
+    "https://www.pushsquare.com/news/2025/11/shameless-clones-of-viral-hit-games-like-megabonk-continue-to-plague-ps-store"
+   ]
+  },
+  {
+   "key": "hi-neighbor-hello-there-xbox",
+   "clone_name": "Hi Neighbor Hello There",
+   "clone_developer": "Dolaka LTD",
+   "original_name": "Hello Neighbor",
+   "original_developer": "Dynamic Pixels",
+   "original_url": "https://store.steampowered.com/app/521890/",
+   "original_released": "2017",
+   "platform": "Xbox",
+   "notes": "In August 2022 GamesRadar+ reported that Dolaka LTD, the studio behind the God of War knock-off pulled from the Xbox Store, was still selling copycats there, including this imitation of Hello Neighbor.",
+   "sources": [
+    "https://gamesradar.com/studio-behind-delisted-xbox-god-of-war-ripoff-still-selling-copycats-of-pokemon-mario-v-rising-and-more"
+   ]
+  },
+  {
+   "key": "mystic-epic-fnafena-fnaf-security-breach",
+   "clone_name": "Mystic Epic Fnafena",
+   "clone_developer": "Dolaka LTD",
+   "original_name": "Five Nights at Freddy's: Security Breach",
+   "original_developer": "Steel Wool Studios",
+   "original_released": "2021",
+   "platform": "Xbox",
+   "notes": "GamesRadar+ reported in August 2022 that this Xbox Store game from Dolaka LTD imitated Five Nights at Freddy's: Security Breach.",
+   "sources": [
+    "https://gamesradar.com/studio-behind-delisted-xbox-god-of-war-ripoff-still-selling-copycats-of-pokemon-mario-v-rising-and-more"
+   ]
+  },
+  {
+   "key": "classic-platformer-mariones-xbox",
+   "clone_name": "Classic Platformer Mariones",
+   "clone_developer": "Dolaka LTD",
+   "original_name": "Super Mario",
+   "original_developer": "Nintendo",
+   "platform": "Xbox",
+   "notes": "GamesRadar+ reported in August 2022 that Dolaka LTD was selling this Mario imitation on the Xbox Store after its God of War knock-off was delisted.",
+   "sources": [
+    "https://gamesradar.com/studio-behind-delisted-xbox-god-of-war-ripoff-still-selling-copycats-of-pokemon-mario-v-rising-and-more"
+   ]
+  },
+  {
+   "key": "zombie-v-rising-after-deaths-xbox",
+   "clone_name": "Zombie V Rising After Deaths",
+   "clone_developer": "Dolaka LTD",
+   "original_name": "V Rising",
+   "original_developer": "Stunlock Studios",
+   "original_url": "https://store.steampowered.com/app/1604030/",
+   "original_released": "2022",
+   "platform": "Xbox",
+   "notes": "GamesRadar+ reported in August 2022 that this Xbox Store listing from Dolaka LTD used V Rising's art to promote an unrelated driving game.",
+   "sources": [
+    "https://gamesradar.com/studio-behind-delisted-xbox-god-of-war-ripoff-still-selling-copycats-of-pokemon-mario-v-rising-and-more"
+   ]
+  },
+  {
+   "key": "fly-monster-3d-pokemon-xbox",
+   "clone_name": "Fly Monster 3D",
+   "clone_developer": "Dolaka LTD",
+   "original_name": "Pokémon",
+   "original_developer": "Game Freak / The Pokémon Company",
+   "platform": "Xbox",
+   "notes": "GamesRadar+ reported in August 2022 that this Xbox Store game from Dolaka LTD used a model of the Pokémon Arceus.",
+   "sources": [
+    "https://gamesradar.com/studio-behind-delisted-xbox-god-of-war-ripoff-still-selling-copycats-of-pokemon-mario-v-rising-and-more"
+   ]
+  },
+  {
+   "key": "fall-gang-knockout-fall-guys",
+   "clone_name": "Fall Gang: Knockout",
+   "clone_developer": "Kelemen Tamas",
+   "clone_released": "2020",
+   "original_name": "Fall Guys",
+   "original_developer": "Mediatonic",
+   "original_url": "https://store.steampowered.com/app/1097150/",
+   "original_released": "2020",
+   "platform": "iOS",
+   "notes": "Fall Gang: Knockout reached about 81,000 downloads before it was taken off the App Store in August 2020. Its developer said Apple asked for the removal after a complaint from Fall Guys publisher Devolver Digital.",
+   "sources": [
+    "https://www.pocketgamer.biz/fall-guys-clone-fall-gang-knockout/",
+    "https://wnhub.io/news/stores-and-publishing/item-17306"
+   ]
+  },
+  {
+   "key": "astrofix-galaxy-quest-astro-bot",
+   "clone_name": "Astrofix Galaxy Quest",
+   "clone_developer": "Witenova Studio",
+   "original_name": "Astro Bot",
+   "original_developer": "Team Asobi",
+   "original_released": "2024",
+   "platform": "PlayStation",
+   "notes": "In December 2025 players drew attention to Astrofix Galaxy Quest, an upcoming PlayStation Store listing with apparently AI-made art that copied the look of the award-winning Astro Bot, and asked Sony to step in.",
+   "sources": [
+    "https://ixbt.games/en/news/2025/12/27/v-playstation-store-obnaruzili-ii-klonov-astro-bot-i-ne-tolko-polzovateli-v-besenstve-ot-otsutstviia-moderacii.html"
+   ]
+  },
+  {
+   "key": "farm-epic-farm-heroes-saga",
+   "clone_name": "Farm Epic",
+   "clone_developer": "6waves",
+   "original_name": "Farm Heroes Saga",
+   "original_developer": "King",
+   "original_released": "2013",
+   "platform": "Facebook",
+   "notes": "King sued 6waves in San Francisco in August 2013, calling Farm Epic an unmistakable copy of Farm Heroes Saga. Under a 2014 settlement and court injunction, 6waves stopped distributing the game and paid King a share of its revenue.",
+   "sources": [
+    "https://gamesbeat.com/king-sues-6waves-for-allegedly-blatantly-copying-two-social-games-exclusive/",
+    "https://www.pocketgamer.biz/king-triumphs-in-6waves-legal-dispute-chinese-firm-pulls-clones-from-sale",
+    "https://www.fenwick.com/insights/our-news/fenwick-secures-stipulated-permanent-injunction-for-king-in-copyright-battle-with-6waves"
+   ]
+  },
+  {
+   "key": "treasure-epic-pet-rescue-saga",
+   "clone_name": "Treasure Epic",
+   "clone_developer": "6waves",
+   "original_name": "Pet Rescue Saga",
+   "original_developer": "King",
+   "original_released": "2012",
+   "platform": "Facebook",
+   "notes": "King's 2013 lawsuit claimed 6waves' Treasure Epic copied Pet Rescue Saga. In the 2014 settlement 6waves agreed to stop distributing it under a court injunction and paid King an undisclosed amount.",
+   "sources": [
+    "https://www.pocketgamer.biz/king-triumphs-in-6waves-legal-dispute-chinese-firm-pulls-clones-from-sale",
+    "https://gamesbeat.com/king-vs-copycats-settlement-forces-6waves-to-remove-its-games-from-the-web/"
+   ]
+  },
+  {
+   "key": "my-little-pony-puzzle-party-toy-blast",
+   "clone_name": "My Little Pony: Puzzle Party",
+   "clone_developer": "Backflip Studios (Hasbro)",
+   "clone_released": "2017",
+   "original_name": "Toy Blast",
+   "original_developer": "Peak Games",
+   "original_released": "2015",
+   "platform": "iOS, Android",
+   "notes": "Peak Games sued Hasbro and Backflip in a US federal court in San Francisco, claiming the game was a re-skin of Toy Blast with matching screens, tutorial and level designs. The parties settled out of court in 2018.",
+   "sources": [
+    "https://gamesbeat.com/lawsuit-says-hasbro-lifted-design-for-my-little-pony-mobile-game-from-peak-games-toy-blast/",
+    "https://gamesbeat.com/hasbro-and-backflip-settle-with-peak-on-my-little-pony-copycat-suit/",
+    "https://www.pocketgamer.biz/peak-games-settles-my-little-pony-cloning-lawsuit-out-of-court"
+   ]
+  },
+  {
+   "key": "kill-shot-deer-hunter-2014",
+   "clone_name": "Kill Shot",
+   "clone_developer": "Hothead Games",
+   "clone_released": "2014",
+   "original_name": "Deer Hunter 2014",
+   "original_developer": "Glu Mobile",
+   "original_released": "2013",
+   "platform": "iOS, Android",
+   "notes": "In November 2014 Glu Mobile sued Hothead Games for copyright and trade dress infringement, claiming Kill Shot copied Deer Hunter 2014. The case settled in 2015, with Hothead making ongoing payments to Glu.",
+   "sources": [
+    "https://gamesbeat.com/glu-mobile-sues-hothead-games-over-alleged-deer-hunter-2014-ripoff-kill-shot",
+    "https://www.pocketgamer.biz/oh-deer-glu-sues-hothead-games-for-copying-dear-hunter-2014",
+    "https://www.courthousenews.com/game-makers-settle-suit-over-kill-shot-app/"
+   ]
+  },
+  {
+   "key": "zynga-bingo-bingo-blitz",
+   "clone_name": "Zynga Bingo",
+   "clone_developer": "Zynga",
+   "clone_released": "2012",
+   "original_name": "Bingo Blitz",
+   "original_developer": "Buffalo Studios",
+   "platform": "Facebook",
+   "notes": "In January 2012 Buffalo Studios published an open letter accusing Zynga of copying Bingo Blitz with Zynga Bingo.",
+   "sources": [
+    "https://techcrunch.com/2012/01/30/zynga-accused-of-ripping-off-another-competitors-game",
+    "https://gamedeveloper.com/business/-i-bingo-blitz-i-developer-accuses-zynga-of-copying",
+    "https://www.escapistmagazine.com/news/view/115567-Zynga-Accused-of-Plagiarism-Over-Zynga-Bingo"
+   ]
+  },
+  {
+   "key": "hexic-flow-flow-free",
+   "clone_name": "Hexic Flow",
+   "clone_developer": "ThinkCube",
+   "original_name": "Flow Free",
+   "original_developer": "Big Duck Games",
+   "original_released": "2012",
+   "platform": "iOS, Android",
+   "notes": "In February 2015 Big Duck Games sued ThinkCube in a US federal court for copyright and trademark infringement, claiming its Hexic Flow series copied Flow Free's graphics, design and name.",
+   "sources": [
+    "https://smcarthurlaw.com/?p=411",
+    "https://legalmoveslawfirm.com/new-lawsuits-mobile-game-clones/"
+   ]
+  },
+  {
+   "key": "pixel-story-tiny-tower",
+   "clone_name": "Pixel Story",
+   "clone_developer": "Skyboard",
+   "clone_released": "2012",
+   "original_name": "Tiny Tower",
+   "original_developer": "NimbleBit",
+   "original_released": "2011",
+   "platform": "iOS",
+   "notes": "During the 2012 \"Clonegate\" row over App Store copies, Pixel Story was accused of closely copying Tiny Tower and disappeared from the US and UK App Store in February 2012.",
+   "sources": [
+    "https://www.pocketgamer.biz/pixel-story-disappears-from-app-store-in-us-and-uk-amid-clonegate-furore",
+    "https://www.pocketgamer.biz/complexity-of-clonegate-underlined-as-temple-jump-pulled-from-app-store-but-tiny-tower-inspired-pixel-story-remains/"
+   ]
+  },
+  {
+   "key": "papa-quash-js-joust",
+   "clone_name": "Papa Quash",
+   "clone_developer": "ustwo (for Sam Pepper)",
+   "clone_released": "2012",
+   "original_name": "J.S. Joust",
+   "original_developer": "Die Gute Fabrik",
+   "platform": "iOS",
+   "notes": "In May 2012 Papa Quash was accused of cloning J.S. Joust. Die Gute Fabrik said it had never approved or encouraged a clone, and ustwo pulled Papa Quash from the App Store.",
+   "sources": [
+    "https://www.mcvuk.com/papa-quash-pulled-following-clone-allegations/",
+    "https://www.pocketgamer.com/papa-quash/ustwo-pulls-papa-quash-from-the-app-store-over-cloning-allegations",
+    "https://kotaku.com/joust-creators-weigh-in-on-cloning-controversy-5913221"
+   ]
+  },
+  {
+   "key": "league-of-epic-heroes-desktop-dungeons",
+   "clone_name": "League of Epic Heroes",
+   "clone_developer": "Lazy Peon Games",
+   "clone_released": "2010",
+   "original_name": "Desktop Dungeons",
+   "original_developer": "QCF Design",
+   "platform": "iOS",
+   "notes": "After QCF Design's lawyer sent a copyright infringement notice, the developer of League of Epic Heroes admitted it infringed Desktop Dungeons, removed it from the App Store in January 2011 and apologized.",
+   "sources": [
+    "https://www.pocketgamer.biz/league-of-epic-heroes-removed-from-app-store-as-dev-admits-copyright-infringement",
+    "https://www.loopinsight.com/2011/01/17/new-plagiarism-charges-hit-app-store-games/"
+   ]
+  },
+  {
+   "key": "i-hate-puzzle-super-puzzle-platformer",
+   "clone_name": "I Hate Puzzle",
+   "clone_developer": "Yan Zhenhua",
+   "clone_released": "2011",
+   "original_name": "Super Puzzle Platformer",
+   "platform": "iOS",
+   "notes": "In August 2011 the developer of the Flash game Super Puzzle Platformer alerted Pocket Gamer to I Hate Puzzle, a near-identical iPhone copy. It was removed from the App Store soon after.",
+   "sources": [
+    "https://www.pocketgamer.com/i-hate-puzzle/update-super-puzzle-platformer-clone-i-hate-puzzle-hits-the-app-store-vanishes-a"
+   ]
+  },
+  {
+   "key": "the-blocks-cometh-iphone-copy",
+   "clone_name": "The Blocks Cometh (unofficial iPhone copy)",
+   "clone_developer": "Yan Zhenhua",
+   "clone_released": "2011",
+   "original_name": "The Blocks Cometh",
+   "original_developer": "Halfbot",
+   "platform": "iOS",
+   "notes": "Pocket Gamer reported in 2011 that the developer behind the I Hate Puzzle copy had earlier put an unauthorized iPhone copy of the Flash game The Blocks Cometh on the App Store without even changing its name.",
+   "sources": [
+    "https://www.pocketgamer.com/i-hate-puzzle/update-super-puzzle-platformer-clone-i-hate-puzzle-hits-the-app-store-vanishes-a"
+   ]
+  },
+  {
+   "key": "muffin-knight-super-crate-box",
+   "clone_name": "Muffin Knight",
+   "clone_developer": "Angry Mob Games",
+   "clone_released": "2012",
+   "original_name": "Super Crate Box",
+   "original_developer": "Vlambeer",
+   "original_url": "https://store.steampowered.com/app/212800/",
+   "original_released": "2010",
+   "platform": "iOS",
+   "notes": "Vlambeer's Rami Ismail criticized Muffin Knight as an imitation of Super Crate Box, released just before Vlambeer's own iOS version. Angry Mob Games said it was \"indeed inspired by Super Crate Box\" and offered to credit it.",
+   "sources": [
+    "https://www.appspy.com/news/regarding-muffin-knight-and-more-updated/",
+    "https://gamedeveloper.com/business/in-depth-inside-i-super-crate-box-i-dev-vlambeer-s-clone-wars"
+   ]
+  },
+  {
+   "key": "poppy-playtime-chapter-3-daigo",
+   "clone_name": "Poppy Playtime: Chapter 3 (unofficial Google Play app)",
+   "clone_developer": "Daigo Game 2020 Inc.",
+   "original_name": "Poppy Playtime",
+   "original_developer": "Mob Entertainment",
+   "original_url": "https://store.steampowered.com/app/1721470/",
+   "original_released": "2021",
+   "platform": "Android",
+   "notes": "In January 2025 Mob Entertainment sued Google and Daigo Game 2020 Inc., claiming this unofficial Google Play app infringed Poppy Playtime and sold add-ons that did not work. Mob said Google took it down after a report but relisted it days later.",
+   "sources": [
+    "https://hitmarker.net/news/google-sued-by-poppy-playtime-developer-for-failing-to-remove-fake-clones-from-the-play-store-2887215",
+    "https://mein-mmo.de/en/a-developer-sues-google-for-failing-to-protect-players-from-scams,1218358"
+   ]
+  },
+  {
+   "key": "poppy-playtime-chapter-4-daigo",
+   "clone_name": "Poppy Playtime: Chapter 4 (unofficial Google Play app)",
+   "clone_developer": "Daigo Game 2020 Inc.",
+   "original_name": "Poppy Playtime",
+   "original_developer": "Mob Entertainment",
+   "original_url": "https://store.steampowered.com/app/1721470/",
+   "original_released": "2021",
+   "platform": "Android",
+   "notes": "Mob Entertainment's January 2025 lawsuit against Google and Daigo Game 2020 Inc. also named this unofficial Chapter 4 app as infringing Poppy Playtime.",
+   "sources": [
+    "https://hitmarker.net/news/google-sued-by-poppy-playtime-developer-for-failing-to-remove-fake-clones-from-the-play-store-2887215"
+   ]
+  },
+  {
+   "key": "sofra-venba",
+   "clone_name": "Sofra",
+   "clone_developer": "Global Advertising Network LTD",
+   "clone_released": "2024",
+   "original_name": "Venba",
+   "original_developer": "Visai Games",
+   "original_url": "https://store.steampowered.com/app/1491670/",
+   "original_released": "2023",
+   "platform": "Android",
+   "notes": "In June 2025 Venba's developer Visai Games publicly called Sofra a \"mobile game rip-off with stolen assets\" that copies Venba's cooking gameplay and art style.",
+   "sources": [
+    "https://aftermath.site/this-game-sure-looks-a-lot-like-venba"
+   ]
+  },
+  {
+   "key": "find-sort-match-a-little-to-the-left",
+   "clone_name": "Find Sort Match: Puzzle game",
+   "clone_developer": "Global Advertising Network LTD",
+   "original_name": "A Little to the Left",
+   "original_developer": "Max Inferno",
+   "original_url": "https://store.steampowered.com/app/1629520/",
+   "original_released": "2022",
+   "platform": "Android",
+   "notes": "Aftermath reported in June 2025 that this Google Play game, with over 5 million downloads, copies A Little to the Left. Max Inferno has said it has had to file many dozens of claims against copycat apps.",
+   "sources": [
+    "https://aftermath.site/this-game-sure-looks-a-lot-like-venba",
+    "https://mobilegamer.biz/the-real-a-little-to-the-left-arrives-on-ios-after-a-slew-of-rip-offs"
+   ]
+  },
+  {
+   "key": "hero-summoner-afk-arena",
+   "clone_name": "Hero Summoner",
+   "clone_developer": "MoBai Technology / Ma'ou Network Technology",
+   "original_name": "AFK Arena",
+   "original_developer": "Lilith Games",
+   "original_released": "2019",
+   "platform": "Mobile",
+   "notes": "At the end of 2021 the makers of Hero Summoner published an apology admitting they had infringed Lilith Games' copyrights in AFK Arena. The game was taken offline for a redesign and the companies settled.",
+   "sources": [
+    "https://www.superpixel.com/article/22243/game-developers-hero-summoner-apologized-lilith-games-plagiarism"
+   ]
+  },
+  {
+   "key": "hex-shards-of-fate-magic",
+   "clone_name": "Hex: Shards of Fate",
+   "clone_developer": "Hex Entertainment / Cryptozoic",
+   "clone_released": "2014",
+   "original_name": "Magic: The Gathering",
+   "original_developer": "Wizards of the Coast",
+   "platform": "PC",
+   "notes": "In 2014 Wizards of the Coast sued Cryptozoic and Hex Entertainment, claiming Hex copied Magic: The Gathering. The companies settled in September 2015.",
+   "sources": [
+    "https://gamedeveloper.com/business/16-months-on-wizards-of-the-coast-settles-i-hex-shards-of-fate-i-lawsuit",
+    "https://massivelyop.com/2015/09/28/that-wizards-of-the-coast-vs-hex-lawsuit-has-finally-been-settled/"
+   ]
+  },
+  {
+   "key": "maxplosion-splosion-man",
+   "clone_name": "MaXplosion",
+   "clone_developer": "Capcom",
+   "clone_released": "2011",
+   "original_name": "'Splosion Man",
+   "original_developer": "Twisted Pixel",
+   "original_released": "2009",
+   "platform": "iOS",
+   "notes": "In January 2011 Twisted Pixel called Capcom's iPhone game MaXplosion \"complete theft\" of 'Splosion Man. Capcom defended the game.",
+   "sources": [
+    "https://www.pocketgamer.com/maxplosion/splosion-man-developer-twisted-pixel-on-capcoms-iphone-game-maxplosion-complete",
+    "https://www.pocketgamer.com/articles/026680/capcom-defends-maxplosion-against-mounting-criticism/",
+    "https://kotaku.com/did-capcom-totally-copy-someone-elses-work-5731482"
+   ]
+  },
+  {
+   "key": "free-runner-canabalt",
+   "clone_name": "Free Runner",
+   "clone_developer": "PLD Soft",
+   "clone_released": "2011",
+   "original_name": "Canabalt",
+   "original_developer": "Adam Saltsman and Danny Baranowsky",
+   "original_released": "2009",
+   "platform": "iOS",
+   "notes": "Kotaku reported in May 2011 that Free Runner was a straight App Store copy of Canabalt, even crediting the original creators in its about screen. Adam Saltsman said it was taken down.",
+   "sources": [
+    "https://kotaku.com/itunes-flash-game-ripoffs-get-more-brazen-with-canabalt-5799158"
+   ]
+  },
+  {
+   "key": "free-running-canabalt",
+   "clone_name": "Free Running",
+   "clone_developer": "PLD Soft",
+   "clone_released": "2011",
+   "original_name": "Canabalt",
+   "original_developer": "Adam Saltsman and Danny Baranowsky",
+   "original_released": "2009",
+   "platform": "iOS",
+   "notes": "Kotaku reported in May 2011 that Free Running was a copy of Canabalt with only a new title and title screen, sold on the App Store by the same publisher as Free Runner.",
+   "sources": [
+    "https://kotaku.com/itunes-flash-game-ripoffs-get-more-brazen-with-canabalt-5799158"
+   ]
+  },
+  {
+   "key": "pick-a-lock-pop-the-lock",
+   "clone_name": "Pick a Lock",
+   "clone_released": "2014",
+   "original_name": "Pop the Lock",
+   "original_developer": "Simple Machine",
+   "original_released": "2014",
+   "platform": "Android",
+   "notes": "Pocket Gamer reported that Pick a Lock was one of many knock-offs of Simple Machine's Pop the Lock, and pulled its own coverage of it after realizing it was a copy. Many of the clones were removed by Apple and Google.",
+   "sources": [
+    "https://www.pocketgamer.com/pop-the-lock/your-game-is-going-to-be-cloned"
+   ]
+  },
+  {
+   "key": "fuktopia-death-trash",
+   "clone_name": "FukTopia",
+   "clone_developer": "Freeminds Studios",
+   "clone_released": "2018",
+   "original_name": "Death Trash",
+   "original_developer": "Stephan Hövelbrinks (Crafting Legends)",
+   "original_url": "https://store.steampowered.com/app/941460/",
+   "platform": "PC",
+   "notes": "In February 2018 Death Trash's developer accused FukTopia of copying its art style and store description and taking its name from a Death Trash location, and asked it to rename. Freeminds removed some similarities but kept the name.",
+   "sources": [
+    "https://www.pcgamer.com/death-trash-dev-calls-out-copycat-on-steam-please-rename-your-game/"
+   ]
   }
  ]
 }
