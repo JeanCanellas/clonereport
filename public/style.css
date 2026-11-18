@@ -1,10 +1,10 @@
 :root {
   --bg: #f7f7f5; --fg: #1b1d21; --muted: #626875; --card: #ffffff; --line: #e2e3e0;
-  --accent: #d6402b; --accent-fg: #fff; --orig: #1f7a4d; --clone: #b4381f; --focus: #2a62d8;
+  --accent: #d6402b; --accent-fg: #fff; --orig: #1f7a4d; --clone: #b4381f; --focus: #2a62d8; --blue: #2a62d8;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #131417; --fg: #ecedef; --muted: #9aa0ab; --card: #1c1e22; --line: #2c2f35;
-          --accent: #f0624b; --orig: #4cc28a; --clone: #f0826d; --focus: #7aa2ff; }
+          --accent: #f0624b; --orig: #4cc28a; --clone: #f0826d; --focus: #7aa2ff; --blue: #3a6be0; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -26,6 +26,7 @@ input, textarea { font: inherit; color: inherit; background: var(--bg); border: 
 .btn { display: inline-block; font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 10px 18px; background: var(--accent); color: var(--accent-fg); text-decoration: none; cursor: pointer; }
 .btn.small { padding: 7px 12px; font-size: .9rem; }
 .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn.blue { background: var(--blue); color: #fff; }
 .btn.danger { background: transparent; color: var(--clone); border: 1px solid var(--clone); }
 
 .hero { text-align: center; padding: 32px 0 8px; }
@@ -83,10 +84,16 @@ legend { font-weight: 700; padding: 0 6px; }
 .pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 18px 0; }
 
 .nav-link { font-size: .92rem; text-decoration: none; color: var(--muted); white-space: nowrap; }
+.top-nav { display: flex; gap: 14px; }
+.top-nav .nav-link { color: var(--fg); font-weight: 600; }
+@media (max-width: 560px) { .top-nav { order: 10; width: 100%; } }
 .nav-link:hover { color: var(--fg); text-decoration: underline; }
 .ext-promo { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 28px 0; }
 .ext-promo img { width: 100%; height: auto; border-radius: 8px; display: block; }
 .ext-promo h2 { margin-top: 0; }
+.install { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.ext-example { margin: 0; }
+.ext-example figcaption { font-size: .9em; margin-top: 6px; }
 .ext-promo.compact { border-left: 4px solid var(--accent); }
 .ext-shot { width: 100%; height: auto; border-radius: 12px; margin: 8px 0 16px; }
 .lead { font-size: 1.1rem; }

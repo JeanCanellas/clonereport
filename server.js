@@ -10,7 +10,7 @@ const scanner = require('./scanner');
 const steam = require('./steam');
 const api = require('./api');
 const mailer = require('./mailer');
-const { layout, home, searchPage, reportPage, gamePage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, clonesPage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS, esc } = require('./views');
 const { familyTree } = require('./tree');
 const classic = require('./classic');
 const stores = require('./stores');
@@ -49,10 +49,11 @@ if (process.env.SEED_REPORTS === '1' || (process.env.SEED_REPORTS !== '0' && !pr
 
 const CSS = fs.readFileSync(path.join(__dirname, 'public', 'style.css'));
 const EXT_SHOT = fs.readFileSync(path.join(__dirname, 'public', 'extension-screenshot.png'));
-// Chrome extension download, built from chrome-extension/ at start. Once the extension
-// is on the Chrome Web Store, set CHROME_STORE_URL and the site links there instead.
+const HOME_EXAMPLE = fs.readFileSync(path.join(__dirname, 'public', 'home-clone-example.png'));
+// The site sends people to the Chrome Web Store listing. The zip, built from
+// chrome-extension/ at start, is still served for developers who load it unpacked.
 const EXT_ZIP = extension.buildZip();
-const EXT_INFO = { version: extension.version(), storeUrl: process.env.CHROME_STORE_URL || '', zipUrl: '/extension/clone-report-extension.zip' };
+const EXT_INFO = { version: extension.version(), storeUrl: extension.STORE_URL, firefoxUrl: extension.FIREFOX_URL, zipUrl: '/extension/clone-report-extension.zip' };
 
 // ---------- helpers ----------
 const hmac = (s) => crypto.createHmac('sha256', SECRET).update(s).digest('hex');
@@ -323,6 +324,8 @@ async function handle(req, res) {
     return send(res, 200, EXT_ZIP, { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="clone-report-extension.zip"', 'Cache-Control': 'public, max-age=3600' });
   if (req.method === 'GET' && p === '/extension-screenshot.png')
     return send(res, 200, EXT_SHOT, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
+  if (req.method === 'GET' && p === '/home-clone-example.png')
+    return send(res, 200, HOME_EXAMPLE, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
   if (req.method === 'GET' && p === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
 
   if (req.method === 'GET' && p === '/privacy') return send(res, 200, privacyPage());
@@ -372,6 +375,13 @@ async function handle(req, res) {
   }
 
   if (req.method === 'GET' && p === '/') return send(res, 200, home(store.recent(12), store.counts().approved, store.countOriginals()));
+  if (req.method === 'GET' && p === '/clones') {
+    const per = 50;
+    const total = store.counts().approved;
+    const pages = Math.max(1, Math.ceil(total / per));
+    const page = Math.max(1, Math.min(pages, Number.parseInt(url.searchParams.get('page'), 10) || 1));
+    return send(res, 200, clonesPage(store.apiReports({ limit: per, offset: (page - 1) * per }), { page, pages, total }));
+  }
   if (req.method === 'GET' && p === '/originals') {
     const s = url.searchParams.get('store');
     const storeFilter = ['steam', 'nintendo', 'classic'].includes(s) ? s : '';

@@ -199,10 +199,12 @@ test('reports work for PlayStation, Xbox, mobile and itch.io store pages', async
 
 test('the site recommends the Chrome extension and serves it', async () => {
   const home = await (await fetch(base + '/')).text();
-  assert.match(home, /href="\/extension">Get the Chrome extension/);
+  const storeLink = /href="https:\/\/chromewebstore\.google\.com\/detail\/ijagfhebglljkibhfdmedhgkdbicibgk"[^>]*>Add to Chrome/;
+  assert.match(home, storeLink);
   const page = await (await fetch(base + '/extension')).text();
-  assert.match(page, /Load unpacked/);
-  assert.match(page, /href="\/extension\/clone-report-extension.zip"/);
+  assert.match(page, storeLink);
+  assert.doesNotMatch(page, /Load unpacked|clone-report-extension\.zip/);
+  // The zip is still served for developers.
   const zip = await fetch(base + '/extension/clone-report-extension.zip');
   assert.equal(zip.headers.get('content-type'), 'application/zip');
   const buf = Buffer.from(await zip.arrayBuffer());
@@ -212,6 +214,52 @@ test('the site recommends the Chrome extension and serves it', async () => {
   assert.equal(img.headers.get('content-type'), 'image/png');
 });
 
+test('the site offers a Firefox version, coming soon until the listing is set', async () => {
+  const home = await (await fetch(base + '/')).text();
+  assert.match(home, /Google Chrome or Firefox/);
+  assert.match(home, /Firefox version coming soon/);
+  const page = await (await fetch(base + '/extension')).text();
+  assert.match(page, /Firefox version coming soon/);
+  const { extensionPage } = require('../views');
+  const live = extensionPage({ version: '1.0', firefoxUrl: 'https://addons.mozilla.org/firefox/addon/clone-report/' });
+  assert.match(live, /href="https:\/\/addons\.mozilla\.org\/firefox\/addon\/clone-report\/"[^>]*>Add to Firefox/);
+  assert.doesNotMatch(live, /coming soon/);
+});
+
+test('the Firefox build is the same extension with a Firefox manifest', () => {
+  const extension = require('../extension');
+  const m = extension.firefoxManifest();
+  const chrome = JSON.parse(require('node:fs').readFileSync(`${__dirname}/../chrome-extension/manifest.json`, 'utf8'));
+  assert.equal(m.version, chrome.version);
+  assert.deepEqual(m.background, { scripts: ['background.js'] });
+  assert.equal(m.browser_specific_settings.gecko.id, 'clone-report@clonereport.com');
+  assert.deepEqual(m.browser_specific_settings.gecko.data_collection_permissions, { required: ['browsingActivity'] });
+  assert.deepEqual(m.content_scripts, chrome.content_scripts);
+  // Read the files back out of the zip (local headers, deflated).
+  const zip = extension.buildZip(undefined, { browser: 'firefox' });
+  const files = {};
+  for (let at = 0; zip.readUInt32LE(at) === 0x04034b50;) {
+    const size = zip.readUInt32LE(at + 18), nameLen = zip.readUInt16LE(at + 26), extra = zip.readUInt16LE(at + 28);
+    const name = zip.toString('utf8', at + 30, at + 30 + nameLen);
+    const start = at + 30 + nameLen + extra;
+    files[name] = require('node:zlib').inflateRawSync(zip.subarray(start, start + size));
+    at = start + size;
+  }
+  assert.deepEqual(JSON.parse(files['manifest.json']), m);
+  assert.ok(files['stores.js'] && files['background.js'] && files['icons/icon128.png']);
+});
+
+test('home page shows the Needle In A Haystack clone warning as an example', async () => {
+  const html = await (await fetch(base + '/')).text();
+  assert.match(html, /<img src="\/home-clone-example\.png" alt="Example in Chrome: the Steam page for Needle In A Haystack[^"]+"/);
+  const img = await fetch(base + '/home-clone-example.png');
+  assert.equal(img.status, 200);
+  assert.equal(img.headers.get('content-type'), 'image/png');
+  // Other pages keep the compact promo without the example image.
+  const ext = await (await fetch(base + '/extension')).text();
+  assert.doesNotMatch(ext, /home-clone-example/);
+});
+
 test('privacy policy page is linked from every page', async () => {
   const res = await fetch(base + '/privacy');
   assert.equal(res.status, 200);
@@ -219,4 +267,15 @@ test('privacy policy page is linked from every page', async () => {
   assert.match(html, /<h1>Privacy policy<\/h1>/);
   assert.match(html, /Limited Use/);
   assert.match(await (await fetch(base + '/')).text(), /href="\/privacy"/);
+});
+
+test('header links to the reported clones list, which shows only approved reports', async () => {
+  const home = await (await fetch(base + '/')).text();
+  assert.match(home, /<nav class="top-nav"[^>]*>[\s\S]*href="\/clones">Browse clones<[\s\S]*href="\/originals">Original games</);
+  const res = await fetch(base + '/clones');
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /<h1>Reported clones<\/h1>/);
+  assert.match(html, /Flappy Pigeon/, 'approved report from the first test is listed');
+  assert.equal((await fetch(base + '/clones?page=999')).status, 200, 'out-of-range page is clamped');
 });

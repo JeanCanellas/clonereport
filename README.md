@@ -33,7 +33,8 @@ npm test
 | `ADMIN_EMAIL` | *(none)* | Gets an email for each request sent through `/contact` (needs email alerts set up). Requests always appear at `/admin/requests` |
 | `STEAM_ENRICH` | on | Set to `0` to stop filling release dates, images and developers from Steam when a report is approved |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
-| `CHROME_STORE_URL` | *(none)* | Chrome Web Store listing for the extension; until set, `/extension` offers the zip and install steps |
+| `CHROME_STORE_URL` | the published listing | Overrides the Chrome Web Store link the site's "Add to Chrome" buttons open |
+| `FIREFOX_ADDON_URL` | empty | Firefox Add-ons listing for the "Add to Firefox" buttons. While empty the site says the Firefox version is coming soon. Once the listing is live, hardcode it in `extension.js` |
 | `STEAM_SCAN` | on | Set to `0` to turn off both daily scans |
 | `CLASSIC_SCAN` | on | Set to `0` to turn off only the classic console scan |
 | `STEAM_SCAN_TARGET` | `25000` | The scanners stop adding once the list has this many games |
@@ -101,7 +102,7 @@ The site and extension describe reports as claims ("reported clone", "reported a
 
 ## Pages
 
-- `/` search + recently added, `/extension` (Chrome extension download), `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/follow?game=`, `/feed.xml`, `/api`, `/api/v1/…`, `/report/:id/history`, `/report/:id/dispute`, `/admin/disputes`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
+- `/` search + recently added, `/extension` (browser extension page), `/search?q=`, `/report/:id` (comparison and votes), `POST /report/:id/vote`, `/admin/:id/edit`, `/follow?game=`, `/feed.xml`, `/api`, `/api/v1/…`, `/report/:id/history`, `/report/:id/dispute`, `/admin/disputes`, `/dev/:key`, `/developers`, `/tree?game=`, `/game/:id`, `/originals`, `/submit`, `/admin`, `/admin/originals`
 - `GET /api/lookup?appid=<steam app id>&name=<game name>` or `GET /api/lookup?store=<store>&id=<store id>&name=<game name>` JSON lookup (used by the browser extension).
 
 ## Supported stores
@@ -114,9 +115,11 @@ The site and extension describe reports as claims ("reported clone", "reported a
 
 Reports saved before this change get their store ids filled in from their links on the next start.
 
-## Chrome extension
+## Browser extension (Chrome and Firefox)
 
-`chrome-extension/` is the Clone Report browser extension. It shows a banner on game pages of every store above. The site recommends it on the home, report and game pages and has an install page at `/extension`, which serves `/extension/clone-report-extension.zip` (zipped from `chrome-extension/` when the server starts, so it always matches the code). Once the extension is on the Chrome Web Store, set `CHROME_STORE_URL` to its listing and the page shows an "Add to Chrome" button instead of the install steps. Its `stores.js` must stay identical to the site's (a test checks this). See `chrome-extension/README.md`.
+`chrome-extension/` is the Clone Report browser extension. It shows a banner on game pages of every store above. It is published on the Chrome Web Store (https://chromewebstore.google.com/detail/ijagfhebglljkibhfdmedhgkdbicibgk). The site recommends it on the home, report and game pages, and every "Add to Chrome" button opens that listing; `/extension` describes it. For developers the server still serves `/extension/clone-report-extension.zip` (zipped from `chrome-extension/` at start), but the site no longer links to it. Its `stores.js` must stay identical to the site's (a test checks this). See `chrome-extension/README.md`.
+
+The Firefox add-on is built from the same folder: `npm run build:firefox` writes `clone-report-firefox-<version>.zip` with the manifest swapped for a Firefox one (`firefoxManifest()` in `extension.js`: event page background, add-on id `clone-report@clonereport.com`, Mozilla's data collection declaration). Upload that zip to addons.mozilla.org. The add-on id must never change.
 
 ## Deploy
 
