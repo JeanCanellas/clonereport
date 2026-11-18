@@ -1,4 +1,4 @@
-# Clone Report (Chrome extension)
+# Clone Report (browser extension for Chrome and Firefox)
 
 Shows a banner on game store pages when the game is reported on clonereport.com. It works on:
 
@@ -33,3 +33,9 @@ Users install it from the Chrome Web Store: https://chromewebstore.google.com/de
 ## Publish an update to the Chrome Web Store
 
 The extension is published (item ID `ijagfhebglljkibhfdmedhgkdbicibgk`). To release a new version, bump `version` in `manifest.json`, zip this folder's contents and upload it as a new package at https://chrome.google.com/webstore/devconsole; it goes through review again. You'll need a privacy policy URL; the extension sends only the store, the game id and the game name of the page you're viewing to clonereport.com and stores nothing else. The store listing will say it can "read and change your data" on the store sites above, because it adds the banner to their pages.
+
+## Firefox
+
+The same files run in Firefox 140 and later (desktop) and Firefox for Android 142 and later. Only the manifest differs, and it is generated: run `npm run build:firefox` in the repo root to get `clone-report-firefox-<version>.zip`, which is ready to upload at https://addons.mozilla.org/developers/. To try it, open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**, and pick that zip.
+
+Don't add a `manifest.json` change here that Firefox can't take without checking `firefoxManifest()` in `extension.js`.

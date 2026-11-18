@@ -91,6 +91,7 @@ legend { font-weight: 700; padding: 0 6px; }
 .ext-promo { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 28px 0; }
 .ext-promo img { width: 100%; height: auto; border-radius: 8px; display: block; }
 .ext-promo h2 { margin-top: 0; }
+.install { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .ext-example { margin: 0; }
 .ext-example figcaption { font-size: .9em; margin-top: 6px; }
 .ext-promo.compact { border-left: 4px solid var(--accent); }
