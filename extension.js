@@ -88,9 +88,10 @@ function version() {
 // The published Chrome Web Store listing. CHROME_STORE_URL overrides it (for a test listing).
 const STORE_URL = process.env.CHROME_STORE_URL || 'https://chromewebstore.google.com/detail/ijagfhebglljkibhfdmedhgkdbicibgk';
 
-// The Firefox Add-ons listing. Empty until the add-on is approved there; the site
-// then says the Firefox version is coming soon. FIREFOX_ADDON_URL overrides it.
-const FIREFOX_URL = process.env.FIREFOX_ADDON_URL || '';
+// The published Firefox Add-ons listing (add-on 3132854, approved 2026-11-18).
+// FIREFOX_ADDON_URL overrides it. If it is ever empty, the site says the Firefox
+// version is coming soon instead of showing the button.
+const FIREFOX_URL = process.env.FIREFOX_ADDON_URL ?? 'https://addons.mozilla.org/firefox/addon/clone-report/';
 
 // `node extension.js firefox [out.zip]` writes the zip to upload to addons.mozilla.org.
 if (require.main === module) {
