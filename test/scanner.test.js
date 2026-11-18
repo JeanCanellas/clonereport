@@ -135,3 +135,19 @@ test('classic console scan: adds famous games, merges consoles, respects exclusi
   assert.equal(r.added, 0);
   assert.equal(store.findOriginal(null, 'Lesser Known'), null);
 });
+
+test('parsed search results do not keep the page HTML in memory', () => {
+  const v8 = require('node:v8');
+  v8.setFlagsFromString('--expose-gc');
+  const gc = require('node:vm').runInNewContext('gc');
+  const padding = '<div class="search_capsule"><img src="https://shared.akamai.steamstatic.com/x.jpg"></div>'.repeat(40);
+  const page = (n) => Array.from({ length: 100 }, (_, i) => item(n * 100 + i + 1, `Plain Name ${n * 100 + i}`, 90, 500) + padding).join('');
+  gc();
+  const before = process.memoryUsage().heapUsed;
+  const kept = [];
+  for (let n = 0; n < 100; n++) kept.push(...parseSearchPage(page(n))); // ~40 MB of HTML in total
+  gc();
+  const grown = process.memoryUsage().heapUsed - before;
+  assert.equal(kept.length, 10_000);
+  assert.ok(grown < 10e6, `kept ${Math.round(grown / 1e6)} MB for 10,000 results`);
+});
