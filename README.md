@@ -34,7 +34,7 @@ npm test
 | `STEAM_ENRICH` | on | Set to `0` to stop filling release dates, images and developers from Steam when a report is approved |
 | `SEED_ORIGINALS` | on | Set to `0` to skip loading `seed/originals.json` at start |
 | `CHROME_STORE_URL` | the published listing | Overrides the Chrome Web Store link the site's "Add to Chrome" buttons open |
-| `FIREFOX_ADDON_URL` | empty | Firefox Add-ons listing for the "Add to Firefox" buttons. While empty the site says the Firefox version is coming soon. Once the listing is live, hardcode it in `extension.js` |
+| `FIREFOX_ADDON_URL` | the published listing | Overrides the Firefox Add-ons link the site's "Add to Firefox" buttons open. Set it to an empty value to show "Firefox version coming soon" instead |
 | `STEAM_SCAN` | on | Set to `0` to turn off both daily scans |
 | `CLASSIC_SCAN` | on | Set to `0` to turn off only the classic console scan |
 | `STEAM_SCAN_TARGET` | `25000` | The scanners stop adding once the list has this many games |
@@ -119,7 +119,7 @@ Reports saved before this change get their store ids filled in from their links 
 
 `chrome-extension/` is the Clone Report browser extension. It shows a banner on game pages of every store above. It is published on the Chrome Web Store (https://chromewebstore.google.com/detail/ijagfhebglljkibhfdmedhgkdbicibgk). The site recommends it on the home, report and game pages, and every "Add to Chrome" button opens that listing; `/extension` describes it. For developers the server still serves `/extension/clone-report-extension.zip` (zipped from `chrome-extension/` at start), but the site no longer links to it. Its `stores.js` must stay identical to the site's (a test checks this). See `chrome-extension/README.md`.
 
-The Firefox add-on is built from the same folder: `npm run build:firefox` writes `clone-report-firefox-<version>.zip` with the manifest swapped for a Firefox one (`firefoxManifest()` in `extension.js`: event page background, add-on id `clone-report@clonereport.com`, Mozilla's data collection declaration). Upload that zip to addons.mozilla.org. The add-on id must never change.
+The Firefox add-on is built from the same folder: `npm run build:firefox` writes `clone-report-firefox-<version>.zip` with the manifest swapped for a Firefox one (`firefoxManifest()` in `extension.js`: event page background, add-on id `clone-report@clonereport.com`, Mozilla's data collection declaration). It is published at https://addons.mozilla.org/firefox/addon/clone-report/; upload new versions there. The add-on id must never change.
 
 ## Deploy
 
