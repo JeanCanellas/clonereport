@@ -285,6 +285,8 @@ test('home page explains how reports get approved and links to moderator applica
   const home = await (await fetch(base + '/')).text();
   assert.match(home, /How reports get approved/);
   assert.match(home, /href="\/pending"/);
+  assert.match(home, /How reports get approved<\/h2>\s*<p>[\s\S]*<\/section>\s*<h2>Recently added/, 'one paragraph, right above Recently added');
+  assert.doesNotMatch(home, /class="how-approved"[\s\S]{0,200}<ol>/);
   assert.match(home, /href="\/moderators\/apply">Apply to become a moderator<\/a>[\s\S]{0,80}MUST BE A VERIFIED INDUSTRY PROFESSIONAL/);
   const apply = await (await fetch(base + '/moderators/apply')).text();
   assert.match(apply, /MUST BE A VERIFIED INDUSTRY PROFESSIONAL/);
