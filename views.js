@@ -95,18 +95,13 @@ function home(recent, total, originals = 0) {
   </form>
   <p class="muted">${total ? `<a href="/clones">Browse ${total.toLocaleString('en-US')} reported clone${total === 1 ? '' : 's'}</a>` : 'No approved reports'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
   ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam, the Nintendo eShop and classic consoles that are not clones.</p>` : ''}
-  <div class="how-approved">
-    <h2>How reports get approved</h2>
-    <ol>
-      <li>Anyone can <a href="/submit">submit a report</a>. It has to name both games and link to evidence anyone can check, like store pages, release dates or comparison videos.</li>
-      <li>New reports wait on the public <a href="/pending">pending list</a>, marked unverified. They don't show up in search or the browser extension yet.</li>
-      <li>A moderator checks the evidence and approves or rejects it. Only approved reports go live, and each one shows its review trail.</li>
-      <li>Developers who disagree can dispute any report from its page, and it gets reviewed again.</li>
-    </ol>
-    <p><a href="/moderators/apply">Apply to become a moderator</a> <strong class="req">MUST BE A VERIFIED INDUSTRY PROFESSIONAL</strong></p>
-  </div>
 </section>
 ${extPromo({ example: true })}
+<section class="how-approved">
+  <h2>How reports get approved</h2>
+  <p>Anyone can <a href="/submit">submit a report</a>, but it has to name both games and link to evidence anyone can check, like store pages, release dates or comparison videos. New reports wait on the public <a href="/pending">pending list</a>, marked unverified, and don't show up in search or the browser extension until a moderator checks the evidence and approves them. Every approved report shows its review trail, and developers who disagree can dispute it from its page to have it reviewed again.</p>
+  <p><a href="/moderators/apply">Apply to become a moderator</a> <strong class="req">MUST BE A VERIFIED INDUSTRY PROFESSIONAL</strong></p>
+</section>
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
 }
 
