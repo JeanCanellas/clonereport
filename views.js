@@ -95,6 +95,16 @@ function home(recent, total, originals = 0) {
   </form>
   <p class="muted">${total ? `<a href="/clones">Browse ${total.toLocaleString('en-US')} reported clone${total === 1 ? '' : 's'}</a>` : 'No approved reports'} so far. Was your game cloned? <a href="/submit">Report it</a>.</p>
   ${originals ? `<p class="muted"><a href="/originals">Browse ${originals.toLocaleString('en-US')} original games</a> from Steam, the Nintendo eShop and classic consoles that are not clones.</p>` : ''}
+  <div class="how-approved">
+    <h2>How reports get approved</h2>
+    <ol>
+      <li>Anyone can <a href="/submit">submit a report</a>. It has to name both games and link to evidence anyone can check, like store pages, release dates or comparison videos.</li>
+      <li>New reports wait on the public <a href="/pending">pending list</a>, marked unverified. They don't show up in search or the browser extension yet.</li>
+      <li>A moderator checks the evidence and approves or rejects it. Only approved reports go live, and each one shows its review trail.</li>
+      <li>Developers who disagree can dispute any report from its page, and it gets reviewed again.</li>
+    </ol>
+    <p><a href="/moderators/apply">Apply to become a moderator</a> <strong class="req">MUST BE A VERIFIED INDUSTRY PROFESSIONAL</strong></p>
+  </div>
 </section>
 ${extPromo({ example: true })}
 ${recent.length ? `<h2>Recently added</h2><ul class="cards">${recent.map(card).join('')}</ul>` : ''}`);
@@ -860,6 +870,7 @@ function applyPage({ token, values = {}, errors = [] }) {
   const v = values;
   return layout('Become a moderator', `<article class="prose">
 <h1>Become a moderator</h1>
+<p class="req-banner"><strong>MUST BE A VERIFIED INDUSTRY PROFESSIONAL.</strong> Moderators must work, or have worked, in the games industry (for example at a studio, publisher, platform or games press outlet), and we verify this before approving an application. Please include links that show your work.</p>
 <p>Moderators review new clone reports before they go public. You decide whether each report is plausible and backed by links anyone can check, and approve or reject it. It takes a few minutes whenever you have time; there is no minimum.</p>
 <h2>What moderators do</h2>
 <ul>
@@ -878,8 +889,8 @@ ${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li
   <label class="field"><span>Why do you want to help, and what experience do you have? <em>*</em></span>
     <textarea name="experience" rows="7" maxlength="4000" required placeholder="e.g. games you know well, communities you moderate, stores you follow">${esc(v.experience)}</textarea></label>
   <label class="field"><span>Links (optional, one per line)</span>
-    <textarea name="links" rows="3" maxlength="2000" placeholder="e.g. your Reddit, Steam or portfolio profile">${esc(v.links)}</textarea>
-    <small>Up to 5 links that help us get to know you.</small></label>
+    <textarea name="links" rows="3" maxlength="2000" placeholder="e.g. your LinkedIn, studio page, MobyGames credits or portfolio">${esc(v.links)}</textarea>
+    <small>Up to 5 links that show your games industry work, so we can verify it.</small></label>
   <label class="check"><input type="checkbox" name="agree" value="yes" ${v.agree === 'yes' ? 'checked' : ''} required>
     <span>I will review reports fairly, follow the <a href="/terms" target="_blank">Terms of Service</a>, keep reporters' private information private, and not review reports where I have a conflict of interest. <em>*</em></span></label>
   <button class="btn">Send application</button>
