@@ -214,16 +214,17 @@ test('the site recommends the Chrome extension and serves it', async () => {
   assert.equal(img.headers.get('content-type'), 'image/png');
 });
 
-test('the site offers a Firefox version, coming soon until the listing is set', async () => {
+test('the site links to the Firefox Add-ons listing', async () => {
+  const amoLink = /href="https:\/\/addons\.mozilla\.org\/firefox\/addon\/clone-report\/"[^>]*>Add to Firefox/;
   const home = await (await fetch(base + '/')).text();
   assert.match(home, /Google Chrome or Firefox/);
-  assert.match(home, /Firefox version coming soon/);
+  assert.match(home, amoLink);
   const page = await (await fetch(base + '/extension')).text();
-  assert.match(page, /Firefox version coming soon/);
+  assert.match(page, amoLink);
+  assert.doesNotMatch(page, /coming soon/);
+  // Without a listing URL the page says it is coming soon instead.
   const { extensionPage } = require('../views');
-  const live = extensionPage({ version: '1.0', firefoxUrl: 'https://addons.mozilla.org/firefox/addon/clone-report/' });
-  assert.match(live, /href="https:\/\/addons\.mozilla\.org\/firefox\/addon\/clone-report\/"[^>]*>Add to Firefox/);
-  assert.doesNotMatch(live, /coming soon/);
+  assert.match(extensionPage({ version: '1.0', firefoxUrl: '' }), /Firefox version coming soon/);
 });
 
 test('the Firefox build is the same extension with a Firefox manifest', () => {
