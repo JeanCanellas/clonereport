@@ -280,3 +280,12 @@ test('header links to the reported clones list, which shows only approved report
   assert.match(html, /Flappy Pigeon/, 'approved report from the first test is listed');
   assert.equal((await fetch(base + '/clones?page=999')).status, 200, 'out-of-range page is clamped');
 });
+
+test('home page explains how reports get approved and links to moderator applications', async () => {
+  const home = await (await fetch(base + '/')).text();
+  assert.match(home, /How reports get approved/);
+  assert.match(home, /href="\/pending"/);
+  assert.match(home, /href="\/moderators\/apply">Apply to become a moderator<\/a>[\s\S]{0,80}MUST BE A VERIFIED INDUSTRY PROFESSIONAL/);
+  const apply = await (await fetch(base + '/moderators/apply')).text();
+  assert.match(apply, /MUST BE A VERIFIED INDUSTRY PROFESSIONAL/);
+});
