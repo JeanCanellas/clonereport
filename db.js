@@ -222,6 +222,37 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_requests_status ON contact_requests(status);
 `);
 
+// Moderator applications ("Become a moderator") and moderator accounts. The site owner
+// (ADMIN_PASSWORD) stays the only super-admin; moderators sign in with their email and
+// their own password, set through a one-time link, and can only approve or reject reports.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS moderator_applications (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    name         TEXT NOT NULL,
+    email        TEXT NOT NULL COLLATE NOCASE,  -- private
+    experience   TEXT NOT NULL,                 -- why they want to help, relevant experience
+    links        TEXT,                          -- one per line (profiles, portfolio)
+    status       TEXT NOT NULL DEFAULT 'pending', -- pending | approved | rejected
+    moderator_id INTEGER,
+    ip_hash      TEXT,
+    created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    reviewed_at  TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_mod_apps_status ON moderator_applications(status);
+  CREATE TABLE IF NOT EXISTS moderators (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    name           TEXT NOT NULL,
+    email          TEXT NOT NULL COLLATE NOCASE UNIQUE, -- their sign-in name
+    pass_hash      TEXT,                               -- scrypt; NULL until they use their setup link
+    setup_token    TEXT UNIQUE,                        -- one-time link to choose a password
+    setup_expires  INTEGER,
+    active         INTEGER NOT NULL DEFAULT 1,
+    application_id INTEGER,
+    created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    last_login     TEXT
+  );
+`);
+
 const stmts = {
   insert: db.prepare(`INSERT INTO reports
     (clone_name, clone_url, clone_developer, original_name, original_url, original_developer, platform, notes, contact, ip_hash,
@@ -340,6 +371,26 @@ const stmts = {
   // Approved reports that say this game is itself a clone.
   reportedAsClone: db.prepare(`SELECT * FROM reports_v WHERE status = 'approved'
     AND ((? IS NOT NULL AND clone_steam_appid = ?) OR lower(clone_name) = lower(?)) ORDER BY id DESC LIMIT 20`),
+  pendingPage: db.prepare(`SELECT * FROM reports WHERE status = 'pending' ORDER BY id DESC LIMIT ? OFFSET ?`),
+  // When and by whom a report was approved (the latest approval in its history).
+  approval: db.prepare(`SELECT actor, created_at FROM report_history WHERE report_id = ? AND action = 'approved' ORDER BY id DESC LIMIT 1`),
+  insertApp: db.prepare(`INSERT INTO moderator_applications (name, email, experience, links, ip_hash) VALUES (?, ?, ?, ?, ?)`),
+  getApp: db.prepare(`SELECT * FROM moderator_applications WHERE id = ?`),
+  appsByStatus: db.prepare(`SELECT * FROM moderator_applications WHERE status = ? ORDER BY id DESC LIMIT 200`),
+  appCounts: db.prepare(`SELECT status, COUNT(*) AS n FROM moderator_applications GROUP BY status`),
+  openAppByEmail: db.prepare(`SELECT 1 FROM moderator_applications WHERE email = ? AND status = 'pending' LIMIT 1`),
+  setApp: db.prepare(`UPDATE moderator_applications SET status = ?, moderator_id = coalesce(?, moderator_id), reviewed_at = datetime('now') WHERE id = ?`),
+  insertMod: db.prepare(`INSERT INTO moderators (name, email, setup_token, setup_expires, application_id) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(email) DO UPDATE SET active = 1, setup_token = excluded.setup_token, setup_expires = excluded.setup_expires RETURNING id`),
+  getMod: db.prepare(`SELECT * FROM moderators WHERE id = ?`),
+  modByEmail: db.prepare(`SELECT * FROM moderators WHERE email = ?`),
+  modBySetup: db.prepare(`SELECT * FROM moderators WHERE setup_token = ? AND setup_expires > ?`),
+  setModPassword: db.prepare(`UPDATE moderators SET pass_hash = ?, setup_token = NULL, setup_expires = NULL WHERE id = ?`),
+  setModSetup: db.prepare(`UPDATE moderators SET setup_token = ?, setup_expires = ? WHERE id = ?`),
+  setModActive: db.prepare(`UPDATE moderators SET active = ? WHERE id = ?`),
+  modLogin: db.prepare(`UPDATE moderators SET last_login = datetime('now') WHERE id = ?`),
+  allMods: db.prepare(`SELECT m.*, (SELECT COUNT(*) FROM report_history h WHERE h.actor = 'moderator:' || m.id AND h.action IN ('approved', 'rejected')) AS reviewed
+    FROM moderators m ORDER BY m.active DESC, m.id DESC`),
   logSubmission: db.prepare(`INSERT INTO submissions_log (ip_hash, created_at) VALUES (?, ?)`),
   countRecent: db.prepare(`SELECT COUNT(*) AS n FROM submissions_log WHERE ip_hash = ? AND created_at > ?`),
   pruneLog: db.prepare(`DELETE FROM submissions_log WHERE created_at < ?`),
@@ -583,6 +634,35 @@ module.exports = {
     return out;
   },
   setRequestStatus: (id, s) => stmts.setRequest.run(s, s, id).changes > 0,
+  // Public "Pending reports" page: newest unreviewed reports.
+  pendingPage: (limit, offset) => stmts.pendingPage.all(limit, offset),
+  // { actor, created_at } of the approval shown in a report's review trail, or null.
+  approval: (id) => stmts.approval.get(id) || null,
+  // Moderator applications.
+  createApplication(a, ipHash) {
+    return Number(stmts.insertApp.run(a.name, a.email, a.experience, a.links || null, ipHash).lastInsertRowid);
+  },
+  getApplication: (id) => stmts.getApp.get(id),
+  applicationsByStatus: (s) => stmts.appsByStatus.all(s),
+  applicationCounts() {
+    const out = { pending: 0, approved: 0, rejected: 0 };
+    for (const row of stmts.appCounts.all()) out[row.status] = row.n;
+    return out;
+  },
+  hasOpenApplication: (email) => !!stmts.openAppByEmail.get(email),
+  setApplicationStatus: (id, s, moderatorId = null) => stmts.setApp.run(s, moderatorId, id).changes > 0,
+  // Moderators. createModerator re-activates an existing account with the same email.
+  createModerator(m, setupToken, expiresAt) {
+    return stmts.insertMod.get(m.name, m.email, setupToken, expiresAt, m.application_id ?? null).id;
+  },
+  getModerator: (id) => stmts.getMod.get(id),
+  moderatorByEmail: (email) => stmts.modByEmail.get(email),
+  moderatorBySetupToken: (t) => stmts.modBySetup.get(t, Date.now()),
+  setModeratorPassword: (id, hash) => stmts.setModPassword.run(hash, id),
+  setModeratorSetup: (id, token, expiresAt) => stmts.setModSetup.run(token, expiresAt, id),
+  setModeratorActive: (id, active) => stmts.setModActive.run(active ? 1 : 0, id).changes > 0,
+  moderatorLoggedIn: (id) => stmts.modLogin.run(id),
+  moderators: () => stmts.allMods.all(),
   // Close the database cleanly (on shutdown): folds the WAL back into the main file.
   close() {
     try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); } catch { /* best effort */ }

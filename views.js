@@ -40,7 +40,7 @@ function layout(title, body, { q = '' } = {}) {
 ${body}
 </main>
 <footer class="wrap site-foot">
-  <nav class="foot-nav"><a href="/clones">Reported clones</a> · <a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/feed.xml">RSS</a> · <a href="/api">API</a> · <a href="/submit">Report a clone</a></nav>
+  <nav class="foot-nav"><a href="/clones">Reported clones</a> · <a href="/originals">Original games</a> · <a href="/developers">Developers</a> · <a href="/tree">Family trees</a> · <a href="/feed.xml">RSS</a> · <a href="/api">API</a> · <a href="/submit">Report a clone</a> · <a href="/pending">Pending reports</a> · <a href="/moderators/apply">Become a moderator</a></nav>
   <p>Reports are claims and opinions submitted by the community and reviewed before they appear. They are not verified facts or legal findings.</p>
   <p><a href="/terms">Terms of Service</a> · <a href="/privacy">Privacy policy</a> · <a href="/contact">Contact and takedown requests</a></p>
 </footer>
@@ -171,7 +171,27 @@ function evidenceList(text, title = 'Evidence') {
   return `<section><h2>${esc(title)}</h2><ul class="evidence">${links.map((u) => `<li>${link(u, host(u))} <small class="muted">${esc(u.length > 80 ? u.slice(0, 77) + '…' : u)}</small></li>`).join('')}</ul></section>`;
 }
 
+// "How this report got here": submitted, reviewed by a moderator (or added from public
+// sources), community votes, published developer responses.
+function reviewTrail(r, approval) {
+  const t = tally(r);
+  const seeded = approval?.actor === 'seed';
+  const when = date(approval?.created_at || r.reviewed_at);
+  const responses = r._responses || 0;
+  const steps = [
+    seeded ? '' : `<li><strong>Submitted</strong> by a community member <span class="muted">${date(r.created_at)}</span></li>`,
+    seeded
+      ? `<li><strong>Added by Clone Report</strong> from public sources (articles and press coverage, listed under Evidence)${when ? ` <span class="muted">${when}</span>` : ''}</li>`
+      : `<li><strong>Reviewed by a moderator</strong> and approved${when ? ` <span class="muted">${when}</span>` : ''}</li>`,
+    `<li><strong>${t.total} community vote${t.total === 1 ? '' : 's'}</strong>${verdict(t) ? ` <span class="muted">verdict: ${esc(verdict(t))}</span>` : ''}</li>`,
+    responses ? `<li><strong>${responses} developer response${responses === 1 ? '' : 's'}</strong> published below</li>` : '',
+  ].filter(Boolean).join('');
+  return `<section class="box trail" aria-label="Review trail"><h2>Review trail</h2><ol class="trail-steps">${steps}</ol>
+  <p class="muted">A moderator checks each report for plausibility before it goes public. That is not a finding that the game was copied. <a href="/report/${r.id}/history">Full edit history</a></p></section>`;
+}
+
 function reportPage(r, opts = {}) {
+  r = { ...r, _responses: (opts.responses || []).length };
   const mech = String(r.mechanics || '').split('\n').filter(Boolean);
   const row = (label, o, c) => (o || c ? `<div class="crow"><div class="clabel">${label}</div><div>${o || '<span class="muted">Unknown</span>'}</div><div>${c || '<span class="muted">Unknown</span>'}</div></div>` : '');
   const steamUrl = (id) => (id ? `https://store.steampowered.com/app/${id}/` : null);
@@ -200,6 +220,7 @@ ${r.status !== 'approved' ? `<p class="notice">This report is <strong>${esc(r.st
   ${evidenceList(r.evidence)}
   ${(opts.responses || []).map((d) => `<section class="box response"><h2>Response from ${esc(d.name)}</h2>
     <p class="muted">${esc(ROLES[d.role] || 'Response')} · ${date(d.created_at)}</p><p class="notes">${esc(d.message)}</p>${evidenceList(d.links, 'Their links')}</section>`).join('')}
+  ${r.status === 'approved' ? reviewTrail(r, opts.approval) : ''}
   ${r.status === 'approved' ? voteBox(r, opts) : ''}
   <p class="muted">Reported ${date(r.created_at)}. This report reflects the claims and opinions of the person who submitted it and of voters. A moderator checked it for plausibility, but it is not a verified fact or a legal finding.
     <a href="/report/${r.id}/history">Edit history</a>${r.status === 'approved' ? ` · <a href="/report/${r.id}/dispute">Are you the developer? Dispute this report</a> · <a href="/contact?report=${r.id}">Request a correction or removal</a>` : ''}</p>
@@ -359,7 +380,8 @@ const thanksPage = () => layout('Thanks', `
 <p>A moderator will review it soon. Once approved, it will show up in search.</p>
 <p><a class="btn" href="/">Back to search</a></p>`);
 
-function adminPage(status, rows, counts, openDisputes = 0, openRequests = 0) {
+function adminPage(status, rows, counts, openDisputes = 0, openRequests = 0, { who = { role: 'admin' }, openApps = 0 } = {}) {
+  const owner = who.role === 'admin';
   const tabs = ['pending', 'approved', 'rejected'].map((s) =>
     `<a class="tab${s === status ? ' on' : ''}" href="/admin?status=${s}">${s} (${counts[s] || 0})</a>`).join('');
   const action = (r, act, label, cls = '') =>
@@ -367,18 +389,21 @@ function adminPage(status, rows, counts, openDisputes = 0, openRequests = 0) {
   const row = (r) => `<li class="admin-row">
   <div>
     <a href="/report/${r.id}"><strong>${esc(r.clone_name)}</strong> → ${esc(r.original_name)}</a>
-    <div class="muted">#${r.id} · ${date(r.created_at)}${r.platform ? ' · ' + esc(r.platform) : ''}${r.contact ? ' · contact: ' + esc(r.contact) : ''}</div>
+    <div class="muted">#${r.id} · ${date(r.created_at)}${r.platform ? ' · ' + esc(r.platform) : ''}${owner && r.contact ? ' · contact: ' + esc(r.contact) : ''}</div>
     <div class="muted">Original: ${link(r.original_url, r.original_url || 'no link')} · Clone: ${link(r.clone_url, r.clone_url || 'no link')}</div>
     ${r.notes ? `<p class="notes">${esc(r.notes)}</p>` : ''}
   </div>
   <div class="actions">
     ${status !== 'approved' ? action(r, 'approve', 'Approve') : ''}
     ${status !== 'rejected' ? action(r, 'reject', 'Reject', 'ghost') : ''}
-    <a class="btn small ghost" href="/admin/${r.id}/edit">Edit</a>
-    ${action(r, 'delete', 'Delete', 'danger')}
+    ${owner ? `<a class="btn small ghost" href="/admin/${r.id}/edit">Edit</a>
+    ${action(r, 'delete', 'Delete', 'danger')}` : ''}
   </div>
 </li>`;
-  return layout('Admin', `<h1>Moderation</h1><nav class="tabs">${tabs}<a class="tab" href="/admin/disputes">Disputes (${openDisputes} open)</a><a class="tab" href="/admin/requests">Requests (${openRequests} open)</a><a class="tab" href="/admin/originals">Original games</a></nav>
+  const ownerTabs = owner ? `<a class="tab" href="/admin/disputes">Disputes (${openDisputes} open)</a><a class="tab" href="/admin/requests">Requests (${openRequests} open)</a><a class="tab" href="/admin/applications">Moderator applications (${openApps} new)</a><a class="tab" href="/admin/moderators">Moderators</a><a class="tab" href="/admin/originals">Original games</a>` : '';
+  return layout('Admin', `<h1>Moderation</h1>
+${owner ? '' : `<p class="muted">Signed in as moderator ${esc(who.name)}. Approve reports that are plausible and backed by links others can check; reject spam, duplicates, personal attacks and claims with nothing to support them.</p>`}
+<nav class="tabs">${tabs}${ownerTabs}</nav>
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : `<p class="muted">Nothing here.</p>`}`);
 }
 
@@ -500,13 +525,15 @@ const FIELD_LABELS = { clone_name: 'Clone name', clone_url: 'Clone link', clone_
   original_released: 'Original release date', clone_image: 'Clone image', original_image: 'Original image', mechanics: 'Shared mechanics',
   evidence: 'Evidence', status: 'Status' };
 const ACTORS = { reporter: 'Reporter', admin: 'Moderator', steam: 'Steam', developer: 'Developer', seed: 'Clone Report' };
+// Moderators are logged as "moderator:<id>" but shown publicly only as "Moderator".
+const actorName = (a) => (String(a).startsWith('moderator:') ? 'Moderator' : ACTORS[a] || a);
 function historyPage(r, rows) {
   const val = (x) => (x == null || x === '' ? '<span class="muted">empty</span>' : `<span class="notes">${esc(x)}</span>`);
   return layout(`Edit history: ${r.clone_name}`, `
 <h1>Edit history</h1>
 <p><a href="/report/${r.id}"><strong>${esc(r.clone_name)}</strong> reported as a clone of <strong>${esc(r.original_name)}</strong></a></p>
 <ol class="history">${rows.map((h) => `<li><div><strong>${esc(h.action[0].toUpperCase() + h.action.slice(1))}</strong>
-  <span class="muted">by ${esc(ACTORS[h.actor] || h.actor)} · ${esc(String(h.created_at).slice(0, 16))} UTC</span></div>
+  <span class="muted">by ${esc(actorName(h.actor))} · ${esc(String(h.created_at).slice(0, 16))} UTC</span></div>
   ${h.changes ? `<dl>${Object.entries(h.changes).map(([k, [a, b]]) => `<dt>${esc(FIELD_LABELS[k] || k)}</dt><dd>${val(a)} → ${val(b)}</dd>`).join('')}</dl>` : ''}</li>`).join('')}</ol>
 <p class="muted">Changes made before edit history was added are not listed.</p>`);
 }
@@ -658,6 +685,7 @@ const privacyPage = () => layout('Privacy policy', `<article class="prose">
 <h2>Your choices</h2>
 <p>You can uninstall the extension at any time from your browser's extensions page, which removes everything it stored. To stop email alerts, use the unsubscribe link in any alert. To have a report you submitted, or your email, removed, send a request through the <a href="/contact?kind=privacy">contact page</a>.</p>
 <p><strong>Contact and takedown requests.</strong> If you send a request through the contact page we store your name, organization, email, message and links. Only moderators see them.</p>
+<p><strong>Moderator applications.</strong> If you apply to be a moderator we store your name, email, what you wrote and your links. Only the site owner sees them. If you are approved, your email becomes your moderator sign-in and your password is stored only as a one-way hash. Your approvals show publicly as "Reviewed by a moderator", without your name.</p>
 
 <h2>Changes</h2>
 <p>If we change what the extension or the site collects, we will update this page and the date at the top before the change takes effect.</p>
@@ -794,6 +822,135 @@ function adminRequestsPage(status, rows, counts) {
 ${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p class="muted">Nothing here.</p>'}`);
 }
 
+// ---------- pending reports (public, unverified) ----------
+// Only store pages that stores.js recognizes are linked, so unreviewed submissions
+// cannot use this page to publish arbitrary links. Notes and evidence stay hidden until review.
+function pendingSide(name, dev, url) {
+  const st = storeInfo.parseStoreUrl(url);
+  return `<strong>${esc(name)}</strong>${dev ? `<small>by ${esc(dev)}</small>` : ''}${st ? `<small>${link(url, storeInfo.storeName(st.store))}</small>` : ''}`;
+}
+function pendingPage(rows, { page = 1, pages = 1, total = rows.length } = {}) {
+  const qs = (n) => '/pending' + (n > 1 ? `?page=${n}` : '');
+  const nav = pages > 1 ? `<nav class="pager">
+    ${page > 1 ? `<a class="btn small ghost" href="${qs(page - 1)}">Previous</a>` : ''}
+    <span class="muted">Page ${page} of ${pages}</span>
+    ${page < pages ? `<a class="btn small ghost" href="${qs(page + 1)}">Next</a>` : ''}
+  </nav>` : '';
+  const item = (r) => `<li class="card pending">
+    <div class="card-link">
+      <div class="pair">
+        <div><span class="tag unverified">Unverified claim</span>${pendingSide(r.clone_name, r.clone_developer, r.clone_url)}</div>
+        <div class="arrow" aria-hidden="true">claimed copy of</div>
+        <div><span class="tag orig">Original</span>${pendingSide(r.original_name, r.original_developer, r.original_url)}</div>
+      </div>
+      <small class="muted">Submitted ${date(r.created_at)} · waiting for review</small>
+    </div>
+  </li>`;
+  return layout('Pending reports', `
+<h1>Pending reports</h1>
+<p class="notice"><strong>These reports have not been reviewed.</strong> Each one is an unverified allegation made by the person who submitted it. It is not a statement by Clone Report, and it does not mean the game copied anything. Many pending reports are rejected.</p>
+<p>New reports wait here until a moderator checks them. Approved reports move to <a href="/clones">reported clones</a>; rejected ones disappear. Pending reports do not show up in search, the browser extension, the API or the feeds.</p>
+<p class="muted">${total.toLocaleString('en-US')} report${total === 1 ? '' : 's'} waiting · Want to help review them? <a href="/moderators/apply">Become a moderator</a>. Is one of these about your game? <a href="/contact?kind=removal">Contact the moderators</a>.</p>
+${rows.length ? `<ul class="cards">${rows.map(item).join('')}</ul>` : '<p>Nothing is waiting for review right now.</p>'}
+${nav}`);
+}
+
+// ---------- moderator applications ----------
+function applyPage({ token, values = {}, errors = [] }) {
+  const v = values;
+  return layout('Become a moderator', `<article class="prose">
+<h1>Become a moderator</h1>
+<p>Moderators review new clone reports before they go public. You decide whether each report is plausible and backed by links anyone can check, and approve or reject it. It takes a few minutes whenever you have time; there is no minimum.</p>
+<h2>What moderators do</h2>
+<ul>
+  <li>Approve reports that name both games clearly and point to evidence: store pages, release dates, comparison videos or articles.</li>
+  <li>Reject spam, duplicates, personal attacks, and claims with nothing to back them up.</li>
+  <li>Stay neutral: don't review reports about games you or your employer made or compete with.</li>
+</ul>
+<p class="muted">The site owner reviews every application and has the final say. If you are approved, you get a link to choose a password, then you sign in at <code>/admin</code> with your email.</p>
+</article>
+${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+<form class="report-form" method="post" action="/moderators/apply">
+  <input type="hidden" name="token" value="${esc(token)}">
+  <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off"></label></div>
+  ${field('name', 'Your name', v, { required: true })}
+  ${field('email', 'Email (private)', v, { type: 'email', required: true, max: 200, hint: 'Only the site owner sees this. If you are approved, it becomes your sign-in.' })}
+  <label class="field"><span>Why do you want to help, and what experience do you have? <em>*</em></span>
+    <textarea name="experience" rows="7" maxlength="4000" required placeholder="e.g. games you know well, communities you moderate, stores you follow">${esc(v.experience)}</textarea></label>
+  <label class="field"><span>Links (optional, one per line)</span>
+    <textarea name="links" rows="3" maxlength="2000" placeholder="e.g. your Reddit, Steam or portfolio profile">${esc(v.links)}</textarea>
+    <small>Up to 5 links that help us get to know you.</small></label>
+  <label class="check"><input type="checkbox" name="agree" value="yes" ${v.agree === 'yes' ? 'checked' : ''} required>
+    <span>I will review reports fairly, follow the <a href="/terms" target="_blank">Terms of Service</a>, keep reporters' private information private, and not review reports where I have a conflict of interest. <em>*</em></span></label>
+  <button class="btn">Send application</button>
+</form>`);
+}
+
+const applyThanksPage = () => layout('Application received', `
+<h1>Thanks for offering to help</h1>
+<p>The site owner reviews every application. If yours is approved, you'll get an email with a link to set up your moderator sign-in.</p>
+<p><a class="btn" href="/">Back to search</a></p>`);
+
+function setupPage(m, { t = '', errors = [], done = false } = {}) {
+  if (done) return layout('Moderator sign-in ready', `
+<h1>You're all set</h1>
+<p>Sign in at <a href="/admin">/admin</a> with your email <strong>${esc(m.email)}</strong> as the username and the password you just chose.</p>`);
+  return layout('Set up your moderator sign-in', `
+<h1>Welcome, ${esc(m.name)}</h1>
+<p>Choose a password for your moderator sign-in. Your username is your email, <strong>${esc(m.email)}</strong>.</p>
+${errors.length ? `<div class="errors" role="alert"><ul>${errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+<form class="report-form" method="post" action="/moderator/setup?t=${encodeURIComponent(t)}">
+  <label class="field"><span>Password</span><input type="password" name="password" minlength="12" maxlength="200" required autocomplete="new-password">
+    <small>At least 12 characters.</small></label>
+  <label class="field"><span>Password again</span><input type="password" name="password2" minlength="12" maxlength="200" required autocomplete="new-password"></label>
+  <button class="btn">Save password</button>
+</form>`);
+}
+
+const OWNER_NAV = (on) => `<nav class="tabs"><a class="tab" href="/admin">Reports</a><a class="tab" href="/admin/disputes">Disputes</a><a class="tab" href="/admin/requests">Requests</a>`
+  + `<a class="tab${on === 'apps' ? ' on' : ''}" href="/admin/applications">Moderator applications</a><a class="tab${on === 'mods' ? ' on' : ''}" href="/admin/moderators">Moderators</a><a class="tab" href="/admin/originals">Original games</a></nav>`;
+
+function adminApplicationsPage(status, rows, counts) {
+  const tabs = ['pending', 'approved', 'rejected'].map((s) => `<a class="tab${s === status ? ' on' : ''}" href="/admin/applications?status=${s}">${s} (${counts[s] || 0})</a>`).join('');
+  const action = (a, act, label, cls = '') => `<form method="post" action="/admin/applications/${a.id}/${act}"><button class="btn small ${cls}">${label}</button></form>`;
+  const row = (a) => `<li class="admin-row">
+  <div>
+    <strong>${esc(a.name)}</strong> · <a href="mailto:${esc(a.email)}">${esc(a.email)}</a>
+    <div class="muted">#${a.id} · applied ${date(a.created_at)}${a.reviewed_at ? ` · ${esc(a.status)} ${date(a.reviewed_at)}` : ''}</div>
+    <p class="notes">${esc(a.experience)}</p>
+    ${a.links ? `<div class="muted">${a.links.split('\n').map((u) => link(u, u)).join('<br>')}</div>` : ''}
+  </div>
+  <div class="actions">
+    ${status !== 'approved' ? action(a, 'approve', 'Approve and make moderator') : ''}
+    ${status === 'pending' ? action(a, 'reject', 'Reject', 'ghost') : ''}
+  </div>
+</li>`;
+  return layout('Admin: moderator applications', `<h1>Moderator applications</h1>
+${OWNER_NAV('apps')}
+<nav class="tabs">${tabs}</nav>
+<p class="muted">Approving creates a moderator account and a one-time link for the new moderator to choose a password. Moderators can approve and reject reports, nothing else. You stay the only one who can edit or delete reports, see reporters' emails, handle disputes and requests, and manage moderators.</p>
+${rows.length ? `<ul class="admin-list">${rows.map(row).join('')}</ul>` : '<p class="muted">Nothing here.</p>'}`);
+}
+
+function adminModeratorsPage(mods, { setupLink = null, emailOn = false } = {}) {
+  const action = (m, act, label, cls = '') => `<form method="post" action="/admin/moderators/${m.id}/${act}"><button class="btn small ${cls}">${label}</button></form>`;
+  const row = (m) => `<li class="admin-row">
+  <div>
+    <strong>${esc(m.name)}</strong> · ${esc(m.email)}${m.active ? '' : ' <span class="tag clone">disabled</span>'}
+    <div class="muted">#${m.id} · since ${date(m.created_at)} · ${m.pass_hash ? `last sign-in ${m.last_login ? date(m.last_login) : 'never'}` : 'has not set a password yet'} · ${m.reviewed} report${m.reviewed === 1 ? '' : 's'} reviewed</div>
+  </div>
+  <div class="actions">
+    ${m.active ? action(m, 'link', m.pass_hash ? 'New password link' : 'New setup link', 'ghost') + action(m, 'disable', 'Disable', 'danger') : action(m, 'enable', 'Enable')}
+  </div>
+</li>`;
+  return layout('Admin: moderators', `<h1>Moderators</h1>
+${OWNER_NAV('mods')}
+${setupLink ? `<div class="notice" role="status"><p><strong>Setup link for ${esc(setupLink.name)}</strong> (${esc(setupLink.email)}). ${emailOn ? 'It was also emailed to them.' : 'Email is not set up on this site, so send it to them yourself.'} It works once and expires in 7 days:</p>
+  <p><code>${esc(setupLink.url)}</code></p></div>` : ''}
+<p class="muted">Moderators sign in at /admin with their email as the username. Disabling an account signs it out at once. Their approvals show publicly as "Reviewed by a moderator"; the edit history never shows their name.</p>
+${mods.length ? `<ul class="admin-list">${mods.map(row).join('')}</ul>` : '<p class="muted">No moderators yet. Approve an application to add one.</p>'}`);
+}
+
 const notFound = () => layout('Not found', `<h1>Not found</h1><p>That page does not exist. <a href="/">Search for a game</a>.</p>`);
 
-module.exports = { esc, layout, home, searchPage, reportPage, gamePage, clonesPage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS };
+module.exports = { esc, layout, home, searchPage, reportPage, gamePage, clonesPage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, pendingPage, applyPage, applyThanksPage, setupPage, adminApplicationsPage, adminModeratorsPage, TERMS_VERSION, REQUEST_KINDS };

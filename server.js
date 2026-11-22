@@ -10,7 +10,7 @@ const scanner = require('./scanner');
 const steam = require('./steam');
 const api = require('./api');
 const mailer = require('./mailer');
-const { layout, home, searchPage, reportPage, gamePage, clonesPage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, TERMS_VERSION, REQUEST_KINDS, esc } = require('./views');
+const { layout, home, searchPage, reportPage, gamePage, clonesPage, originalsPage, adminOriginalsPage, submitPage, thanksPage, adminPage, extensionPage, adminEditPage, adminDisputesPage, disputePage, disputeThanksPage, historyPage, apiDocsPage, followPage, developerPage, developersPage, treePage, notFound, privacyPage, termsPage, contactPage, contactThanksPage, adminRequestsPage, pendingPage, applyPage, applyThanksPage, setupPage, adminApplicationsPage, adminModeratorsPage, TERMS_VERSION, REQUEST_KINDS, esc } = require('./views');
 const { familyTree } = require('./tree');
 const classic = require('./classic');
 const stores = require('./stores');
@@ -161,14 +161,73 @@ function validate(f) {
   return { r, errors };
 }
 
-function isAdmin(req) {
-  if (!ADMIN_PASSWORD) return false;
-  const h = req.headers.authorization || '';
-  if (!h.startsWith('Basic ')) return false;
-  const [, pass = ''] = Buffer.from(h.slice(6), 'base64').toString().split(/:(.*)/s);
-  const a = Buffer.from(hmac(pass)), b = Buffer.from(hmac(ADMIN_PASSWORD));
-  return crypto.timingSafeEqual(a, b);
+// ---------- sign-in for the site owner and moderators ----------
+// HTTP Basic auth. Any username with ADMIN_PASSWORD signs in the site owner (super-admin),
+// as before. Moderators sign in with their email as the username and their own password.
+const FAILED_LOGIN_LIMIT = Number(process.env.FAILED_LOGIN_LIMIT ?? 20); // per IP per 15 minutes
+const failedLogins = new Map(); // ip hash -> { n, since }
+const modAuthCache = new Map(); // hmac(email, password) -> { id, exp }, so scrypt is not run on every request
+const SCRYPT_KEYLEN = 32;
+function hashPassword(pass) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  return `scrypt$${salt}$${crypto.scryptSync(pass, salt, SCRYPT_KEYLEN).toString('hex')}`;
 }
+function checkPassword(pass, stored) {
+  const [kind, salt, hex] = String(stored || '').split('$');
+  if (kind !== 'scrypt' || !salt || !hex) return false;
+  const a = crypto.scryptSync(pass, salt, SCRYPT_KEYLEN), b = Buffer.from(hex, 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+const WINDOW_15M = 15 * 60 * 1000;
+function loginBlocked(req) {
+  const f = failedLogins.get(hmac('login:' + clientIp(req)));
+  return !!f && Date.now() - f.since < WINDOW_15M && f.n >= FAILED_LOGIN_LIMIT;
+}
+function loginFailed(req) {
+  const k = hmac('login:' + clientIp(req)), now = Date.now();
+  const f = failedLogins.get(k);
+  if (!f || now - f.since > WINDOW_15M) failedLogins.set(k, { n: 1, since: now }); else f.n++;
+  if (failedLogins.size > 10_000) failedLogins.clear();
+}
+// Who is signed in: { role: 'admin' }, { role: 'moderator', id, name }, or null.
+// Cached on the request so a page can ask more than once.
+function staff(req) {
+  if ('_staff' in req) return req._staff;
+  req._staff = null;
+  const h = req.headers.authorization || '';
+  if (!h.startsWith('Basic ') || loginBlocked(req)) return null;
+  const [user = '', pass = ''] = Buffer.from(h.slice(6), 'base64').toString().split(/:(.*)/s);
+  if (ADMIN_PASSWORD && crypto.timingSafeEqual(Buffer.from(hmac(pass)), Buffer.from(hmac(ADMIN_PASSWORD))))
+    return (req._staff = { role: 'admin' });
+  const email = user.trim().toLowerCase();
+  if (email && pass) {
+    const key = hmac('mod:' + email + '\n' + pass), hit = modAuthCache.get(key);
+    let m = null;
+    // The cache only skips the slow password check: the account is still read on every request,
+    // so disabling it or setting a new password applies at once.
+    const cached = hit && hit.exp > Date.now() ? store.getModerator(hit.id) : null;
+    if (cached && cached.pass_hash === hit.hash) m = cached;
+    else {
+      const row = store.moderatorByEmail(email);
+      if (row && row.pass_hash && checkPassword(pass, row.pass_hash)) {
+        m = row;
+        modAuthCache.set(key, { id: row.id, hash: row.pass_hash, exp: Date.now() + 10 * 60 * 1000 });
+        if (modAuthCache.size > 1000) modAuthCache.clear();
+        store.moderatorLoggedIn(row.id);
+      }
+    }
+    if (m && m.active) return (req._staff = { role: 'moderator', id: m.id, name: m.name });
+  }
+  loginFailed(req);
+  return null;
+}
+const isAdmin = (req) => staff(req)?.role === 'admin';
+const isStaff = (req) => !!staff(req);
+// What goes in a report's edit history for this person.
+const actorOf = (req) => (staff(req)?.role === 'moderator' ? `moderator:${staff(req).id}` : 'admin');
+const SETUP_DAYS = 7;
+const newSetupToken = () => ({ token: crypto.randomBytes(24).toString('base64url'), expires: Date.now() + SETUP_DAYS * 24 * 3600 * 1000 });
+const MIN_PASSWORD = 12;
 // One vote per visitor per report, keyed on a salted hash of the IP address.
 const voterId = (req) => hmac('voter:' + clientIp(req));
 const sameOrigin = (req) => {
@@ -310,6 +369,29 @@ async function contactRoute(req, res, url) {
   return redirect(res, '/contact/thanks');
 }
 
+// Approve or reject a report (site owner or moderator).
+function reviewReport(req, res, url, id, act) {
+  if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+  const back = ['pending', 'approved', 'rejected'].includes(url.searchParams.get('back')) ? url.searchParams.get('back') : 'pending';
+  const before = store.get(id);
+  if (!before) return send(res, 404, notFound());
+  const wasPending = before.status === 'pending';
+  store.setStatus(id, act === 'approve' ? 'approved' : 'rejected', actorOf(req));
+  // A game confirmed as a clone comes off the originals list for good.
+  if (act === 'approve') {
+    const r = store.get(id);
+    // Match by Steam id, or by name unless the clone shares the original's name.
+    const sameName = r.clone_name.toLowerCase() === r.original_name.toLowerCase();
+    const g = store.findOriginal(r.clone_steam_appid, '') || (!sameName && store.findOriginal(null, r.clone_name));
+    if (g) store.excludeOriginal(g.id, `approved clone report #${id}`);
+    // Fill missing release dates, images and developers from Steam in the background.
+    if (STEAM_ENRICH) steam.comparisonFor(r).then((d) => store.fillComparison(id, d)).catch(() => {});
+    // Email people who follow the original game (only on the first approval).
+    if (wasPending && mailer.enabled) sendAlerts(r, baseUrl(req)).catch(() => {});
+  }
+  return redirect(res, '/admin?status=' + encodeURIComponent(back));
+}
+
 // ---------- routes ----------
 async function handle(req, res) {
   const url = new URL(req.url, 'http://localhost');
@@ -318,7 +400,7 @@ async function handle(req, res) {
   if (req.method === 'GET' && p === '/style.css')
     return send(res, 200, CSS, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
   if (req.method === 'GET' && p === '/robots.txt')
-    return send(res, 200, 'User-agent: *\nDisallow: /admin\n', { 'Content-Type': 'text/plain' });
+    return send(res, 200, 'User-agent: *\nDisallow: /admin\nDisallow: /pending\nDisallow: /moderator\n', { 'Content-Type': 'text/plain' });
   if (req.method === 'GET' && p === '/extension') return send(res, 200, extensionPage(EXT_INFO));
   if (req.method === 'GET' && p === EXT_INFO.zipUrl)
     return send(res, 200, EXT_ZIP, { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="clone-report-extension.zip"', 'Cache-Control': 'public, max-age=3600' });
@@ -382,6 +464,77 @@ async function handle(req, res) {
     const page = Math.max(1, Math.min(pages, Number.parseInt(url.searchParams.get('page'), 10) || 1));
     return send(res, 200, clonesPage(store.apiReports({ limit: per, offset: (page - 1) * per }), { page, pages, total }));
   }
+  // Reports waiting for review. Unverified: never in search, /clones, the API, feeds or the extension.
+  if (req.method === 'GET' && p === '/pending') {
+    const per = 50;
+    const total = store.counts().pending;
+    const pages = Math.max(1, Math.ceil(total / per));
+    const page = Math.max(1, Math.min(pages, Number.parseInt(url.searchParams.get('page'), 10) || 1));
+    return send(res, 200, pendingPage(store.pendingPage(per, (page - 1) * per), { page, pages, total }),
+      { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' });
+  }
+
+  // "Become a moderator" applications.
+  if (p === '/moderators/apply') {
+    if (req.method === 'GET') return send(res, 200, applyPage({ token: makeFormToken('apply'), values: {} }));
+    if (req.method === 'POST') {
+      let f;
+      try { f = await readBody(req); } catch { return send(res, 413, layout('Too large', '<p>That application is too large.</p>')); }
+      if (f.get('website')) return redirect(res, '/moderators/apply/thanks');
+      const values = Object.fromEntries(f);
+      const again = (status, errors) => send(res, status, applyPage({ token: makeFormToken('apply'), values, errors }));
+      const tokErr = checkFormToken(f.get('token'), 'apply');
+      if (tokErr) return again(400, [tokErr === 'too-fast' ? 'That was very quick! Please check your application and send it again.' : 'The form expired. Please send it again.']);
+      const ipHash = hmac('ip:' + clientIp(req));
+      if (store.rateCheck(ipHash, 3600 * 1000) >= MAX_PER_HOUR) return again(429, ['You have sent several messages recently. Please try again in an hour.']);
+      const a = {
+        name: clean(f.get('name'), 120),
+        email: clean(f.get('email'), 200).toLowerCase(),
+        experience: String(f.get('experience') || '').trim().slice(0, 4000),
+        links: cleanLinks(f.get('links'), 5),
+      };
+      const errors = [];
+      if (!a.name) errors.push('Please enter your name.');
+      if (!/^[^\s@:]+@[^\s@]+\.[^\s@]+$/.test(a.email)) errors.push('Please enter your email address. It becomes your moderator sign-in.');
+      if (a.experience.length < 50) errors.push('Please tell us a bit more about why you want to help and your experience (at least 50 characters).');
+      if (a.links === null) errors.push('Links must be up to 5 web addresses, one per line.');
+      if (f.get('agree') !== 'yes') errors.push('Please confirm that you will follow the moderation guidelines.');
+      if (!errors.length && store.hasOpenApplication(a.email)) errors.push('There is already an application from this email waiting for review.');
+      if (errors.length) return again(400, errors);
+      store.logSubmission(ipHash);
+      const id = store.createApplication(a, ipHash);
+      if (ADMIN_EMAIL && mailer.enabled) {
+        mailer.send({ to: ADMIN_EMAIL, subject: `Clone Report moderator application #${id}: ${a.name}`,
+          text: `${a.name} <${a.email}> applied to be a moderator.\n\n${a.experience}\n\n${a.links ? `Links:\n${a.links}\n\n` : ''}Review it: ${baseUrl(req)}/admin/applications\n` })
+          .catch((err) => console.error('application email failed:', err.message));
+      }
+      return redirect(res, '/moderators/apply/thanks');
+    }
+  }
+  if (req.method === 'GET' && p === '/moderators/apply/thanks') return send(res, 200, applyThanksPage());
+
+  // A new moderator chooses their password through the one-time link from their approval.
+  if (p === '/moderator/setup') {
+    const t = String(url.searchParams.get('t') || '').slice(0, 64);
+    const m = t && store.moderatorBySetupToken(t);
+    const headers = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' };
+    if (!m || !m.active) return send(res, 404, layout('Link expired', '<h1>This link no longer works</h1><p>Setup links work once and expire after 7 days. Ask the site owner for a new one.</p>'), headers);
+    if (req.method === 'GET') return send(res, 200, setupPage(m, { t }), headers);
+    if (req.method === 'POST') {
+      if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+      let f;
+      try { f = await readBody(req, 2000); } catch { return send(res, 413, layout('Too large', '<p>Too large.</p>')); }
+      const pass = String(f.get('password') || '');
+      const errors = [];
+      if (pass.length < MIN_PASSWORD || pass.length > 200) errors.push(`Please choose a password of at least ${MIN_PASSWORD} characters.`);
+      else if (pass !== String(f.get('password2') || '')) errors.push('The two passwords do not match.');
+      else if (ADMIN_PASSWORD && pass === ADMIN_PASSWORD) errors.push('Please choose a different password.');
+      if (errors.length) return send(res, 400, setupPage(m, { t, errors }), headers);
+      store.setModeratorPassword(m.id, hashPassword(pass));
+      return send(res, 200, setupPage(m, { done: true }), headers);
+    }
+  }
+
   if (req.method === 'GET' && p === '/originals') {
     const s = url.searchParams.get('store');
     const storeFilter = ['steam', 'nintendo', 'classic'].includes(s) ? s : '';
@@ -405,10 +558,11 @@ async function handle(req, res) {
   let m;
   if (req.method === 'GET' && (m = p.match(/^\/report\/(\d+)$/))) {
     const r = store.get(Number(m[1]));
-    if (!r || (r.status !== 'approved' && !isAdmin(req))) return send(res, 404, notFound());
+    if (!r || (r.status !== 'approved' && !isStaff(req))) return send(res, 404, notFound());
     const voted = url.searchParams.get('voted');
     return send(res, 200, reportPage(r, {
       responses: store.disputesFor(r.id, 'published'),
+      approval: r.status === 'approved' ? store.approval(r.id) : null,
       myVote: store.myVote(r.id, voterId(req)), voteToken: makeFormToken('vote:' + r.id),
       voteMsg: voted === 'ok' ? 'Thanks, your vote counts.' : voted === 'limit' ? 'You have voted a lot in the last hour. Please try again later.'
         : voted === 'expired' ? 'The page was open too long. Please vote again.' : '',
@@ -417,7 +571,7 @@ async function handle(req, res) {
 
   if (req.method === 'GET' && (m = p.match(/^\/report\/(\d+)\/history$/))) {
     const r = store.get(Number(m[1]));
-    if (!r || (r.status !== 'approved' && !isAdmin(req))) return send(res, 404, notFound());
+    if (!r || (r.status !== 'approved' && !isStaff(req))) return send(res, 404, notFound());
     return send(res, 200, historyPage(r, store.history(r.id)));
   }
 
@@ -526,11 +680,60 @@ async function handle(req, res) {
   if (req.method === 'GET' && p === '/submit/thanks') return send(res, 200, thanksPage());
 
   if (p === '/admin' || p.startsWith('/admin/')) {
-    if (!isAdmin(req))
-      return send(res, 401, layout('Admin', '<p>Sign in required.</p>'), { 'WWW-Authenticate': 'Basic realm="clonereport admin", charset="UTF-8"' });
+    if (!isStaff(req)) {
+      if (loginBlocked(req)) return send(res, 429, layout('Admin', '<p>Too many failed sign-ins. Please try again in 15 minutes.</p>'));
+      return send(res, 401, layout('Admin', '<p>Sign in required. Moderators: use your email as the username.</p>'), { 'WWW-Authenticate': 'Basic realm="clonereport admin", charset="UTF-8"' });
+    }
+    const who = staff(req);
     if (req.method === 'GET' && p === '/admin') {
       const status = ['pending', 'approved', 'rejected'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'pending';
-      return send(res, 200, adminPage(status, store.byStatus(status), store.counts(), store.disputeCounts().open, store.requestCounts().open), { 'Cache-Control': 'no-store' });
+      return send(res, 200, adminPage(status, store.byStatus(status), store.counts(), store.disputeCounts().open, store.requestCounts().open,
+        { who, openApps: store.applicationCounts().pending }), { 'Cache-Control': 'no-store' });
+    }
+    // Moderators can review reports: list them, approve and reject. Everything else is for the site owner.
+    if (req.method === 'POST' && (m = p.match(/^\/admin\/(\d+)\/(approve|reject)$/))) return reviewReport(req, res, url, Number(m[1]), m[2]);
+    if (!isAdmin(req)) return send(res, 403, layout('Admin', '<h1>Site owner only</h1><p>Moderators can approve and reject reports. <a href="/admin">Back to the review queue</a>.</p>'));
+
+    if (req.method === 'GET' && p === '/admin/applications') {
+      const status = ['pending', 'approved', 'rejected'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'pending';
+      return send(res, 200, adminApplicationsPage(status, store.applicationsByStatus(status), store.applicationCounts()), { 'Cache-Control': 'no-store' });
+    }
+    if (req.method === 'POST' && (m = p.match(/^\/admin\/applications\/(\d+)\/(approve|reject)$/))) {
+      if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+      const a = store.getApplication(Number(m[1]));
+      if (!a) return send(res, 404, notFound());
+      if (m[2] === 'reject') { store.setApplicationStatus(a.id, 'rejected'); return redirect(res, '/admin/applications'); }
+      const { token, expires } = newSetupToken();
+      const modId = store.createModerator({ name: a.name, email: a.email, application_id: a.id }, token, expires);
+      store.setApplicationStatus(a.id, 'approved', modId);
+      modAuthCache.clear();
+      if (mailer.enabled) {
+        mailer.send({ to: a.email, subject: 'You are now a Clone Report moderator',
+          text: `Hi ${a.name},\n\nYour application to moderate Clone Report was approved. Choose your password here (the link works once and expires in ${SETUP_DAYS} days):\n\n`
+            + `${baseUrl(req)}/moderator/setup?t=${token}\n\nThen sign in at ${baseUrl(req)}/admin with your email (${a.email}) as the username.\n` })
+          .catch((err) => console.error('moderator email failed:', err.message));
+      }
+      return redirect(res, `/admin/moderators?link=${modId}&t=${token}`);
+    }
+    if (req.method === 'GET' && p === '/admin/moderators') {
+      const linkId = Number(url.searchParams.get('link')) || 0;
+      const t = String(url.searchParams.get('t') || '').slice(0, 64);
+      const lm = linkId && t ? store.moderatorBySetupToken(t) : null;
+      const setupLink = lm && lm.id === linkId ? { name: lm.name, email: lm.email, url: `${baseUrl(req)}/moderator/setup?t=${t}` } : null;
+      return send(res, 200, adminModeratorsPage(store.moderators(), { setupLink, emailOn: mailer.enabled }), { 'Cache-Control': 'no-store' });
+    }
+    if (req.method === 'POST' && (m = p.match(/^\/admin\/moderators\/(\d+)\/(disable|enable|link)$/))) {
+      if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
+      const mod = store.getModerator(Number(m[1]));
+      if (!mod) return send(res, 404, notFound());
+      modAuthCache.clear();
+      if (m[2] === 'link') {
+        const { token, expires } = newSetupToken();
+        store.setModeratorSetup(mod.id, token, expires);
+        return redirect(res, `/admin/moderators?link=${mod.id}&t=${token}`);
+      }
+      store.setModeratorActive(mod.id, m[2] === 'enable');
+      return redirect(res, '/admin/moderators');
     }
     if (req.method === 'GET' && p === '/admin/originals') {
       const q = clean(url.searchParams.get('q'), 120);
@@ -574,26 +777,10 @@ async function handle(req, res) {
         return redirect(res, `/report/${r.id}`);
       }
     }
-    if (req.method === 'POST' && (m = p.match(/^\/admin\/(\d+)\/(approve|reject|delete)$/))) {
+    if (req.method === 'POST' && (m = p.match(/^\/admin\/(\d+)\/delete$/))) {
       if (!sameOrigin(req)) return send(res, 403, layout('Forbidden', '<p>Bad origin.</p>'));
-      const id = Number(m[1]);
-      const back = url.searchParams.get('back') || 'pending';
-      const wasPending = store.get(id)?.status === 'pending';
-      if (m[2] === 'delete') store.remove(id);
-      else store.setStatus(id, m[2] === 'approve' ? 'approved' : 'rejected');
-      // A game confirmed as a clone comes off the originals list for good.
-      if (m[2] === 'approve') {
-        const r = store.get(id);
-        // Match by Steam id, or by name unless the clone shares the original's name.
-        const sameName = r && r.clone_name.toLowerCase() === r.original_name.toLowerCase();
-        const g = r && (store.findOriginal(r.clone_steam_appid, '') || (!sameName && store.findOriginal(null, r.clone_name)));
-        if (g) store.excludeOriginal(g.id, `approved clone report #${id}`);
-        // Fill missing release dates, images and developers from Steam in the background.
-        if (r && STEAM_ENRICH) steam.comparisonFor(r).then((d) => store.fillComparison(id, d)).catch(() => {});
-        // Email people who follow the original game (only on the first approval).
-        if (r && wasPending && mailer.enabled) sendAlerts(r, baseUrl(req)).catch(() => {});
-      }
-      return redirect(res, '/admin?status=' + encodeURIComponent(back));
+      store.remove(Number(m[1]));
+      return redirect(res, '/admin?status=' + encodeURIComponent(url.searchParams.get('back') || 'pending'));
     }
   }
 
