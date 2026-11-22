@@ -19,7 +19,8 @@ npm test
 | Variable | Default | Purpose |
 |---|---|---|
 | `PORT` | `3000` | HTTP port |
-| `ADMIN_PASSWORD` | *(none: admin disabled)* | Password for `/admin` (any username) |
+| `ADMIN_PASSWORD` | *(none: admin disabled)* | Site owner (super-admin) password for `/admin` (any username). Moderators sign in with their own email and password |
+| `FAILED_LOGIN_LIMIT` | `20` | Failed `/admin` sign-ins allowed per IP per 15 minutes |
 | `SECRET` | random per start | Signs form tokens and hashes IPs. Set a long random value in production. |
 | `DB_PATH` | `./data/clonereport.db` | SQLite file location (put it on a persistent disk) |
 | `PUBLIC_URL` | from request | e.g. `https://clonereport.com`, used in API links |
@@ -124,3 +125,10 @@ The Firefox add-on is built from the same folder: `npm run build:firefox` writes
 ## Deploy
 
 Any host that runs Node 22 with a persistent disk works. `render.yaml` sets up Render (web service + 1 GB disk); a `Dockerfile` is included for Fly.io, Railway or a VPS. Then point the clonereport.com DNS at the host.
+
+## Pending reports and moderators
+
+- **`/pending`** lists reports waiting for review, labelled as unverified allegations. It shows only game names, developers and links to recognized store pages (no notes, evidence or other links), is `noindex` and disallowed in `robots.txt`, and pending reports never appear in search, `/clones`, the API, feeds or the browser extension.
+- **Review trail.** Approved report pages show when the report was submitted, when a moderator approved it (or that it was added from public sources, for seeded reports), the number of community votes and published developer responses.
+- **Become a moderator.** `/moderators/apply` takes a name, email, experience and links. Applications are listed at `/admin/applications` for the site owner. Approving one creates a moderator account and a one-time link (valid 7 days, emailed when email is set up, and always shown on `/admin/moderators`) where the moderator chooses a password (scrypt-hashed). Moderators sign in at `/admin` with their email as the username.
+- **What moderators can do:** see the review queue and pending report pages, approve and reject reports. Only the site owner (`ADMIN_PASSWORD`) can edit or delete reports, see reporters' emails, handle disputes, requests and original games, and approve, disable or re-enable moderators. Approvals are logged in the edit history as "Moderator" without the person's name; `/admin/moderators` shows how many reports each moderator reviewed.
